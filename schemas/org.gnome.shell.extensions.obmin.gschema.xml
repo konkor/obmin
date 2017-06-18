@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist gettext-domain="gnome-shell-extensions-obmin-daemon">
+
+  <schema id="org.gnome.shell.extensions.obmin" path="/org/gnome/shell/extensions/obmin/">
+
+    <key type="b" name="save-settings">
+      <default>false</default>
+      <summary>Save last settings</summary>
+      <description>Save settings for restore</description>
+    </key>
+
+  </schema>
+</schemalist>

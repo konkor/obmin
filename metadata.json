@@ -1,0 +1,16 @@
+{
+  "description": "Gnome File Sharing Server.\n\nThis is a lightweight HTTP file server.\n\nFeatures:\n⚫ Recursive Folder sharing;\n⚫ File sharing...\n\nFor more information and how-to see README.md",
+  "name": "obmin",
+  "settings-schema": "org.gnome.shell.extensions.obmin",
+  "shell-version": [
+    "3.14",
+    "3.16",
+    "3.18",
+    "3.20",
+    "3.22",
+    "3.24",
+    "3.26"
+  ],
+  "url": "https://github.com/konkor/obmin",
+  "uuid": "obmin@konkor"
+}
