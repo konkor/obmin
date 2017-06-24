@@ -1,5 +1,5 @@
 {
-  "description": "Gnome File Sharing Server.\n\nThis is a lightweight HTTP file server.\n\nFeatures:\n⚫ Recursive Folder sharing;\n⚫ File sharing...\n\nFor more information and how-to see README.md",
+  "description": "Simple File Sharing Server.\n\nThis is a simple HTTP file server.\n\nFeatures:\n⚫ Recursive Folder sharing;\n⚫ File sharing...\n\nFor more information and how-to see README.md",
   "name": "obmin",
   "settings-schema": "org.gnome.shell.extensions.obmin",
   "shell-version": [

@@ -9,5 +9,53 @@
       <description>Save settings for restore</description>
     </key>
 
+    <key type="b" name="enabled">
+      <default>false</default>
+      <summary>Enabled</summary>
+      <description>Server enabled</description>
+    </key>
+
+    <key type="b" name="links-settings">
+      <default>true</default>
+      <summary>Follow links</summary>
+      <description>Follow to symbolic links</description>
+    </key>
+
+    <key type="b" name="hidden-settings">
+      <default>false</default>
+      <summary>Show hidden</summary>
+      <description>Show hidden locations</description>
+    </key>
+
+    <key type="b" name="backup-settings">
+      <default>false</default>
+      <summary>Show backups</summary>
+      <description>Show backup sources</description>
+    </key>
+
+    <key type="b" name="mounts-settings">
+      <default>false</default>
+      <summary>Show mounts</summary>
+      <description>Show mount points</description>
+    </key>
+
+    <key type="s" name="content-sources">
+        <default>''</default>
+        <summary>Content locations</summary>
+        <description>Server content locations</description>
+    </key>
+
+    <key type="s" name="recent-files">
+        <default>''</default>
+        <summary>Recent locations</summary>
+        <description>Recent locations</description>
+    </key>
+
+    <key type="s" name="excluded-files">
+        <default>''</default>
+        <summary>Excluded locations</summary>
+        <description>Excluded locations</description>
+    </key>
+
   </schema>
 </schemalist>
