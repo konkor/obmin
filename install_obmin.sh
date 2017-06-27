@@ -31,10 +31,11 @@ EXTENSION_UUID="obmin@konkor";
 wget --header='Accept-Encoding:none' -O /tmp/extension.zip "${URL}" 
 
 # Unzip extension to installation folder 
+mkdir -p "${EXTENSION_PATH}";
 mkdir -p "${EXTENSION_PATH}/${EXTENSION_UUID}";
 unzip -q /tmp/extension.zip -d ${EXTENSION_PATH}/${EXTENSION_UUID};
-cp -r ${EXTENSION_PATH}/${EXTENSION_UUID}/cpufreq-${BRANCH}/* ${EXTENSION_PATH}/${EXTENSION_UUID};
-rm -r ${EXTENSION_PATH}/${EXTENSION_UUID}/cpufreq-${BRANCH}
+cp -r ${EXTENSION_PATH}/${EXTENSION_UUID}/obmin-${BRANCH}/* ${EXTENSION_PATH}/${EXTENSION_UUID};
+rm -r ${EXTENSION_PATH}/${EXTENSION_UUID}/obmin-${BRANCH}
 
 # List enabled extensions 
 EXTENSION_LIST=$(gsettings get org.gnome.shell enabled-extensions | sed 's/^.\(.*\).$/\1/');
