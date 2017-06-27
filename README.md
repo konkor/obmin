@@ -1,6 +1,5 @@
 # obmin
-Gnome Simple HTTP File Sharing Server.
+Gnome Simple File Sharing.
 
-`https://extensions.gnome.org/extension/1082/obmin/`
-
+![](/data/www/obmin.png?raw=true)
 

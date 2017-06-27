@@ -1,0 +1,12 @@
+/* Obmin style */
+body {background: #edede2;color:#343a3a;font-family: sans;font-size: 1.0em;}
+a,a:visited,a:hover {text-decoration:none;}
+.path {background: #ffcc0c;color: #343a3a; margin: 10px auto 10px auto; padding: 8px;font-weight: bold;font-size: 1.6em;box-shadow: inset 0px 2px 4px rgba(0,0,0,0.6);}
+.contents {width: 97%; margin: 0px auto 0px auto;}
+.content {background: #edede2;color:#343a3a;padding: 4px; margin: 2px auto 2px auto;border: 0px solid;border-bottom-width: 2px;border-color: #a4aaaa;}
+.content:hover, .content:focus, .content:active {background-color: #ffcc0c;color: #343a3a;}
+.selected {color:#edede2;text-shadow: 2px 2px rgba(0,0,0,0.6);}
+.file {font-weight: bold;}
+.fileinfo {color: #343a3a;font-style: italic;margin: auto;height: 1em;}
+.date {width: 80%;float: left;height: 1em;}
+.size {margin-left: 60%;text-align: end;height: 1em;}

@@ -3,11 +3,14 @@
 const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
 const Soup = imports.gi.Soup;
+//const GObject = imports.gi.GObject;
 const Lang = imports.lang;
 const Mainloop = imports.mainloop;
+const System = imports.system;
 
 imports.searchPath.unshift(getCurrentFile ()[1]);
 const Convenience = imports.convenience;
+const APPDIR = getCurrentFile ()[1];
 
 const DEBUG = true;
 const ATTRIBUTES = "standard," +
@@ -25,6 +28,7 @@ const BACKUPS_KEY = 'backup-settings';
 const SOURCES_KEY = 'content-sources';
 const SETTINGS_ID = 'org.gnome.shell.extensions.obmin';
 
+const html_head = "<head><meta charset=\"utf-8\"><title>Obmin - Gnome File Sharing</title><link href=\"style.css\" rel=\"stylesheet\" type=\"text/css\"></head>";
 
 let save = false;
 let follow_links = true;
@@ -42,47 +46,30 @@ const ObminServer = new Lang.Class({
     _init: function () {
         this.parent ();
         this.access_counter = 0;
-        //this.add_handler ("/index.html", Lang.bind (this, this._root_handler));
-		//this.add_handler ("/", Lang.bind (this, this._root_handler));
         this.add_handler (null, Lang.bind (this, this._default_handler));
     },
 
     _default_handler: function (server, msg, path, query, client) {
-        let self = server;
-        debug (msg.method);
-        debug (path);
+        let self = server, drop = false;
+        debug ("\n" + msg.method + " " + path + " HTTP/1." + msg.get_http_version ());
+        msg.request_headers.foreach ( (n, v) => {
+            debug (n + ": " + v);
+        });
+        if (msg.method == "POST") return;
+        if (msg.request_body.length > 0) debug (msg.request_body);
         this.access_counter++;
         debug ("Default handler start (" + this.access_counter + ")\n");
         GLib.timeout_add_seconds (0, 0, Lang.bind (this, function () {
-            if (path == '/' || path == '/index.html') this._root_handler (server, msg);
+            if (path == '/') this._root_handler (server, msg);
             else this._send_content (self, msg, path);
-            debug ("Default handler end", this.access_counter);
+            debug ("Default handler end " + this.access_counter);
             return false;
         }));
-        msg.connect ("content-sniffed", ()=>{debug ("content-sniffed");});
-        
-        msg.connect ("got-body", ()=>{debug ("got-body");});
-        
-        
-        msg.connect ("got-informational", ()=>{debug ("got-informational");});
-        msg.connect ("network-event", ()=>{debug ("network-event");});
-        msg.connect ("restarted", ()=>{debug ("restarted");});
-        msg.connect ("wrote-body", ()=>{debug ("wrote-body");});
-        msg.connect ("wrote-body-data", ()=>{debug ("wrote-body-data");});
-        msg.connect ("wrote-headers", ()=>{debug ("wrote-headers");});
-        msg.connect ("wrote-informational", ()=>{debug ("wrote-informational");});
         self.pause_message (msg);
     },
 
     _send_content: function (server, msg, path) {
         let self = server;
-        if (path == '/favicon.ico') {
-            msg.set_status (200);
-            msg.set_response ("image/vnd.microsoft.icon", Soup.MemoryUse.COPY, GLib.file_get_contents ("./data/www/favicon.ico")[1]);
-            self.unpause_message (msg);
-            //debug (EXTENSIONDIR+"/data/www/favicon.ico");
-            return;
-        }
         let file, r, info;
         [file, r] = this.get_file (path);
         if (file) {
@@ -92,10 +79,21 @@ const ObminServer = new Lang.Class({
             } else {
                 if (info.get_size () < 10*1048576) {
                     msg.set_status (200);
-                    msg.set_response (info.get_content_type (), Soup.MemoryUse.COPY, GLib.file_get_contents (file.get_path())[1]);
+                    msg.response_headers.set_content_length (info.get_size ());
+                    msg.set_response (info.get_content_type (), Soup.MemoryUse.COPY, file.load_contents (null)[1]);
                 } else {
                     debug ("start chunking");
-                    let st = new ContentStream (self, msg, file, info.get_content_type ());
+                    let st = new ContentStream (self, msg, file, info, this.access_counter);
+                    msg.connect ("finished", (o)=>{
+                        debug ("st finished" + st);
+                        //o.destroy ();
+                        delete st;
+                        delete o;
+                        st = null;
+                        o = null;
+                        System.gc();
+                        //this.dispose ();
+                    });
                     return;
                     //msg.response_headers.set_encoding (Soup.Encoding.CHUNKED);
                     //msg.response_headers.set_content_type (info.get_content_type ());
@@ -111,6 +109,21 @@ const ObminServer = new Lang.Class({
                 }
             }
             self.unpause_message (msg);
+        } else if (path == '/favicon.ico') {
+            msg.set_status (200);
+            msg.set_response ("image/vnd.microsoft.icon", Soup.MemoryUse.COPY, GLib.file_get_contents (APPDIR + "/data/www/favicon.ico")[1]);
+            self.unpause_message (msg);
+            return;
+        } else if (path.endsWith ('style.css')) {
+            msg.set_status (200);
+            msg.set_response ("text/css", Soup.MemoryUse.COPY, GLib.file_get_contents (APPDIR + "/data/www/style.css")[1]);
+            self.unpause_message (msg);
+            return;
+        } else if (path.endsWith ('obmin.png')) {
+            msg.set_status (200);
+            msg.set_response ("image/png", Soup.MemoryUse.COPY, GLib.file_get_contents (APPDIR + "/data/www/obmin.png")[1]);
+            self.unpause_message (msg);
+            return;
         } else {
             msg.set_response ("text/html", Soup.MemoryUse.COPY, "<html><head><title>404</title></head><body><h1>404</h1></body></html>");
             msg.set_status (404);
@@ -120,30 +133,30 @@ const ObminServer = new Lang.Class({
     },
 
     get_file: function (path) {
-        let s = path, file, id, src, i;
-        if (s.length == 0) return null;
-        if (s[0] != '/') return null;
+        let s = path, file, id, src, i, res = [null, null];
+        if (s.length == 0) return res;
+        if (s[0] != '/') return res;
         s = s.slice (1);
         i = s.indexOf ('/');
         if (i == -1) {
-            if (!this.is_int (s)) return null;
+            if (!this.is_int (s)) return res;
             id = parseInt (s);
-            if (id >= sources.length) return null;
+            if (id >= sources.length) return res;
             file = Gio.File.new_for_path (sources[id].path);
             if (file.query_exists (null)) return [file, false];
         } else {
             src = s.substring (0, i);
             s = s.slice (i + 1);
-            if (!this.is_int (src)) return null;
+            if (!this.is_int (src)) return res;
             id = parseInt (src);
-            if (id >= sources.length) return null;
-            if (s.indexOf ('/') > -1 && !sources[id].recursive) return null;
+            if (id >= sources.length) return res;
+            if (s.indexOf ('/') > -1 && !sources[id].recursive) return res;
             if (s.length == 0) src = sources[id].path;
             else src = sources[id].path + '/' + s;
             file = Gio.File.new_for_path (src);
             if (file.query_exists (null)) return [file, sources[id].recursive];
         }
-        return null;
+        return res;
     },
 
     is_int: function (str) {
@@ -154,17 +167,27 @@ const ObminServer = new Lang.Class({
     },
 
     get_dir: function (server, msg, dir, r, path) {
-        let self = server, slash, size;
+        let self = server, slash, size, d = new Date(0),ds;
         debug ("LOCAL PATH:"+dir.get_path ());
         this.list_dir ({path: dir.get_path (), recursive: r});
-        let html_head = "<head><meta charset=\"utf-8\"><title>Obmin - Gnome File Sharing</title></head>";
-        let html_body = "<body><h1>Directory listing " + path + "</h1><hr><ul>";
+        let html_body = "<body><div class=\"path\"><img src=\"obmin.png\">" + path.replace (/\u002f/g,"> ") + "</div><div class=\"contents\">";
         files.forEach (f => {
-            if (f.type == 2) { slash = "/"; size = "";}
-            else {slash = ""; size = " <i>" + GLib.format_size (f.size) + "</i>";}
-            html_body += "<li><a href=\"" + f.name + slash + "\">" + f.name + slash + "</a>" + size;
+            if (f.type == 2) { slash = "/"; size = "Folder";}
+            else {slash = ""; size = " " + GLib.format_size (f.size);}
+            d.setTime (f.date*1000);
+            ds = d.toString();
+            if (ds.indexOf(" GMT")) ds = ds.substring(0,ds.indexOf(" GMT"));
+            //html_body += "<li><a href=\"" + f.name + slash + "\">" + f.name + slash + "</a>" + size;
+            /*html_body += "<div class=\"content\" onclick=\"location.href=\'" + f.name + slash + "\';\">";
+            html_body += "<div class=\"file\">" + f.name + slash + "</div>";
+            html_body += "<section class=\"fileinfo\"><div class=\"date\">" + f.date + "</div>";
+            html_body += "<div class=\"size\">" + size + "</div></section></div>";*/
+            html_body += "<a href=\"" + f.name + slash + "\"><div class=\"content\">";
+            html_body += "<div class=\"file\">" + f.name + slash + "</div>";
+            html_body += "<section class=\"fileinfo\"><div class=\"date\">" + ds + "</div>";
+            html_body += "<div class=\"size\">" + size + "</div></section></div></a>";
         });
-        html_body += "</ul><hr></body>";
+        html_body += "</div></body>";
         msg.set_response ("text/html", Soup.MemoryUse.COPY, "<html>" + html_head + html_body + "</html>");
         msg.set_status (200);
 
@@ -222,17 +245,6 @@ const ObminServer = new Lang.Class({
 					if (info.get_is_backup ())
 						continue;
 				}
-				/*if (info.has_attribute (Gio.FILE_ATTRIBUTE_UNIX_NLINK)) {
-					if (info.get_attribute_uint32 (Gio.FILE_ATTRIBUTE_UNIX_NLINK) > 1) {
-						let hl = {inode: info.get_attribute_uint64 (Gio.FILE_ATTRIBUTE_UNIX_INODE),
-						          device: info.get_attribute_uint32 (Gio.FILE_ATTRIBUTE_UNIX_DEVICE)};
-						print (hl);
-						if (hl in hardlinks) {
-							continue;
-						}
-						hardlinks.push (hl);
-					}
-				}*/
 				switch (info.get_file_type ()) {
 					case Gio.FileType.DIRECTORY:
 						if (loc.recursive) {
@@ -260,20 +272,40 @@ const ObminServer = new Lang.Class({
             name: info.get_name (),
             type: info.get_file_type (),
             mime: info.get_content_type (),
-            size: info.get_size ()});
+            size: info.get_size (),
+            date: info.get_attribute_uint64 (Gio.FILE_ATTRIBUTE_TIME_MODIFIED)});
     }
 });
 
 const ContentStream = new Lang.Class({
     Name: 'ContentStream',
-    _init: function (server, message, file, mime) {
+    /*Extends: GObject.Object,
+    Signals: {
+        'finised': {},
+    },*/
+    _init: function (server, message, file, info, count) {
         this.server = server;
         this.msg = message;
         this.msg.connect ("wrote-chunk", Lang.bind (this, this.wrote_chunk));
+        this.msg.connect ("got-headers", ()=>{debug ("got-headers");});
+        this.msg.connect ("got-chunk", ()=>{debug ("got-chunk");});
+        this.msg.connect ("finished", ()=>{
+            debug ("finished ContentStream");
+            this.done = true;
+            if (this.read_event != 0) {
+            Mainloop.source_remove (this.read_event);
+            this.read_event = 0;
+        }
+        });
         this.file = file;
-        this.mime = mime;
+        this.mime = info.get_content_type ();
+        this.size = info.get_size ();
+        this.num = count.toString();
         this.stream = null;
         this.offset = 0;
+        this.wrotes = 0;
+        this.reads = 0;
+        this.read_event = 0;
         this.done = false;
         debug ("Start steamimg");
         this.file.read_async (GLib.PRIORITY_DEFAULT, null, Lang.bind (this, this.opened));
@@ -281,20 +313,32 @@ const ContentStream = new Lang.Class({
 
     wrote_chunk: function (sender, msg) {
         //if (!this.done) this.server.pause_message (this.msg);
-        debug ("wrote_chunk");
+        this.wrotes++;
+        debug ("Request(" + this.num + ") wrote_chunk: " + this.wrotes);
     },
 
     opened: function (sender, result) {
         try {
             debug ("file opened");
+            //this.seek_request = this.msg.request_headers.get_content_range (this.seek_start, this.seek_end, this.seek_total);
+            //debug ("seek " + this.msg.request_headers.get_content_range ());
             this.msg.response_headers.set_encoding (Soup.Encoding.CHUNKED);
-            //this.msg.response_headers.set_content_type (this.mime, null);
-            this.msg.response_headers.set_content_type ('application/octet-stream', null);
+            this.msg.response_headers.set_content_type (this.mime, null);
+            this.msg.response_headers.set_content_length (this.size);
+            //this.msg.response_headers.set_content_type ('application/octet-stream', null);
             this.msg.response_body.set_accumulate (false);
             this.stream = this.file.read_finish (result);
             debug ("typeof stream " + (typeof this.stream));
             this.msg.set_status (200);
-            this.read_more ();
+            this.msg.request_headers.foreach ( (n, v) => {
+                if (n.indexOf ("Range") > -1)
+                    if (v.indexOf ("bytes=") > -1) {
+                        let s = v.slice (6).split("-");
+                        if (s[0]) this.offset = parseInt(s[0]);
+                    }
+            });
+            debug ("Request(" + this.num + ") offset " + this.offset);
+            this.read_more (this.offset>0);
         } catch (err) {
             error (err);
             this.msg.set_status (500);
@@ -302,39 +346,64 @@ const ContentStream = new Lang.Class({
         }
     },
 
-    read_more: function () {
+    read_more: function (seek) {
         //debug ("file read next chunk");
-        this.stream.read_bytes_async (65536, GLib.PRIORITY_DEFAULT, null, Lang.bind (this, this.read_done));
+        if (this.read_event != 0) {
+            Mainloop.source_remove (this.read_event);
+            this.read_event = 0;
+        }
+        this.b = [];
+        if (seek) this.stream.seek (this.offset, GLib.SeekType.SET, null);
+        //if ((this.reads - this.wrotes) > 12) this.read_event = Mainloop.timeout_add (50, Lang.bind (this, this.read_more));
+        this.stream.read_bytes_async (1*1048576, GLib.PRIORITY_DEFAULT, null, Lang.bind (this, this.read_done));
+        this.reads++;
     },
 
-    read_done: function (sender, result, d) {
+    read_done: function (sender, result) {
         try {
             //debug ("file read chunk done");
-            let b = this.stream.read_bytes_finish (result);
-            if (b.get_size() == 0) {
-                debug (b + " " + b.get_size());
+            this.b = this.stream.read_bytes_finish (result);
+            if (this.done) {
+                debug ("this.msg.response_body.complete ();");
+                this.b = [];
+                this.msg.response_body.complete ();
+                this.stream.close (null);
+                return;
+            }
+            if (this.b.get_size() == 0) {
+                debug (this.b + " " + this.b.get_size());
                 this.done = true;
                 this.msg.response_body.complete ();
                 this.server.unpause_message (this.msg);
+                this.stream.close (null);
             } else {
-                this.offset += b.get_size();
-                this.msg.response_body.append (b.get_data()); //# uh..
-                if (this.msg.is_keepalive()){ 
-                    this.server.unpause_message (this.msg);
-                    this.read_more ();
-                } else {
-                    this.done = true;
-                    this.destroy();
+                this.offset += this.b.get_size();
+                this.msg.response_headers.set_content_range (this.offset - this.b.get_size(),
+                                                        this.offset,
+                                                        this.size);
+                this.msg.response_headers.append ("Accept-Ranges", "bytes");
+                this.msg.response_headers.set_content_length (this.size);
+                //this.msg.response_body.append (this.b.get_data());
+                this.msg.response_body.append_buffer (new Soup.Buffer (this.b.get_data()));
+                /*debug ("Request(" + this.num + ") on read done\n" + this.msg.method + " HTTP/1." + this.msg.get_http_version ());
+                this.msg.request_headers.foreach ( (n, v) => {
+                    debug (n + ": " + v);
+                });*/
+                if (this.msg.request_body.length > 0) debug (this.msg.request_body);
+                /*this.msg.response_headers.foreach ( (n, v) => {
+                    debug (n + ": " + v);
+                });*/
+                debug ("Stream " + this.num + " " + this.offset + ":" + this.seek_start);
+                this.server.unpause_message (this.msg);
+                this.read_event = Mainloop.timeout_add (10, Lang.bind (this, this.read_more));//this.read_more ();
                 }
-            }
             
         } catch (err) {
             error ("read_done" + err);
-            //if (this.offset == 0) this.msg.set_status (500);
-            //else this.msg.response_body.complete ();
-            //this.server.unpause_message (this.msg);
-            this.destroy();
-            //this = null;
+            if (this.offset == 0) this.msg.set_status (500);
+            else this.msg.response_body.complete ();
+            this.server.unpause_message (this.msg);
+            this.done = true;
         }
     }
 });
