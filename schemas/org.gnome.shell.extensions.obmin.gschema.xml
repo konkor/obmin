@@ -9,6 +9,12 @@
       <description>Save settings for restore</description>
     </key>
 
+    <key type="i" name="port">
+      <default>8088</default>
+      <summary>Port number</summary>
+      <description>Server port</description>
+    </key>
+
     <key type="b" name="enabled">
       <default>false</default>
       <summary>Enabled</summary>

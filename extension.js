@@ -4,6 +4,7 @@ const Clutter = imports.gi.Clutter;
 const Main = imports.ui.main;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
+const Separator = imports.ui.separator;
 const Util = imports.misc.util;
 const Lang = imports.lang;
 //const Mainloop = imports.mainloop;
@@ -44,15 +45,13 @@ const ObminIndicator = new Lang.Class({
         this.settings = Convenience.getSettings();
 
         this.statusIcon = new St.Icon ({ style: 'icon-size: 20px;' });
-        //this.actor.add_child (this._icon, { align: St.Align.END });
         this.statusIcon.icon_name = 'obmin-symbolic';
-        //this.statusLabel = new St.Label ({text: "OFF", y_expand: true, y_align: Clutter.ActorAlign.CENTER});
         let _box = new St.BoxLayout();
         _box.add_actor(this.statusIcon);
-        //_box.add_actor(this.statusLabel);
         this.actor.add_actor (_box);
 
         save = this.settings.get_boolean (SAVE_SETTINGS_KEY);
+        port = this.settings.get_int (PORT_KEY);
         follow_links = this.settings.get_boolean (LINKS_KEY);
         check_hidden = this.settings.get_boolean (HIDDENS_KEY);
         check_backup = this.settings.get_boolean (BACKUPS_KEY);
@@ -75,13 +74,16 @@ const ObminIndicator = new Lang.Class({
 
     _build_popup: function () {
         this.menu.removeAll ();
-        this.info = new InfoItem ();
-        this.menu.addMenuItem (this.info);
         this.server_switch = new PopupMenu.PopupSwitchMenuItem('File Server ', server);
         this.server_switch.connect ('toggled', Lang.bind (this, function (item) {
             this._enable (item.state);
         }));
         this.menu.addMenuItem (this.server_switch);
+        this.info_local = new LocalItem ();
+        this.menu.addMenuItem (this.info_local);
+        this.info_public = new PublicItem ();
+        this.menu.addMenuItem (this.info_public);
+        this.menu.addMenuItem (new SeparatorItem ());
         //Locations
         this.smenu = new PopupMenu.PopupSubMenuMenuItem ("Locations", false);
         this.menu.addMenuItem (this.smenu);
@@ -100,7 +102,7 @@ const ObminIndicator = new Lang.Class({
             this._add_source (p);
         }
         //Preferences
-        this.menu.addMenuItem (new PopupMenu.PopupSeparatorMenuItem ());
+        this.menu.addMenuItem (new SeparatorItem ());
         let sm = new PopupMenu.PopupSubMenuMenuItem ('Preferences', false);
         this.menu.addMenuItem (sm);
         let save_switch = new PopupMenu.PopupSwitchMenuItem ('Load on startup', save);
@@ -187,10 +189,6 @@ const ObminIndicator = new Lang.Class({
     },
 
     remove_events: function () {
-        //if (event != 0) Mainloop.source_remove (event);
-        //event = 0;
-        //this._enable (false);
-        //server = null;
     }
 });
 
@@ -274,7 +272,6 @@ const NewMenuItem = new Lang.Class ({
                                      y_fill: true });
         this.state = this.check_box.checked = recursive;
         this._box = new St.Bin();
-        //this._box.set_y_align(Clutter.ActorAlign.START);
         container.add_actor(this._box);
         this.actor.add_child (this.check_box);
         this.check_box.visible = false;
@@ -332,7 +329,6 @@ const SourceMenuItem = new Lang.Class ({
 
     activate: function (event) {
         if (this.entry.text == '') this.entry.text = this.path;
-        //if (!this.edit_mode) this.emit ('activate', event);
         if (this.entry.visible) this.toggle ();
     },
 
@@ -351,42 +347,68 @@ const SourceMenuItem = new Lang.Class ({
     }
 });
 
-const InfoItem = new Lang.Class({
-    Name: 'InfoItem',
-    Extends: PopupMenu.PopupBaseMenuItem,
+const InfoMenuItem = new Lang.Class ({
+    Name: 'InfoMenuItem',
+    Extends: PopupMenu.PopupMenuItem,
 
-    _init: function (params) {
-        this.parent ({ reactive: false, can_focus: false });
-        this._icon = new St.Label ({text: "☺", style: 'color: #33d552; font-weight: bold; font-size: 56pt;'});
-        this._icon.y_expand = true;
-        this._icon.y_align = Clutter.ActorAlign.CENTER;
-        this.actor.add_child (this._icon);
-        this._icon.visible = false;
-        this.vbox = new St.BoxLayout({ vertical: true, style: 'padding: 0px; spacing: 4px;' });
-        this.actor.add_child (this.vbox, { align: St.Align.END });
-        /*this._host = new St.Label ({text: this.hostname, style: 'font-weight: bold;'});
-        this.vbox.add_child (this._host, {align:St.Align.START});*/
-        this._ip = new St.Label ({text: this.ip + ":" + port, style: 'color: white; font-weight: bold;'});
-        this.vbox.add_child (this._ip, {align:St.Align.START});
-        this._warn = new St.Label ({text: "☺ 😐 ☹ WARN MESSAGE", style: 'color: orange; font-weight: bold;'});
-        this.vbox.add_child (this._warn, {align:St.Align.START});
-        this._warn.visible = false;
+    _init: function (label, info, reactive) {
+        this.parent (label, {reactive: reactive, style_class: 'popup-info-item'});
+        this.label.x_expand = true;
+        this.info = new St.Label ({text: info});
+        this.actor.add_child (this.info, {align:St.Align.END});
     },
 
-    get hostname () {
-        return get_info_string ("hostname");
+    set_text: function (text) {
+        this.info.set_text (text);
+    }
+});
+
+const LocalItem = new Lang.Class ({
+    Name: 'LocalItem',
+    Extends: InfoMenuItem,
+
+    _init: function () {
+        this.parent ("Local IP", this.ip, false);
     },
 
     get ip () {
-        return get_info_string ("hostname -I");
+        let l = get_info_string ("hostname -I").split (" ");
+        if (l[0]) if (l[0].length > 6) return l[0] + ":" + port;
+        return "127.0.0.1:" + port;
+    },
+    
+    update: function () {
+        this.set_text (this.ip);
+    }
+});
+
+const PublicItem = new Lang.Class ({
+    Name: 'PublicItem',
+    Extends: InfoMenuItem,
+
+    _init: function () {
+        this.parent ("Public IP", this.ip, false);
     },
 
-    update: function (governors) {
-        this._load.text = this.loadavg;
-        /*if (governors) {
-            this._cores.visible = true;
-            this._cores.text = governors;
-        } else this._cores.visible = false;*/
+    get ip () {
+        let l = get_info_string ("dig +short myip.opendns.com @resolver1.opendns.com");
+        if (l.length > 6) return l;
+        return "";
+    },
+    
+    update: function () {
+        this.set_text (this.ip);
+    }
+});
+
+const SeparatorItem = new Lang.Class({
+    Name: 'SeparatorItem',
+    Extends: PopupMenu.PopupBaseMenuItem,
+
+    _init: function () {
+        this.parent({ reactive: false, style_class: 'separator-item', can_focus: false});
+        this._separator = new Separator.HorizontalSeparator ({ style_class: 'cpufreq-separator-menu-item' });
+        this.actor.add (this._separator.actor, { expand: true });
     }
 });
 
@@ -422,6 +444,4 @@ function disable () {
     //obmin_menu.remove_events ();
     //obmin_menu.destroy ();
     //obmin_menu = null;
-    //if (server) server.destroy ();
-    //server = null;
 }
