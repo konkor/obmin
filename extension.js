@@ -15,6 +15,7 @@ const LINKS_KEY = 'links-settings';
 const HIDDENS_KEY = 'hidden-settings';
 const BACKUPS_KEY = 'backup-settings';
 const SOURCES_KEY = 'content-sources';
+const PORT_KEY = 'port';
 const SETTINGS_ID = 'org.gnome.shell.extensions.obmin';
 
 const ExtensionUtils = imports.misc.extensionUtils;
@@ -26,6 +27,7 @@ let save = false;
 let follow_links = true;
 let check_hidden = false;
 let check_backup = false;
+let port = 8088;
 
 let server = false;
 let sources = [];
@@ -73,6 +75,8 @@ const ObminIndicator = new Lang.Class({
 
     _build_popup: function () {
         this.menu.removeAll ();
+        this.info = new InfoItem ();
+        this.menu.addMenuItem (this.info);
         this.server_switch = new PopupMenu.PopupSwitchMenuItem('File Server ', server);
         this.server_switch.connect ('toggled', Lang.bind (this, function (item) {
             this._enable (item.state);
@@ -347,6 +351,45 @@ const SourceMenuItem = new Lang.Class ({
     }
 });
 
+const InfoItem = new Lang.Class({
+    Name: 'InfoItem',
+    Extends: PopupMenu.PopupBaseMenuItem,
+
+    _init: function (params) {
+        this.parent ({ reactive: false, can_focus: false });
+        this._icon = new St.Label ({text: "☺", style: 'color: #33d552; font-weight: bold; font-size: 56pt;'});
+        this._icon.y_expand = true;
+        this._icon.y_align = Clutter.ActorAlign.CENTER;
+        this.actor.add_child (this._icon);
+        this._icon.visible = false;
+        this.vbox = new St.BoxLayout({ vertical: true, style: 'padding: 0px; spacing: 4px;' });
+        this.actor.add_child (this.vbox, { align: St.Align.END });
+        /*this._host = new St.Label ({text: this.hostname, style: 'font-weight: bold;'});
+        this.vbox.add_child (this._host, {align:St.Align.START});*/
+        this._ip = new St.Label ({text: this.ip + ":" + port, style: 'color: white; font-weight: bold;'});
+        this.vbox.add_child (this._ip, {align:St.Align.START});
+        this._warn = new St.Label ({text: "☺ 😐 ☹ WARN MESSAGE", style: 'color: orange; font-weight: bold;'});
+        this.vbox.add_child (this._warn, {align:St.Align.START});
+        this._warn.visible = false;
+    },
+
+    get hostname () {
+        return get_info_string ("hostname");
+    },
+
+    get ip () {
+        return get_info_string ("hostname -I");
+    },
+
+    update: function (governors) {
+        this._load.text = this.loadavg;
+        /*if (governors) {
+            this._cores.visible = true;
+            this._cores.text = governors;
+        } else this._cores.visible = false;*/
+    }
+});
+
 let obmin_menu;
 
 function debug (msg) {
@@ -355,6 +398,14 @@ function debug (msg) {
 
 function error (msg) {
     print ("[obmin] (EE) " + msg);
+}
+
+let cmd_out, info_out;
+function get_info_string (cmd) {
+    cmd_out = GLib.spawn_command_line_sync (cmd);
+    if (cmd_out[0]) info_out = cmd_out[1].toString().split("\n")[0];
+    if (info_out) return info_out;
+    return "";
 }
 
 function init () {
