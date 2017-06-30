@@ -86,26 +86,13 @@ const ObminServer = new Lang.Class({
                     let st = new ContentStream (self, msg, file, info, this.access_counter);
                     msg.connect ("finished", (o)=>{
                         debug ("st finished" + st);
-                        //o.destroy ();
                         delete st;
                         delete o;
                         st = null;
                         o = null;
                         System.gc();
-                        //this.dispose ();
                     });
                     return;
-                    //msg.response_headers.set_encoding (Soup.Encoding.CHUNKED);
-                    //msg.response_headers.set_content_type (info.get_content_type ());
-                    
-                    //msg.connect ("got-headers", ()=>{debug ("got-headers");});
-                    //msg.connect ("got-chunk", ()=>{debug ("got-chunk");});
-                    //msg.connect ("finished", ()=>{debug ("finished");});
-                    /*if (!mapping) {
-                        msg.set_status (500);
-                        self.unpause_message (msg);
-                        return;
-                    }*/
                 }
             }
             self.unpause_message (msg);
@@ -119,9 +106,9 @@ const ObminServer = new Lang.Class({
             msg.set_response ("text/css", Soup.MemoryUse.COPY, GLib.file_get_contents (APPDIR + "/data/www/style.css")[1]);
             self.unpause_message (msg);
             return;
-        } else if (path.endsWith ('obmin.png')) {
+        } else if (path.endsWith ('home.png')) {
             msg.set_status (200);
-            msg.set_response ("image/png", Soup.MemoryUse.COPY, GLib.file_get_contents (APPDIR + "/data/www/obmin.png")[1]);
+            msg.set_response ("image/png", Soup.MemoryUse.COPY, GLib.file_get_contents (APPDIR + "/data/www/home.png")[1]);
             self.unpause_message (msg);
             return;
         } else {
@@ -166,36 +153,44 @@ const ObminServer = new Lang.Class({
         return true;
     },
 
+    get_path: function (path) {
+        let res = "", ref = "/", dirs = path.substring (1, path.length - 1).split ("/");
+        debug (dirs);
+        for (let i = 0; i < dirs.length; i++) {
+            if (i == 0) {
+                ref += dirs[i] + "/";
+                res += "<a href=\"" + ref + "\">" + Gio.File.new_for_path (sources[parseInt (dirs[i])].path).get_basename () + "> </a>";
+            } else {
+                ref += dirs[i] + "/";
+                res += "<a href=\"" + ref + "\">" + dirs[i].replace (/\u002e/g,".&#8203;") + "> </a>";
+            }
+        };
+        return res;
+    },
+
     get_dir: function (server, msg, dir, r, path) {
-        let self = server, slash, size, d = new Date(0),ds;
+        let self = server, slash, size, d = new Date(0), ds;
         debug ("LOCAL PATH:"+dir.get_path ());
         this.list_dir ({path: dir.get_path (), recursive: r});
-        let html_body = "<body><div class=\"path\"><img src=\"obmin.png\">" + path.replace (/\u002f/g,"> ") + "</div><div class=\"contents\">";
+        let html_body = "<body><div class=\"path\"><a href=\"/\"><img src=\"home.png\" class=\"home\">> </a>" + this.get_path (path) + "</div><div class=\"contents\">";
         files.forEach (f => {
             if (f.type == 2) { slash = "/"; size = "Folder";}
             else {slash = ""; size = " " + GLib.format_size (f.size);}
             d.setTime (f.date*1000);
             ds = d.toString();
-            if (ds.indexOf(" GMT")) ds = ds.substring(0,ds.indexOf(" GMT"));
-            //html_body += "<li><a href=\"" + f.name + slash + "\">" + f.name + slash + "</a>" + size;
-            /*html_body += "<div class=\"content\" onclick=\"location.href=\'" + f.name + slash + "\';\">";
-            html_body += "<div class=\"file\">" + f.name + slash + "</div>";
-            html_body += "<section class=\"fileinfo\"><div class=\"date\">" + f.date + "</div>";
-            html_body += "<div class=\"size\">" + size + "</div></section></div>";*/
+            if (ds.indexOf (" GMT")) ds = ds.substring (0, ds.indexOf (" GMT"));
             html_body += "<a href=\"" + f.name + slash + "\"><div class=\"content\">";
-            html_body += "<div class=\"file\">" + f.name + slash + "</div>";
+            html_body += "<div class=\"file\">" + f.name.replace (/\u002e/g,".&#8203;") + slash + "</div>";
             html_body += "<section class=\"fileinfo\"><div class=\"date\">" + ds + "</div>";
             html_body += "<div class=\"size\">" + size + "</div></section></div></a>";
         });
         html_body += "</div></body>";
         msg.set_response ("text/html", Soup.MemoryUse.COPY, "<html>" + html_head + html_body + "</html>");
         msg.set_status (200);
-
     },
 
     _root_handler: function (server, msg) {
-        let self = server, i = 0, slash;
-        let html_head = "<head><meta charset=\"utf-8\"><title>Obmin - Gnome File Sharing</title></head>";
+        let self = server, i = 0, slash, size, d = new Date(0), ds;
         let html_body = "<body><h1>Directory listing /</h1><hr><ul>";
         files = [];
         sources.forEach (s => {
@@ -204,13 +199,20 @@ const ObminServer = new Lang.Class({
                 this.add_file (fl.query_info ("*", 0, null), s.path);
             }
         });
+        let html_body = "<body><div class=\"path\"><a href=\"/\"><img src=\"home.png\" class=\"home\">> </a></div><div class=\"contents\">";
         files.forEach (f => {
-            if (f.type == 2) slash = "/";
-            else slash = "";
-            html_body += "<li><a href=\"" + i + slash + "\">" + f.name + slash + "</a>";
+            if (f.type == 2) { slash = "/"; size = "Folder";}
+            else {slash = ""; size = " " + GLib.format_size (f.size);}
+            d.setTime (f.date*1000);
+            ds = d.toString();
+            if (ds.indexOf (" GMT")) ds = ds.substring (0, ds.indexOf (" GMT"));
+            html_body += "<a href=\"" + i + slash + "\"><div class=\"content\">";
+            html_body += "<div class=\"file\">" + f.name.replace (/\u002e/g,".&#8203;") + slash + "</div>";
+            html_body += "<section class=\"fileinfo\"><div class=\"date\">" + ds + "</div>";
+            html_body += "<div class=\"size\">" + size + "</div></section></div></a>";
             i++;
         });
-        html_body += "</ul><hr></body>";
+        html_body += "</div></body>";
         msg.set_response ("text/html", Soup.MemoryUse.COPY, "<html>" + html_head + html_body + "</html>");
         msg.set_status (200);
         self.unpause_message (msg);
@@ -279,10 +281,6 @@ const ObminServer = new Lang.Class({
 
 const ContentStream = new Lang.Class({
     Name: 'ContentStream',
-    /*Extends: GObject.Object,
-    Signals: {
-        'finised': {},
-    },*/
     _init: function (server, message, file, info, count) {
         this.server = server;
         this.msg = message;
@@ -290,12 +288,12 @@ const ContentStream = new Lang.Class({
         this.msg.connect ("got-headers", ()=>{debug ("got-headers");});
         this.msg.connect ("got-chunk", ()=>{debug ("got-chunk");});
         this.msg.connect ("finished", ()=>{
-            debug ("finished ContentStream");
+            debug ("ContentStream " + this.num + " finished");
             this.done = true;
             if (this.read_event != 0) {
-            Mainloop.source_remove (this.read_event);
-            this.read_event = 0;
-        }
+                Mainloop.source_remove (this.read_event);
+                this.read_event = 0;
+            }
         });
         this.file = file;
         this.mime = info.get_content_type ();
@@ -328,7 +326,6 @@ const ContentStream = new Lang.Class({
             //this.msg.response_headers.set_content_type ('application/octet-stream', null);
             this.msg.response_body.set_accumulate (false);
             this.stream = this.file.read_finish (result);
-            debug ("typeof stream " + (typeof this.stream));
             this.msg.set_status (200);
             this.msg.request_headers.foreach ( (n, v) => {
                 if (n.indexOf ("Range") > -1)
@@ -389,7 +386,7 @@ const ContentStream = new Lang.Class({
                 this.msg.request_headers.foreach ( (n, v) => {
                     debug (n + ": " + v);
                 });*/
-                if (this.msg.request_body.length > 0) debug (this.msg.request_body);
+                //if (this.msg.request_body.length > 0) debug (this.msg.request_body);
                 /*this.msg.response_headers.foreach ( (n, v) => {
                     debug (n + ": " + v);
                 });*/
@@ -448,8 +445,8 @@ let srcs =  settings.get_string (SOURCES_KEY);
 if (srcs.length > 0) sources = JSON.parse (srcs);
 //sources.push ({path: '/home', recursive: true});
 
-let server = new ObminServer ();
-server.listen_all (8088, 0);
+let obmin = new ObminServer ();
+obmin.listen_all (8088, 0);
 
-Mainloop.run('serverMainloop');
+Mainloop.run('obminMainloop');
 
