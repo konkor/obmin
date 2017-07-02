@@ -49,7 +49,7 @@ const ObminIndicator = new Lang.Class({
         if (srcs.length > 0) sources = JSON.parse (srcs);
         if (server = this.server_enabled) this.statusIcon.icon_name = 'obmin-on-symbolic';
         this._build_ui ();
-        
+
         this.menu.actor.add_style_class_name('obmin-menu');
         this.menu.connect ('open-state-changed', Lang.bind (this, this._on_menu_state_changed));
     },
@@ -95,7 +95,7 @@ const ObminIndicator = new Lang.Class({
         this.menu.addMenuItem (new SeparatorItem ());
         let sm = new PrefsMenuItem ();
         this.menu.addMenuItem (sm);
-        
+
     },
 
     _add_source: function (idx) {
@@ -180,10 +180,6 @@ const PrefsMenuItem = new Lang.Class({
             GLib.spawn_command_line_async ("gedit --new-window " + EXTENSIONDIR + "/README.md");
         }));
         this.actor.add (new St.Label ({text: ' '}), { expand: true });
-        
-    },
-
-    activate: function (event) {
     }
 });
 
@@ -339,7 +335,7 @@ const LocalItem = new Lang.Class ({
         if (l[0]) if (l[0].length > 6) return l[0] + ":" + port;
         return "127.0.0.1:" + port;
     },
-    
+
     update: function () {
         this.set_text (this.ip);
     }
@@ -358,7 +354,7 @@ const PublicItem = new Lang.Class ({
         if (l.length > 6) return l;
         return "";
     },
-    
+
     update: function () {
         this.set_text (this.ip);
     }

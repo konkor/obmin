@@ -45,16 +45,16 @@ const ObminWidget = new Lang.Class({
         if (srcs.length > 0) sources = JSON.parse (srcs);
 
         this.notebook = new Gtk.Notebook ({expand:true});
-        
-        this.general = new PageGeneral ();
-		this.notebook.add (this.general);
-		let label = new Gtk.Label ({label: _("General")});
-		this.notebook.set_tab_label (this.general, label);
 
-		this.display = new PageDisplay ();
-		this.notebook.add (this.display);
-		label = new Gtk.Label ({label: _("Display")});
-		this.notebook.set_tab_label (this.display, label);
+        this.general = new PageGeneral ();
+        this.notebook.add (this.general);
+        let label = new Gtk.Label ({label: _("General")});
+        this.notebook.set_tab_label (this.general, label);
+
+        this.display = new PageDisplay ();
+        this.notebook.add (this.display);
+        label = new Gtk.Label ({label: _("Display")});
+        this.notebook.set_tab_label (this.display, label);
 
         this.notebook.show_all ();
     }
@@ -67,28 +67,28 @@ const PageGeneral = new Lang.Class({
     _init: function () {
         this.parent ();
         this.box = new Gtk.Box ({orientation:Gtk.Orientation.VERTICAL, margin:6});
-		this.box.border_width = 6;
-		this.add (this.box);
+        this.box.border_width = 6;
+        this.add (this.box);
 
         this.cb_startup = Gtk.CheckButton.new_with_label (_("Load on startup"));
-		this.box.add (this.cb_startup);
-		this.cb_startup.active = startup;
-		this.cb_startup.connect ('toggled', Lang.bind (this, ()=>{
-			startup = this.cb_startup.active;
-			settings.set_boolean (STARTUP_KEY, startup);
-		}));
+        this.box.add (this.cb_startup);
+        this.cb_startup.active = startup;
+        this.cb_startup.connect ('toggled', Lang.bind (this, ()=>{
+            startup = this.cb_startup.active;
+            settings.set_boolean (STARTUP_KEY, startup);
+        }));
 
-		let hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
+        let hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
         this.box.pack_start (hbox, false, false, 0);
         let label = new Gtk.Label ({label: _("Listening Port")});
         hbox.add (label);
         this.port = Gtk.SpinButton.new_with_range (1, 65535, 1);
         this.port.value = port;
-		this.port.connect ('value_changed', Lang.bind (this, ()=>{
-			port = this.port.value;
-			settings.set_int (PORT_KEY, port);
-		}));
-		hbox.pack_end (this.port, false, false, 0);
+        this.port.connect ('value_changed', Lang.bind (this, ()=>{
+            port = this.port.value;
+            settings.set_int (PORT_KEY, port);
+        }));
+        hbox.pack_end (this.port, false, false, 0);
 
         this.show_all ();
     }
@@ -101,44 +101,44 @@ const PageDisplay = new Lang.Class({
     _init: function () {
         this.parent ();
         this.box = new Gtk.Box ({orientation:Gtk.Orientation.VERTICAL, margin:6});
-		this.box.border_width = 6;
-		this.add (this.box);
+        this.box.border_width = 6;
+        this.add (this.box);
 
         this.mounts = Gtk.CheckButton.new_with_label (_("Show mount points"));
-		this.box.add (this.mounts);
-		this.mounts.active = mounts;
-		this.mounts.connect ('toggled', Lang.bind (this, ()=>{
-			mounts = this.mounts.active;
-			settings.set_boolean (MOUNTS_KEY, mounts);
-		}));
+        this.box.add (this.mounts);
+        this.mounts.active = mounts;
+        this.mounts.connect ('toggled', Lang.bind (this, ()=>{
+            mounts = this.mounts.active;
+            settings.set_boolean (MOUNTS_KEY, mounts);
+        }));
 
         this.links = Gtk.CheckButton.new_with_label (_("Show symbolic links"));
-		this.box.add (this.links);
-		this.links.active = links;
-		this.links.connect ('toggled', Lang.bind (this, ()=>{
-			links = this.links.active;
-			settings.set_boolean (LINKS_KEY, links);
-		}));
+        this.box.add (this.links);
+        this.links.active = links;
+        this.links.connect ('toggled', Lang.bind (this, ()=>{
+            links = this.links.active;
+            settings.set_boolean (LINKS_KEY, links);
+        }));
 
         this.hiddens = Gtk.CheckButton.new_with_label (_("Show hidden content"));
-		this.box.add (this.hiddens);
-		this.hiddens.active = hiddens;
-		this.hiddens.connect ('toggled', Lang.bind (this, ()=>{
-			hiddens = this.hiddens.active;
-			settings.set_boolean (HIDDENS_KEY, hiddens);
-		}));
+        this.box.add (this.hiddens);
+        this.hiddens.active = hiddens;
+        this.hiddens.connect ('toggled', Lang.bind (this, ()=>{
+            hiddens = this.hiddens.active;
+            settings.set_boolean (HIDDENS_KEY, hiddens);
+        }));
 
         this.backups = Gtk.CheckButton.new_with_label (_("Show backups"));
-		this.box.add (this.backups);
-		this.backups.active = backups;
-		this.backups.connect ('toggled', Lang.bind (this, ()=>{
-			backups = this.backups.active;
-			settings.set_boolean (BACKUPS_KEY, backups);
-		}));
+        this.box.add (this.backups);
+        this.backups.active = backups;
+        this.backups.connect ('toggled', Lang.bind (this, ()=>{
+            backups = this.backups.active;
+            settings.set_boolean (BACKUPS_KEY, backups);
+        }));
 
-		let hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
+        let hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
         this.box.pack_start (hbox, false, false, 0);
-        
+
 
         this.show_all ();
     }
