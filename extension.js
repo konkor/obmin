@@ -10,11 +10,7 @@ const Lang = imports.lang;
 //const Mainloop = imports.mainloop;
 
 const DEBUG = true;
-const SAVE_SETTINGS_KEY = 'save-settings';
-const ENABLED_KEY = 'enabled';
-const LINKS_KEY = 'links-settings';
-const HIDDENS_KEY = 'hidden-settings';
-const BACKUPS_KEY = 'backup-settings';
+const STARTUP_KEY = 'startup-settings';
 const SOURCES_KEY = 'content-sources';
 const PORT_KEY = 'port';
 const SETTINGS_ID = 'org.gnome.shell.extensions.obmin';
@@ -24,10 +20,7 @@ const Me = ExtensionUtils.getCurrentExtension ();
 const EXTENSIONDIR = Me.dir.get_path ();
 const Convenience = Me.imports.convenience;
 
-let save = false;
-let follow_links = true;
-let check_hidden = false;
-let check_backup = false;
+let startup = false;
 let port = 8088;
 
 let server = false;
@@ -50,11 +43,8 @@ const ObminIndicator = new Lang.Class({
         _box.add_actor(this.statusIcon);
         this.actor.add_actor (_box);
 
-        save = this.settings.get_boolean (SAVE_SETTINGS_KEY);
+        startup = this.settings.get_boolean (STARTUP_KEY);
         port = this.settings.get_int (PORT_KEY);
-        follow_links = this.settings.get_boolean (LINKS_KEY);
-        check_hidden = this.settings.get_boolean (HIDDENS_KEY);
-        check_backup = this.settings.get_boolean (BACKUPS_KEY);
         let srcs =  this.settings.get_string (SOURCES_KEY);
         if (srcs.length > 0) sources = JSON.parse (srcs);
         if (server = this.server_enabled) this.statusIcon.icon_name = 'obmin-on-symbolic';
@@ -83,7 +73,7 @@ const ObminIndicator = new Lang.Class({
         this.menu.addMenuItem (this.info_local);
         this.info_public = new PublicItem ();
         this.menu.addMenuItem (this.info_public);
-        this.menu.addMenuItem (new SeparatorItem ());
+        //this.menu.addMenuItem (new SeparatorItem ());
         //Locations
         this.smenu = new PopupMenu.PopupSubMenuMenuItem ("Locations", false);
         this.menu.addMenuItem (this.smenu);
@@ -103,31 +93,9 @@ const ObminIndicator = new Lang.Class({
         }
         //Preferences
         this.menu.addMenuItem (new SeparatorItem ());
-        let sm = new PopupMenu.PopupSubMenuMenuItem ('Preferences', false);
+        let sm = new PrefsMenuItem ();
         this.menu.addMenuItem (sm);
-        let save_switch = new PopupMenu.PopupSwitchMenuItem ('Load on startup', save);
-        sm.menu.addMenuItem (save_switch);
-        save_switch.connect ('toggled', Lang.bind (this, function (item) {
-            save = item.state;
-            this.settings.set_boolean (SAVE_SETTINGS_KEY, item.state);
-        }));
-        sm.menu.addMenuItem (new PopupMenu.PopupSeparatorMenuItem ());
-        let links_switch = new PrefsMenuItem ('Show symbolic links', follow_links);
-        sm.menu.addMenuItem (links_switch);
-        links_switch.connect ('toggled', Lang.bind (this, function (item) {
-            this.settings.set_boolean (LINKS_KEY, follow_links = item.state);
-            debug ('toggled ' + item.state);
-        }));
-        let hidden_switch = new PrefsMenuItem ('Show hidden locations', check_hidden);
-        sm.menu.addMenuItem (hidden_switch);
-        hidden_switch.connect ('toggled', Lang.bind (this, function (item) {
-            this.settings.set_boolean (HIDDENS_KEY, check_hidden = item.state);
-        }));
-        let backup_switch = new PrefsMenuItem ('Show backups', check_backup);
-        sm.menu.addMenuItem (backup_switch);
-        backup_switch.connect ('toggled', Lang.bind (this, function (item) {
-            this.settings.set_boolean (BACKUPS_KEY, check_backup = item.state);
-        }));
+        
     },
 
     _add_source: function (idx) {
@@ -194,37 +162,28 @@ const ObminIndicator = new Lang.Class({
 
 const PrefsMenuItem = new Lang.Class({
     Name: 'PrefsMenuItem',
-    Extends: PopupMenu.PopupMenuItem,
+    Extends: PopupMenu.PopupBaseMenuItem,
 
-    _init: function(text, active, params) {
-        this.parent(text, params);
-        this.label.x_expand = true;
-        let container = new St.BoxLayout();
-        this.check_box = new St.Button({ style_class: 'check-box',
-                                     child: container,
-                                     button_mask: St.ButtonMask.ONE,
-                                     toggle_mode: true,
-                                     can_focus: true,
-                                     x_fill: true,
-                                     y_fill: true });
-        this.state = this.check_box.checked = active;
-        this._box = new St.Bin();
-        this._box.set_y_align(Clutter.ActorAlign.START);
-        container.add_actor(this._box);
-        this.actor.add_child (this.check_box);
-        this.check_box.connect ('clicked', Lang.bind (this, function (item) {
-            this.state = this.check_box.checked;
-            this.emit ('toggled');
+    _init: function () {
+        this.parent ({ reactive: false, can_focus: false});
+        this.actor.add (new St.Label ({text: ' '}), { expand: true });
+        this.preferences = new St.Button ({ child: new St.Icon ({ icon_name: 'preferences-system-symbolic' }), style_class: 'system-menu-action'});
+        this.actor.add (this.preferences, { expand: true, x_fill: false });
+        this.preferences.connect ('clicked', Lang.bind (this, function () {
+            GLib.spawn_command_line_async ('gnome-shell-extension-prefs ' + Me.uuid);
         }));
-    },
-
-    toggle: function (event) {
-        this.state = this.check_box.checked = !this.check_box.checked;
-        this.emit ('toggled');
+        this.actor.add (new St.Label ({text: ' '}), { expand: true });
+        //this.about = new St.Button ({ label: '?', style_class: 'prefs-button'});
+        this.about = new St.Button ({ child: new St.Icon ({ icon_name: 'dialog-question-symbolic' }), style_class: 'system-menu-action'});
+        this.actor.add (this.about, { expand: false });
+        this.about.connect ('clicked', Lang.bind (this, function () {
+            GLib.spawn_command_line_async ("gedit --new-window " + EXTENSIONDIR + "/README.md");
+        }));
+        this.actor.add (new St.Label ({text: ' '}), { expand: true });
+        
     },
 
     activate: function (event) {
-        this.toggle ();
     }
 });
 
@@ -352,10 +311,14 @@ const InfoMenuItem = new Lang.Class ({
     Extends: PopupMenu.PopupMenuItem,
 
     _init: function (label, info, reactive) {
-        this.parent (label, {reactive: reactive, style_class: 'popup-info-item'});
+        this.parent (label, {reactive: reactive, style_class: 'obmin-info-item'});
         this.label.x_expand = true;
-        this.info = new St.Label ({text: info});
+        this.info = new St.Label ({text: ' '});
         this.actor.add_child (this.info, {align:St.Align.END});
+        this.info.connect ('notify::text', Lang.bind (this, function () {
+            this.actor.visible = this.info.text.length > 0;
+        }));
+        this.set_text (info);
     },
 
     set_text: function (text) {

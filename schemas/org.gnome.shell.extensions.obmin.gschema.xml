@@ -3,22 +3,16 @@
 
   <schema id="org.gnome.shell.extensions.obmin" path="/org/gnome/shell/extensions/obmin/">
 
-    <key type="b" name="save-settings">
+    <key type="b" name="startup-settings">
       <default>false</default>
-      <summary>Save last settings</summary>
-      <description>Save settings for restore</description>
+      <summary>>Load on startup</summary>
+      <description>Load the server on startup</description>
     </key>
 
     <key type="i" name="port">
       <default>8088</default>
       <summary>Port number</summary>
       <description>Server port</description>
-    </key>
-
-    <key type="b" name="enabled">
-      <default>false</default>
-      <summary>Enabled</summary>
-      <description>Server enabled</description>
     </key>
 
     <key type="b" name="links-settings">
@@ -40,7 +34,7 @@
     </key>
 
     <key type="b" name="mounts-settings">
-      <default>false</default>
+      <default>true</default>
       <summary>Show mounts</summary>
       <description>Show mount points</description>
     </key>

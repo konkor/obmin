@@ -437,7 +437,6 @@ function error (msg) {
 }
 
 let settings = Convenience.getSettings();
-save = settings.get_boolean (SAVE_SETTINGS_KEY);
 follow_links = settings.get_boolean (LINKS_KEY);
 check_hidden = settings.get_boolean (HIDDENS_KEY);
 check_backup = settings.get_boolean (BACKUPS_KEY);

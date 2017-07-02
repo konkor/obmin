@@ -2,9 +2,9 @@
     min-width: 320px;
 }
 
-.popup-info-item {
+.obmin-info-item {
     padding-top: 0px;
-    padding-bottom: 0px;
+    padding-bottom: 8px;
 }
 
 .separator-item {
@@ -39,8 +39,20 @@
   .obmin-entry:focus .obmin-entry-icon {
     color: #e0e0ec; }
 
-.edit-button, .delete-button {
+.prefs-button {
+    color: white;
+    size: 4em;
     border-radius: 32px;
+    padding: 16px;
+}
+.prefs-button:hover, .prefs-button:focus {
+    background-color: pink;
+    border: none;
+    padding: 32px;
+}
+
+.edit-button, .delete-button {
+    border-radius: 16px;
     padding: 4px;
 }
 
