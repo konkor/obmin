@@ -33,11 +33,11 @@ const APPDIR = getCurrentFile ()[1];
 
 const ATTRIBUTES = "standard," +
     Gio.FILE_ATTRIBUTE_TIME_MODIFIED + "," +
-	Gio.FILE_ATTRIBUTE_UNIX_NLINK + "," +
-	Gio.FILE_ATTRIBUTE_UNIX_MODE + "," +
-	Gio.FILE_ATTRIBUTE_UNIX_INODE + "," +
-	Gio.FILE_ATTRIBUTE_UNIX_DEVICE + "," +
-	Gio.FILE_ATTRIBUTE_ACCESS_CAN_READ;
+    Gio.FILE_ATTRIBUTE_UNIX_NLINK + "," +
+    Gio.FILE_ATTRIBUTE_UNIX_MODE + "," +
+    Gio.FILE_ATTRIBUTE_UNIX_INODE + "," +
+    Gio.FILE_ATTRIBUTE_UNIX_DEVICE + "," +
+    Gio.FILE_ATTRIBUTE_ACCESS_CAN_READ;
 
 const LINKS_KEY = 'links-settings';
 const MOUNTS_KEY = 'mounts-settings';
@@ -247,43 +247,44 @@ const ObminServer = new Lang.Class({
         if (!dir.query_exists (null)) return;
         try {
             info = dir.query_info ("*", 0, null);
-            if (info.get_is_symlink ()) {
-                debug ("Symlink " + loc.folder);
-				loc.folder = info.get_symlink_target ();
-				debug ("Target " + loc.folder);
-				dir = File.new_for_path (loc.folder);
-				info = dir.query_info ("*", 0, null);
-			}
-			if (!info.get_attribute_boolean (Gio.FILE_ATTRIBUTE_ACCESS_CAN_READ)) return;
+            if (info.get_is_symlink () {
+                if (follow_links) {
+                    loc.path = info.get_symlink_target ();
+                    debug ("Symlink Target " + loc.path);
+                    dir = Gio.File.new_for_path (loc.path);
+                    info = dir.query_info ("*", 0, null);
+                } else return;
+            }
+            if (!info.get_attribute_boolean (Gio.FILE_ATTRIBUTE_ACCESS_CAN_READ)) return;
             if (info.get_file_type () == Gio.FileType.REGULAR) {
-				this.add_file (info, loc.path);
+                this.add_file (info, loc.path);
                 return;
-			}
-			var e = dir.enumerate_children (ATTRIBUTES, follow_links?Gio.FileQueryInfoFlags.NONE:Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS, null);
-			while ((info = e.next_file (null)) != null) {
-			    if (!check_hidden) {
-					if (info.get_name ().startsWith ("."))
-						continue;
-				}
-				if (!check_backup) {
-					if (info.get_is_backup ())
-						continue;
-				}
-				switch (info.get_file_type ()) {
-					case Gio.FileType.DIRECTORY:
-						if (loc.recursive) {
-							let l = {path: loc.path + "/" + info.get_name (), recursive: true};
-							this.add_file (info, loc.path);
-						}
-						break;
-					case Gio.FileType.REGULAR:
-						this.add_file (info, loc.path);
-						break;
-					default:
-					    print ("DEFAULT", info.get_name (), info.get_file_type (), Gio.FILE_TYPE_DIRECTORY, Gio.FILE_TYPE_REGULAR);
-						break;
-				}
-			}
+            }
+            var e = dir.enumerate_children (ATTRIBUTES, follow_links?Gio.FileQueryInfoFlags.NONE:Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS, null);
+            while ((info = e.next_file (null)) != null) {
+                if (!check_hidden) {
+                    if (info.get_name ().startsWith ("."))
+                        continue;
+                }
+                if (!check_backup) {
+                    if (info.get_is_backup ())
+                        continue;
+                }
+                switch (info.get_file_type ()) {
+                    case Gio.FileType.DIRECTORY:
+                        if (loc.recursive) {
+                            let l = {path: loc.path + "/" + info.get_name (), recursive: true};
+                            this.add_file (info, loc.path);
+                        }
+                        break;
+                    case Gio.FileType.REGULAR:
+                        this.add_file (info, loc.path);
+                        break;
+                    default:
+                        print ("DEFAULT", info.get_name (), info.get_file_type (), Gio.FILE_TYPE_DIRECTORY, Gio.FILE_TYPE_REGULAR);
+                        break;
+                }
+            }
         } catch (err) {
             error (err);
         }
@@ -481,4 +482,3 @@ let obmin = new ObminServer ();
 obmin.listen_all (port, 0);
 
 Mainloop.run ('obminMainloop');
-
