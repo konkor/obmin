@@ -30,10 +30,10 @@ const Util = imports.misc.util;
 const Lang = imports.lang;
 //const Mainloop = imports.mainloop;
 
-const DEBUG = true;
 const STARTUP_KEY = 'startup-settings';
 const SOURCES_KEY = 'content-sources';
 const PORT_KEY = 'port';
+const DEBUG_KEY = 'debug';
 const SETTINGS_ID = 'org.gnome.shell.extensions.obmin';
 
 const ExtensionUtils = imports.misc.extensionUtils;
@@ -43,6 +43,7 @@ const Convenience = Me.imports.convenience;
 
 let startup = false;
 let port = 8088;
+let DEBUG = 1;
 
 let server = false;
 let sources = [];
@@ -65,6 +66,7 @@ const ObminIndicator = new Lang.Class({
 
         startup = this.settings.get_boolean (STARTUP_KEY);
         port = this.settings.get_int (PORT_KEY);
+        debug = this.settings.get_int (DEBUG_KEY);
         let srcs =  this.settings.get_string (SOURCES_KEY);
         if (srcs.length > 0) sources = JSON.parse (srcs);
         else {
@@ -398,10 +400,12 @@ const SeparatorItem = new Lang.Class({
     }
 });
 
-let obmin_menu;
+function info (msg) {
+    if (DEBUG > 0) print ("[obmin] " + msg);
+}
 
 function debug (msg) {
-    if (DEBUG) print ("[obmin] " + msg);
+    if (DEBUG > 1) print ("[obmin] " + msg);
 }
 
 function error (msg) {
@@ -416,18 +420,19 @@ function get_info_string (cmd) {
     return "";
 }
 
+let obmin_menu;
 function init () {
     let theme = imports.gi.Gtk.IconTheme.get_default();
     theme.append_search_path (EXTENSIONDIR + "/data/icons");
+}
+
+function enable () {
     obmin_menu = new ObminIndicator;
     Main.panel.addToStatusArea ('obmin-indicator', obmin_menu);
 }
 
-function enable () {
-}
-
 function disable () {
-    //obmin_menu.remove_events ();
-    //obmin_menu.destroy ();
-    //obmin_menu = null;
+    obmin_menu.remove_events ();
+    obmin_menu.destroy ();
+    obmin_menu = null;
 }

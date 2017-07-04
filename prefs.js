@@ -29,8 +29,7 @@ const HIDDENS_KEY = 'hidden-settings';
 const BACKUPS_KEY = 'backup-settings';
 const SOURCES_KEY = 'content-sources';
 const PORT_KEY = 'port';
-
-const DEBUG = true;
+const DEBUG_KEY = 'debug';
 
 const Gettext = imports.gettext.domain('gnome-shell-extensions-obmin');
 const _ = Gettext.gettext;
@@ -46,6 +45,7 @@ let mounts = true;
 let hiddens = false;
 let backups = false;
 let port = 8088;
+let DEBUG = 1;
 
 let settings = null;
 let sources = [];
@@ -56,6 +56,7 @@ const ObminWidget = new Lang.Class({
     _init: function (params) {
         this.parent (0.0, "Obmin Widget", false);
 
+        DEBUG = settings.get_int (DEBUG_KEY);
         startup = settings.get_boolean (STARTUP_KEY);
         port = settings.get_int (PORT_KEY);
         links = settings.get_boolean (LINKS_KEY);
@@ -76,6 +77,11 @@ const ObminWidget = new Lang.Class({
         this.notebook.add (this.display);
         label = new Gtk.Label ({label: _("Display")});
         this.notebook.set_tab_label (this.display, label);
+
+        this.notify = new PageNotify ();
+        this.notebook.add (this.notify);
+        label = new Gtk.Label ({label: _("Notifications")});
+        this.notebook.set_tab_label (this.notify, label);
 
         this.notebook.show_all ();
     }
@@ -165,8 +171,45 @@ const PageDisplay = new Lang.Class({
     }
 });
 
+const PageNotify = new Lang.Class({
+    Name: 'PageNotify',
+    Extends: Gtk.ScrolledWindow,
+
+    _init: function () {
+        this.parent ();
+        this.box = new Gtk.Box ({orientation:Gtk.Orientation.VERTICAL, margin:6});
+        this.box.border_width = 6;
+        this.add (this.box);
+
+        let hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
+        this.box.pack_start (hbox, false, false, 0);
+        let label = new Gtk.Label ({label: _("Debugging level")});
+        hbox.add (label);
+        this.level = new Gtk.ComboBoxText ();
+        [_("ERROR"),_("INFO"),_("DEBUG")].forEach (s => {
+            this.level.append_text (s);
+        });
+        this.level.active = DEBUG;
+        this.level.connect ('changed', Lang.bind (this, ()=>{
+            DEBUG = this.level.active;
+            settings.set_int (DEBUG_KEY, DEBUG);
+        }));
+        hbox.pack_end (this.level, false, false, 0);
+
+        this.show_all ();
+    }
+});
+
+function info (msg) {
+    if (DEBUG > 0) print ("[obmin][prefs] " + msg);
+}
+
 function debug (msg) {
-    if (DEBUG) print ("[obmin prefs] " + msg);
+    if (DEBUG > 1) print ("[obmin][prefs] " + msg);
+}
+
+function error (msg) {
+    print ("[obmin][prefs] (EE) " + msg);
 }
 
 function init() {

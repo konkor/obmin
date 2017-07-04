@@ -45,6 +45,7 @@ const HIDDENS_KEY = 'hidden-settings';
 const BACKUPS_KEY = 'backup-settings';
 const SOURCES_KEY = 'content-sources';
 const PORT_KEY = 'port';
+const DEBUG_KEY = 'debug';
 const SETTINGS_ID = 'org.gnome.shell.extensions.obmin';
 
 const html_head = "<head><meta charset=\"utf-8\"><title>Obmin - Simple File Sharing</title><link href=\"style.css\" rel=\"stylesheet\" type=\"text/css\"></head>";
@@ -54,7 +55,7 @@ let follow_links = true;
 let check_hidden = false;
 let check_backup = false;
 let port = 8088;
-let DEBUG = true;
+let DEBUG = 1;
 
 let server = null;
 let files = [];
@@ -68,18 +69,24 @@ const ObminServer = new Lang.Class({
         this.parent ();
         this.access_counter = 0;
         this.add_handler (null, Lang.bind (this, this._default_handler));
+        try {
+            this.listen_all (port, 0);
+            info ("Obmin server started at 127.0.0.1:" + port);
+        } catch (err) {
+            error (err);
+        }
     },
 
     _default_handler: function (server, msg, path, query, client) {
         let self = server, drop = false;
-        debug ("New request from " + client.get_host ());
-        debug ("\n" + msg.method + " " + path + " HTTP/1." + msg.get_http_version ());
+        this.access_counter++;
+        info ("Request (" + this.access_counter + ") from " + client.get_host () +
+            " " + msg.method + " " + path + " HTTP/1." + msg.get_http_version ());
         msg.request_headers.foreach ( (n, v) => {
             debug (n + ": " + v);
         });
         if (msg.method == "POST") return;
         if (msg.request_body.length > 0) debug (msg.request_body);
-        this.access_counter++;
         debug ("Default handler start (" + this.access_counter + ")");
         GLib.timeout_add_seconds (0, 0, Lang.bind (this, function () {
             if (path == '/') this._root_handler (server, msg);
@@ -91,26 +98,22 @@ const ObminServer = new Lang.Class({
 
     _send_content: function (server, msg, path) {
         let self = server;
-        let file, r, info;
+        let file, r, finfo;
         [file, r] = this.get_file (path);
         if (file) {
-            info = file.query_info ("*", 0, null);
-            if (info.get_file_type () == 2) {
+            finfo = file.query_info ("*", 0, null);
+            if (finfo.get_file_type () == 2) {
                 this.get_dir (self, msg, file, r, path);
             } else {
-                if (info.get_size () < 64*1024) {
+                if (finfo.get_size () < 64*1024) {
                     msg.set_status (200);
-                    msg.response_headers.set_content_length (info.get_size ());
-                    msg.set_response (info.get_content_type (), Soup.MemoryUse.COPY, file.load_contents (null)[1]);
+                    msg.response_headers.set_content_length (finfo.get_size ());
+                    msg.set_response (finfo.get_content_type (), Soup.MemoryUse.COPY, file.load_contents (null)[1]);
                 } else {
                     debug ("start chunking");
-                    let st = new ContentStream (self, msg, file, info, this.access_counter);
+                    let st = new ContentStream (self, msg, file, finfo, this.access_counter);
                     msg.connect ("finished", (o)=>{
                         debug ("st finished" + st);
-                        /*delete st;
-                        delete o;
-                        st = null;
-                        o = null;*/
                         st = null;
                         System.gc();
                     });
@@ -241,47 +244,47 @@ const ObminServer = new Lang.Class({
     },
 
     list_dir: function (loc) {
-        var info;
+        var finfo;
         var dir = Gio.File.new_for_path (loc.path);
         files = [];
         if (!dir.query_exists (null)) return;
         try {
-            info = dir.query_info ("*", 0, null);
-            if (info.get_is_symlink () {
+            finfo = dir.query_info ("*", 0, null);
+            if (finfo.get_is_symlink ()) {
                 if (follow_links) {
-                    loc.path = info.get_symlink_target ();
+                    loc.path = finfo.get_symlink_target ();
                     debug ("Symlink Target " + loc.path);
                     dir = Gio.File.new_for_path (loc.path);
-                    info = dir.query_info ("*", 0, null);
+                    finfo = dir.query_info ("*", 0, null);
                 } else return;
             }
-            if (!info.get_attribute_boolean (Gio.FILE_ATTRIBUTE_ACCESS_CAN_READ)) return;
-            if (info.get_file_type () == Gio.FileType.REGULAR) {
-                this.add_file (info, loc.path);
+            if (!finfo.get_attribute_boolean (Gio.FILE_ATTRIBUTE_ACCESS_CAN_READ)) return;
+            if (finfo.get_file_type () == Gio.FileType.REGULAR) {
+                this.add_file (finfo, loc.path);
                 return;
             }
             var e = dir.enumerate_children (ATTRIBUTES, follow_links?Gio.FileQueryInfoFlags.NONE:Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS, null);
-            while ((info = e.next_file (null)) != null) {
+            while ((finfo = e.next_file (null)) != null) {
                 if (!check_hidden) {
-                    if (info.get_name ().startsWith ("."))
+                    if (finfo.get_name ().startsWith ("."))
                         continue;
                 }
                 if (!check_backup) {
-                    if (info.get_is_backup ())
+                    if (finfo.get_is_backup ())
                         continue;
                 }
-                switch (info.get_file_type ()) {
+                switch (finfo.get_file_type ()) {
                     case Gio.FileType.DIRECTORY:
                         if (loc.recursive) {
-                            let l = {path: loc.path + "/" + info.get_name (), recursive: true};
-                            this.add_file (info, loc.path);
+                            let l = {path: loc.path + "/" + finfo.get_name (), recursive: true};
+                            this.add_file (finfo, loc.path);
                         }
                         break;
                     case Gio.FileType.REGULAR:
-                        this.add_file (info, loc.path);
+                        this.add_file (finfo, loc.path);
                         break;
                     default:
-                        print ("DEFAULT", info.get_name (), info.get_file_type (), Gio.FILE_TYPE_DIRECTORY, Gio.FILE_TYPE_REGULAR);
+                        print ("DEFAULT", finfo.get_name (), finfo.get_file_type (), Gio.FILE_TYPE_DIRECTORY, Gio.FILE_TYPE_REGULAR);
                         break;
                 }
             }
@@ -291,20 +294,20 @@ const ObminServer = new Lang.Class({
         files.sort (sorting);
     },
 
-    add_file: function (info, path) {
-        debug ("add_file " + info.get_name ());
+    add_file: function (finfo, path) {
+        debug ("add_file " + finfo.get_name ());
         files.push ({path: path,
-            name: info.get_name (),
-            type: info.get_file_type (),
-            mime: info.get_content_type (),
-            size: info.get_size (),
-            date: info.get_attribute_uint64 (Gio.FILE_ATTRIBUTE_TIME_MODIFIED)});
+            name: finfo.get_name (),
+            type: finfo.get_file_type (),
+            mime: finfo.get_content_type (),
+            size: finfo.get_size (),
+            date: finfo.get_attribute_uint64 (Gio.FILE_ATTRIBUTE_TIME_MODIFIED)});
     }
 });
 
 const ContentStream = new Lang.Class({
     Name: 'ContentStream',
-    _init: function (server, message, file, info, count) {
+    _init: function (server, message, file, finfo, count) {
         this.server = server;
         this.msg = message;
         this.version = message.get_http_version ();
@@ -337,9 +340,9 @@ const ContentStream = new Lang.Class({
             System.gc ();
         });
         this.file = file;
-        this.mime = info.get_content_type ();
-        this.size = info.get_size ();
-        this.date = new Date (info.get_attribute_uint64 (Gio.FILE_ATTRIBUTE_TIME_MODIFIED)*1000).toUTCString();
+        this.mime = finfo.get_content_type ();
+        this.size = finfo.get_size ();
+        this.date = new Date (finfo.get_attribute_uint64 (Gio.FILE_ATTRIBUTE_TIME_MODIFIED)*1000).toUTCString();
         this.num = count.toString();
         this.stream = null;
         this.offset = 0;
@@ -460,8 +463,12 @@ function sorting (a, b) {
     return 0;
 }
 
+function info (msg) {
+    if (DEBUG > 0) print ("[obmin] " + msg);
+}
+
 function debug (msg) {
-    if (DEBUG) print ("[obmin] " + msg);
+    if (DEBUG > 1) print ("[obmin] " + msg);
 }
 
 function error (msg) {
@@ -474,11 +481,11 @@ follow_links = settings.get_boolean (LINKS_KEY);
 check_hidden = settings.get_boolean (HIDDENS_KEY);
 check_backup = settings.get_boolean (BACKUPS_KEY);
 port = settings.get_int (PORT_KEY);
+DEBUG = settings.get_int (DEBUG_KEY);
 let srcs =  settings.get_string (SOURCES_KEY);
 if (srcs.length > 0) sources = JSON.parse (srcs);
 else sources.push ({path: GLib.get_home_dir (), recursive: true});
 
 let obmin = new ObminServer ();
-obmin.listen_all (port, 0);
 
 Mainloop.run ('obminMainloop');
