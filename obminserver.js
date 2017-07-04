@@ -1,9 +1,28 @@
 #!/usr/bin/gjs
+/*
+ * Obmin - Simple File Sharing Server For GNOME Desktop
+ *
+ * Copyright (C) 2017 Kostiantyn Korienkov <kapa76@gmail.com>
+ *
+ * This file is part of Obmin File Server.
+ *
+ * Obmin is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Filefinder is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
 const Soup = imports.gi.Soup;
-//const GObject = imports.gi.GObject;
 const Lang = imports.lang;
 const Mainloop = imports.mainloop;
 const System = imports.system;
@@ -12,7 +31,6 @@ imports.searchPath.unshift(getCurrentFile ()[1]);
 const Convenience = imports.convenience;
 const APPDIR = getCurrentFile ()[1];
 
-const DEBUG = true;
 const ATTRIBUTES = "standard," +
     Gio.FILE_ATTRIBUTE_TIME_MODIFIED + "," +
 	Gio.FILE_ATTRIBUTE_UNIX_NLINK + "," +
@@ -20,20 +38,23 @@ const ATTRIBUTES = "standard," +
 	Gio.FILE_ATTRIBUTE_UNIX_INODE + "," +
 	Gio.FILE_ATTRIBUTE_UNIX_DEVICE + "," +
 	Gio.FILE_ATTRIBUTE_ACCESS_CAN_READ;
-const SAVE_SETTINGS_KEY = 'save-settings';
-const ENABLED_KEY = 'enabled';
+
 const LINKS_KEY = 'links-settings';
+const MOUNTS_KEY = 'mounts-settings';
 const HIDDENS_KEY = 'hidden-settings';
 const BACKUPS_KEY = 'backup-settings';
 const SOURCES_KEY = 'content-sources';
+const PORT_KEY = 'port';
 const SETTINGS_ID = 'org.gnome.shell.extensions.obmin';
 
-const html_head = "<head><meta charset=\"utf-8\"><title>Obmin - Gnome File Sharing</title><link href=\"style.css\" rel=\"stylesheet\" type=\"text/css\"></head>";
+const html_head = "<head><meta charset=\"utf-8\"><title>Obmin - Simple File Sharing</title><link href=\"style.css\" rel=\"stylesheet\" type=\"text/css\"></head>";
 
-let save = false;
+let mounts = true;
 let follow_links = true;
 let check_hidden = false;
 let check_backup = false;
+let port = 8088;
+let DEBUG = true;
 
 let server = null;
 let files = [];
@@ -51,6 +72,7 @@ const ObminServer = new Lang.Class({
 
     _default_handler: function (server, msg, path, query, client) {
         let self = server, drop = false;
+        debug ("New request from " + client.get_host ());
         debug ("\n" + msg.method + " " + path + " HTTP/1." + msg.get_http_version ());
         msg.request_headers.foreach ( (n, v) => {
             debug (n + ": " + v);
@@ -58,11 +80,10 @@ const ObminServer = new Lang.Class({
         if (msg.method == "POST") return;
         if (msg.request_body.length > 0) debug (msg.request_body);
         this.access_counter++;
-        debug ("Default handler start (" + this.access_counter + ")\n");
+        debug ("Default handler start (" + this.access_counter + ")");
         GLib.timeout_add_seconds (0, 0, Lang.bind (this, function () {
             if (path == '/') this._root_handler (server, msg);
             else this._send_content (self, msg, path);
-            debug ("Default handler end " + this.access_counter);
             return false;
         }));
         self.pause_message (msg);
@@ -77,7 +98,7 @@ const ObminServer = new Lang.Class({
             if (info.get_file_type () == 2) {
                 this.get_dir (self, msg, file, r, path);
             } else {
-                if (info.get_size () < 10*1048576) {
+                if (info.get_size () < 64*1024) {
                     msg.set_status (200);
                     msg.response_headers.set_content_length (info.get_size ());
                     msg.set_response (info.get_content_type (), Soup.MemoryUse.COPY, file.load_contents (null)[1]);
@@ -86,10 +107,11 @@ const ObminServer = new Lang.Class({
                     let st = new ContentStream (self, msg, file, info, this.access_counter);
                     msg.connect ("finished", (o)=>{
                         debug ("st finished" + st);
-                        delete st;
+                        /*delete st;
                         delete o;
                         st = null;
-                        o = null;
+                        o = null;*/
+                        st = null;
                         System.gc();
                     });
                     return;
@@ -284,9 +306,8 @@ const ContentStream = new Lang.Class({
     _init: function (server, message, file, info, count) {
         this.server = server;
         this.msg = message;
+        this.version = message.get_http_version ();
         this.msg.connect ("wrote-chunk", Lang.bind (this, this.wrote_chunk));
-        this.msg.connect ("got-headers", ()=>{debug ("got-headers");});
-        this.msg.connect ("got-chunk", ()=>{debug ("got-chunk");});
         this.msg.connect ("finished", ()=>{
             debug ("ContentStream " + this.num + " finished");
             this.done = true;
@@ -294,10 +315,30 @@ const ContentStream = new Lang.Class({
                 Mainloop.source_remove (this.read_event);
                 this.read_event = 0;
             }
+            try{this.stream.close (null);
+            }catch (err) {
+            error ("Error close stream " + err);
+            }
+            this.b = [];
+            try{this.msg.set_status (200);
+            }catch (err) {
+            error ("Error set status " + err);
+            }
+            try{
+            this.msg.response_body.complete ();
+            }catch (err) {
+            error ("Error complete " + err);
+            }
+            try{this.msg.response_body.free();
+            }catch (err) {
+            error ("Error free body " + err);
+            }
+            System.gc ();
         });
         this.file = file;
         this.mime = info.get_content_type ();
         this.size = info.get_size ();
+        this.date = new Date (info.get_attribute_uint64 (Gio.FILE_ATTRIBUTE_TIME_MODIFIED)*1000).toUTCString();
         this.num = count.toString();
         this.stream = null;
         this.offset = 0;
@@ -307,26 +348,26 @@ const ContentStream = new Lang.Class({
         this.done = false;
         debug ("Start steamimg");
         this.file.read_async (GLib.PRIORITY_DEFAULT, null, Lang.bind (this, this.opened));
+        //System.gc();
     },
 
     wrote_chunk: function (sender, msg) {
-        //if (!this.done) this.server.pause_message (this.msg);
         this.wrotes++;
-        debug ("Request(" + this.num + ") wrote_chunk: " + this.wrotes);
+        debug ("Request(" + this.num + ") wrote_chunk: " + this.wrotes + "/" + this.reads);
     },
 
     opened: function (sender, result) {
         try {
-            debug ("file opened");
-            //this.seek_request = this.msg.request_headers.get_content_range (this.seek_start, this.seek_end, this.seek_total);
-            //debug ("seek " + this.msg.request_headers.get_content_range ());
             this.msg.response_headers.set_encoding (Soup.Encoding.CHUNKED);
             this.msg.response_headers.set_content_type (this.mime, null);
             this.msg.response_headers.set_content_length (this.size);
-            //this.msg.response_headers.set_content_type ('application/octet-stream', null);
+            this.msg.response_headers.append ("Last-Modified", this.date);
+            this.msg.response_headers.append ("Accept-Ranges", "bytes");
+            //this.msg.response_headers.append ("ETag", "18c50e1bbe972bdf9c7d9b8f6f019959");
             this.msg.response_body.set_accumulate (false);
             this.stream = this.file.read_finish (result);
-            this.msg.set_status (200);
+            if (this.version == 1) this.msg.set_status (206);
+            else this.msg.set_status (200)
             this.msg.request_headers.foreach ( (n, v) => {
                 if (n.indexOf ("Range") > -1)
                     if (v.indexOf ("bytes=") > -1) {
@@ -335,7 +376,7 @@ const ContentStream = new Lang.Class({
                     }
             });
             debug ("Request(" + this.num + ") offset " + this.offset);
-            this.read_more (this.offset>0);
+            this.read_more (this.offset > 0);
         } catch (err) {
             error (err);
             this.msg.set_status (500);
@@ -344,24 +385,25 @@ const ContentStream = new Lang.Class({
     },
 
     read_more: function (seek) {
-        //debug ("file read next chunk");
         if (this.read_event != 0) {
             Mainloop.source_remove (this.read_event);
             this.read_event = 0;
         }
-        this.b = [];
+        if (this.done) return;
         if (seek) this.stream.seek (this.offset, GLib.SeekType.SET, null);
-        //if ((this.reads - this.wrotes) > 12) this.read_event = Mainloop.timeout_add (50, Lang.bind (this, this.read_more));
-        this.stream.read_bytes_async (1*1048576, GLib.PRIORITY_DEFAULT, null, Lang.bind (this, this.read_done));
+        if ((this.reads - this.wrotes) > 32) {
+            this.read_event = Mainloop.timeout_add (250, Lang.bind (this, this.read_more));
+            return;
+        }
+        this.stream.read_bytes_async (64*1024, GLib.PRIORITY_DEFAULT, null, Lang.bind (this, this.read_done));
         this.reads++;
     },
 
     read_done: function (sender, result) {
         try {
-            //debug ("file read chunk done");
             this.b = this.stream.read_bytes_finish (result);
             if (this.done) {
-                debug ("this.msg.response_body.complete ();");
+                debug ("Stream " + this.num + " done");
                 this.b = [];
                 this.msg.response_body.complete ();
                 this.stream.close (null);
@@ -375,26 +417,18 @@ const ContentStream = new Lang.Class({
                 this.stream.close (null);
             } else {
                 this.offset += this.b.get_size();
-                this.msg.response_headers.set_content_range (this.offset - this.b.get_size(),
-                                                        this.offset,
-                                                        this.size);
-                this.msg.response_headers.append ("Accept-Ranges", "bytes");
-                this.msg.response_headers.set_content_length (this.size);
-                //this.msg.response_body.append (this.b.get_data());
+                this.msg.response_headers.set_content_range (this.offset - this.b.get_size(),this.offset-1,this.size);
+                //this.msg.response_headers.set_range (this.offset - this.b.get_size(),-1);
                 this.msg.response_body.append_buffer (new Soup.Buffer (this.b.get_data()));
-                /*debug ("Request(" + this.num + ") on read done\n" + this.msg.method + " HTTP/1." + this.msg.get_http_version ());
-                this.msg.request_headers.foreach ( (n, v) => {
-                    debug (n + ": " + v);
-                });*/
+                /*debug ("Request(" + this.num + ")\n" + this.msg.method + " HTTP/1." + this.msg.get_http_version ());
+                this.msg.request_headers.foreach ( (n, v) => {debug (n + ": " + v);});*/
                 //if (this.msg.request_body.length > 0) debug (this.msg.request_body);
-                /*this.msg.response_headers.foreach ( (n, v) => {
-                    debug (n + ": " + v);
-                });*/
-                debug ("Stream " + this.num + " " + this.offset + ":" + this.seek_start);
+                /*debug ("Response(" + this.num + ")");
+                this.msg.response_headers.foreach ( (n, v) => {debug (n + ": " + v);});*/
+                debug ("Stream " + this.num + " " + this.offset + ":" + this.size);
                 this.server.unpause_message (this.msg);
                 this.read_event = Mainloop.timeout_add (10, Lang.bind (this, this.read_more));//this.read_more ();
-                }
-            
+            }
         } catch (err) {
             error ("read_done" + err);
             if (this.offset == 0) this.msg.set_status (500);
@@ -407,15 +441,12 @@ const ContentStream = new Lang.Class({
 
 function getCurrentFile () {
     let stack = (new Error()).stack;
-
     let stackLine = stack.split('\n')[1];
     if (!stackLine)
         throw new Error ('Could not find current file');
-
     let match = new RegExp ('@(.+):\\d+').exec(stackLine);
     if (!match)
         throw new Error ('Could not find current file');
-
     let path = match[1];
     let file = Gio.File.new_for_path (path);
     return [file.get_path(), file.get_parent().get_path(), file.get_basename()];
@@ -437,15 +468,17 @@ function error (msg) {
 }
 
 let settings = Convenience.getSettings();
+mounts = settings.get_boolean (MOUNTS_KEY);
 follow_links = settings.get_boolean (LINKS_KEY);
 check_hidden = settings.get_boolean (HIDDENS_KEY);
 check_backup = settings.get_boolean (BACKUPS_KEY);
+port = settings.get_int (PORT_KEY);
 let srcs =  settings.get_string (SOURCES_KEY);
 if (srcs.length > 0) sources = JSON.parse (srcs);
-//sources.push ({path: '/home', recursive: true});
+else sources.push ({path: GLib.get_home_dir (), recursive: true});
 
 let obmin = new ObminServer ();
-obmin.listen_all (8088, 0);
+obmin.listen_all (port, 0);
 
-Mainloop.run('obminMainloop');
+Mainloop.run ('obminMainloop');
 

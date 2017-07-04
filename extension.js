@@ -1,3 +1,24 @@
+/*
+ * Obmin - Simple File Sharing Server For GNOME Desktop
+ *
+ * Copyright (C) 2017 Kostiantyn Korienkov <kapa76@gmail.com>
+ *
+ * This file is part of Obmin File Server.
+ *
+ * Obmin is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Filefinder is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 const St = imports.gi.St;
 const GLib = imports.gi.GLib;
 const Clutter = imports.gi.Clutter;
@@ -32,7 +53,6 @@ const ObminIndicator = new Lang.Class({
 
     _init: function () {
         this.parent (0.0, "Obmin Indicator", false);
-
         this.edit_item = null;
 
         this.settings = Convenience.getSettings();
@@ -47,14 +67,17 @@ const ObminIndicator = new Lang.Class({
         port = this.settings.get_int (PORT_KEY);
         let srcs =  this.settings.get_string (SOURCES_KEY);
         if (srcs.length > 0) sources = JSON.parse (srcs);
-        if (server = this.server_enabled) this.statusIcon.icon_name = 'obmin-on-symbolic';
-        this._build_ui ();
+        else sources.push ({path: GLib.get_home_dir (), recursive: true});
 
-        this.menu.actor.add_style_class_name('obmin-menu');
-        this.menu.connect ('open-state-changed', Lang.bind (this, this._on_menu_state_changed));
+        if (server = this.server_enabled) this.statusIcon.icon_name = 'obmin-on-symbolic';
+        if (startup && !server) this._enable (true);
+        this._build_ui ();
+        this.menu.actor.add_style_class_name ('obmin-menu');
+
+        this.menu.connect ('open-state-changed', Lang.bind (this, this.on_menu_state_changed));
     },
 
-    _on_menu_state_changed: function (source, state) {
+    on_menu_state_changed: function (source, state) {
         Clutter.ungrab_keyboard ();
     },
 
@@ -64,7 +87,7 @@ const ObminIndicator = new Lang.Class({
 
     _build_popup: function () {
         this.menu.removeAll ();
-        this.server_switch = new PopupMenu.PopupSwitchMenuItem('File Server ', server);
+        this.server_switch = new PopupMenu.PopupSwitchMenuItem ('File Server ', server);
         this.server_switch.connect ('toggled', Lang.bind (this, function (item) {
             this._enable (item.state);
         }));
@@ -137,6 +160,7 @@ const ObminIndicator = new Lang.Class({
                 this.statusIcon.icon_name = 'obmin-on-symbolic';
             } else {
                 server = false;
+                this.statusIcon.icon_name = 'obmin-symbolic';
                 this.server_switch.setToggleState (false);
             }
         } else {
