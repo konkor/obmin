@@ -67,7 +67,10 @@ const ObminIndicator = new Lang.Class({
         port = this.settings.get_int (PORT_KEY);
         let srcs =  this.settings.get_string (SOURCES_KEY);
         if (srcs.length > 0) sources = JSON.parse (srcs);
-        else sources.push ({path: GLib.get_home_dir (), recursive: true});
+        else {
+            sources.push ({path: GLib.get_home_dir (), recursive: true});
+            this.settings.set_string (SOURCES_KEY, JSON.stringify (sources));
+        }
 
         if (server = this.server_enabled) this.statusIcon.icon_name = 'obmin-on-symbolic';
         if (startup && !server) this._enable (true);
