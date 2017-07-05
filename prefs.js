@@ -20,6 +20,7 @@
  */
 
 const Gtk = imports.gi.Gtk;
+const Gio = imports.gi.Gio;
 const Lang = imports.lang;
 
 const STARTUP_KEY = 'startup-settings';
@@ -105,10 +106,10 @@ const PageGeneral = new Lang.Class({
             settings.set_boolean (STARTUP_KEY, startup);
         }));
 
+        this.box.add (new Gtk.Label ({label: _("<b>Network</b>"), use_markup:true, xalign:0}));
         let hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
         this.box.pack_start (hbox, false, false, 0);
-        let label = new Gtk.Label ({label: _("Listening Port")});
-        hbox.add (label);
+        hbox.add (new Gtk.Label ({label: _("Listening Port")}));
         this.port = Gtk.SpinButton.new_with_range (1, 65535, 1);
         this.port.value = port;
         this.port.connect ('value_changed', Lang.bind (this, ()=>{
@@ -117,7 +118,38 @@ const PageGeneral = new Lang.Class({
         }));
         hbox.pack_end (this.port, false, false, 0);
 
+        this.box.add (new Gtk.Label ({label: _("<b>Content</b>"), use_markup:true, xalign:0}));
+        hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
+        this.box.pack_start (hbox, false, false, 0);
+        hbox.add (new Gtk.Label ({label: _("Theme")}));
+        this.theme = new Gtk.ComboBoxText ();
+        this.theme.append_text ("");
+        this.themes.forEach (s => {
+            this.theme.append_text (s);
+        });
+        this.theme.connect ('changed', Lang.bind (this, ()=>{
+            let dir = Gio.File.new_for_path (EXTENSIONDIR + "/data/themes/" + this.theme.get_active_text() + ".css");
+            debug (EXTENSIONDIR + "/data/themes/" + this.theme.active_text + ".css");
+            if (!dir.query_exists (null)) return;
+            dir.copy (Gio.File.new_for_path (EXTENSIONDIR + "/data/www/style.css"), Gio.FileCopyFlags.OVERWRITE, null, null);
+            debug (EXTENSIONDIR + "/data/www/style.css");
+        }));
+        hbox.pack_end (this.theme, false, false, 0);
+
         this.show_all ();
+    },
+
+    get themes () {
+        let list = [], finfo, fname;
+        let dir = Gio.File.new_for_path (EXTENSIONDIR + "/data/themes");
+        if (!dir.query_exists (null)) return list;
+        var e = dir.enumerate_children ("*", Gio.FileQueryInfoFlags.NONE, null);
+        while ((finfo = e.next_file (null)) != null) {
+            fname = finfo.get_name ();
+            if (fname.endsWith (".css") && (finfo.get_content_type () == "text/css"))
+                list.push (fname.substring (0, fname.length - 4));
+        }
+        return list;
     }
 });
 

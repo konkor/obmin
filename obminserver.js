@@ -48,7 +48,7 @@ const PORT_KEY = 'port';
 const DEBUG_KEY = 'debug';
 const SETTINGS_ID = 'org.gnome.shell.extensions.obmin';
 
-const html_head = "<head><meta charset=\"utf-8\"><title>Obmin - Simple File Sharing</title><link href=\"style.css\" rel=\"stylesheet\" type=\"text/css\"></head>";
+const html_head = "<head><meta charset=\"utf-8\"><title>Obmin - Simple File Sharing</title><meta name=\"viewport\" content=\"width=device-width\"><link href=\"style.css\" rel=\"stylesheet\" type=\"text/css\"></head>";
 
 let mounts = true;
 let follow_links = true;

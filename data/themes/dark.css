@@ -1,8 +1,9 @@
 /* Obmin style */
-body {background: #282c2c;color:#edede2;font-family: sans;font-size: 1.0em;}
-a,a:visited,a:hover {text-decoration:none;}
+body {background: #282c2c;color:#edede2;font-family: sans;font-size: 1.0em; margin: 0px;}
+a,a:visited,a:focus {text-decoration:none;color: #343a3a;}
+a:hover,a:active {text-decoration:none;color: #464e4e;}
 .home {height:32px;}
-.path {background: #ffcc0c;color: #343a3a; margin: 10px auto 10px auto; padding: 8px;font-weight: bold;font-size: 2em;box-shadow: inset 0px 2px 4px rgba(0,0,0,0.6);}
+.path {background: #ffcc0c;color: #343a3a; margin: 0px auto 0px auto; padding: 8px;font-weight: bold;font-size: 2em;box-shadow: inset 0px 2px 4px rgba(0,0,0,0.6);}
 .contents {width: 97%; margin: 0px auto 0px auto;}
 .content {background: #343a3a;color:#edede2;padding: 4px; margin: 2px auto 2px auto;}
 .content:hover, .content:focus, .content:active {background-color: #ffcc0c;color: #343a3a;}
