@@ -22,6 +22,7 @@
 const St = imports.gi.St;
 const GLib = imports.gi.GLib;
 const Clutter = imports.gi.Clutter;
+const Tweener = imports.ui.tweener;
 const Main = imports.ui.main;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
@@ -40,6 +41,9 @@ const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension ();
 const EXTENSIONDIR = Me.dir.get_path ();
 const Convenience = Me.imports.convenience;
+
+const Clipboard      = St.Clipboard.get_default();
+const CLIPBOARD_TYPE = St.ClipboardType.CLIPBOARD;
 
 let startup = false;
 let port = 8088;
@@ -340,10 +344,10 @@ const InfoMenuItem = new Lang.Class ({
     Name: 'InfoMenuItem',
     Extends: PopupMenu.PopupMenuItem,
 
-    _init: function (label, info, reactive) {
-        this.parent (label, {reactive: reactive, style_class: 'obmin-info-item'});
+    _init: function (label, info, reactive, style, style_info) {
+        this.parent (label, {reactive: reactive, style_class: style?style:'obmin-info-item'});
         this.label.x_expand = true;
-        this.info = new St.Label ({text: ' '});
+        this.info = new St.Label ({text: ' ', style_class: style_info?style_info:"", reactive:true, can_focus: true, track_hover: true });
         this.actor.add_child (this.info, {align:St.Align.END});
         this.info.connect ('notify::text', Lang.bind (this, function () {
             this.actor.visible = this.info.text.length > 0;
@@ -361,7 +365,13 @@ const LocalItem = new Lang.Class ({
     Extends: InfoMenuItem,
 
     _init: function () {
-        this.parent ("Local IP", this.ip, false);
+        this.parent ("Local IP", this.ip, true, 'obmin-ip-item', 'obmin-ip-label');
+    },
+
+    activate: function (event) {
+        Clipboard.set_text (CLIPBOARD_TYPE, "http://" + this.info.text);
+        show_notify ("Local IP address copied to clipboard.");
+        this.emit ('activate', event);
     },
 
     get ip () {
@@ -380,7 +390,13 @@ const PublicItem = new Lang.Class ({
     Extends: InfoMenuItem,
 
     _init: function () {
-        this.parent ("Public IP", this.ip, false);
+        this.parent ("Public IP", this.ip, true, 'obmin-ip-item', 'obmin-ip-label');
+    },
+
+    activate: function (event) {
+        Clipboard.set_text (CLIPBOARD_TYPE, "http://" + this.info.text);
+        show_notify ("Public IP address copied to clipboard.");
+        this.emit ('activate', event);
     },
 
     get ip () {
@@ -423,6 +439,25 @@ function get_info_string (cmd) {
     if (cmd_out[0]) info_out = cmd_out[1].toString().split("\n")[0];
     if (info_out) return info_out;
     return "";
+}
+
+function show_notify (message, style) {
+    var text = new St.Label ({text: message, style_class: style?style:'notify-label'});
+    text.opacity = 255;
+    Main.uiGroup.add_actor (text);
+
+    text.set_position (Math.floor (Main.layoutManager.primaryMonitor.width / 2 - text.width / 2),
+        Math.floor (Main.layoutManager.primaryMonitor.height / 2 - text.height / 2));
+
+    Tweener.addTween (text, {
+        opacity: 196,
+        time: 1,
+        transition: 'linear',
+        onComplete: Lang.bind(this, function () {
+            Main.uiGroup.remove_actor (text);
+            text = null;
+        })
+    });
 }
 
 let obmin_menu;
