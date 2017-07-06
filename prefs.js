@@ -106,7 +106,7 @@ const PageGeneral = new Lang.Class({
             settings.set_boolean (STARTUP_KEY, startup);
         }));
 
-        this.box.add (new Gtk.Label ({label: _("<b>Network</b>"), use_markup:true, xalign:0}));
+        this.box.add (new Gtk.Label ({label: _("<b>Network</b>"), use_markup:true, xalign:0, margin_top:16}));
         let hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
         this.box.pack_start (hbox, false, false, 0);
         hbox.add (new Gtk.Label ({label: _("Listening Port")}));
@@ -159,7 +159,7 @@ const PageDisplay = new Lang.Class({
 
     _init: function () {
         this.parent ();
-        this.box = new Gtk.Box ({orientation:Gtk.Orientation.VERTICAL, margin:6});
+        this.box = new Gtk.Box ({orientation:Gtk.Orientation.VERTICAL, margin:6, spacing:8});
         this.box.border_width = 6;
         this.add (this.box);
 
