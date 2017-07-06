@@ -83,7 +83,12 @@ const ObminIndicator = new Lang.Class({
     },
 
     on_menu_state_changed: function (source, state) {
-        Clutter.ungrab_keyboard ();
+        if (state) {
+            this.info_local.update ();
+            this.info_public.update ();
+        } else {
+            Clutter.ungrab_keyboard ();
+        }
     },
 
     _build_ui: function () {
