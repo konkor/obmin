@@ -44,6 +44,8 @@ const Convenience = Me.imports.convenience;
 
 const Clipboard      = St.Clipboard.get_default();
 const CLIPBOARD_TYPE = St.ClipboardType.CLIPBOARD;
+const Gettext = imports.gettext.domain('gnome-shell-extensions-obmin');
+const _ = Gettext.gettext;
 
 let startup = false;
 let port = 8088;
@@ -101,7 +103,7 @@ const ObminIndicator = new Lang.Class({
 
     _build_popup: function () {
         this.menu.removeAll ();
-        this.server_switch = new PopupMenu.PopupSwitchMenuItem ('File Server ', server);
+        this.server_switch = new PopupMenu.PopupSwitchMenuItem (_("Obmin Server "), server);
         this.server_switch.connect ('toggled', Lang.bind (this, function (item) {
             this._enable (item.state);
         }));
@@ -112,9 +114,9 @@ const ObminIndicator = new Lang.Class({
         this.menu.addMenuItem (this.info_public);
         //this.menu.addMenuItem (new SeparatorItem ());
         //Locations
-        this.smenu = new PopupMenu.PopupSubMenuMenuItem ("Locations", false);
+        this.smenu = new PopupMenu.PopupSubMenuMenuItem (_("Locations"), false);
         this.menu.addMenuItem (this.smenu);
-        let newItem = new NewMenuItem ("New Location...", "", "Path", true);
+        let newItem = new NewMenuItem (_("New Location..."), "", _("Path"), true);
         this.smenu.menu.addMenuItem (newItem);
         newItem.connect ('save', Lang.bind (this, function () {
             let exist = false;
@@ -252,7 +254,7 @@ const NewMenuItem = new Lang.Class ({
             Clutter.grab_keyboard (this.entry.clutter_text);
         }));
         this.entry.visible = false;
-        this.context = new St.Label({text: "Recursive", y_expand: true, y_align: Clutter.ActorAlign.CENTER});
+        this.context = new St.Label({text: _("Recursive"), y_expand: true, y_align: Clutter.ActorAlign.CENTER});
         this.actor.add_child (this.context);
         this.context.visible = false;
         let container = new St.BoxLayout();
@@ -365,12 +367,12 @@ const LocalItem = new Lang.Class ({
     Extends: InfoMenuItem,
 
     _init: function () {
-        this.parent ("Local IP", this.ip, true, 'obmin-ip-item', 'obmin-ip-label');
+        this.parent (_("Local IP"), this.ip, true, 'obmin-ip-item', 'obmin-ip-label');
     },
 
     activate: function (event) {
         Clipboard.set_text (CLIPBOARD_TYPE, "http://" + this.info.text);
-        show_notify ("Local IP address copied to clipboard.");
+        show_notify (_("Local IP address copied to clipboard."));
         this.emit ('activate', event);
     },
 
@@ -390,12 +392,12 @@ const PublicItem = new Lang.Class ({
     Extends: InfoMenuItem,
 
     _init: function () {
-        this.parent ("Public IP", this.ip, true, 'obmin-ip-item', 'obmin-ip-label');
+        this.parent (_("Public IP"), this.ip, true, 'obmin-ip-item', 'obmin-ip-label');
     },
 
     activate: function (event) {
         Clipboard.set_text (CLIPBOARD_TYPE, "http://" + this.info.text);
-        show_notify ("Public IP address copied to clipboard.");
+        show_notify (_("Public IP address copied to clipboard."));
         this.emit ('activate', event);
     },
 
@@ -462,6 +464,7 @@ function show_notify (message, style) {
 
 let obmin_menu;
 function init () {
+    Convenience.initTranslations ();
     let theme = imports.gi.Gtk.IconTheme.get_default();
     theme.append_search_path (EXTENSIONDIR + "/data/icons");
 }
