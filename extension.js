@@ -72,7 +72,7 @@ const ObminIndicator = new Lang.Class({
 
         startup = this.settings.get_boolean (STARTUP_KEY);
         port = this.settings.get_int (PORT_KEY);
-        debug = this.settings.get_int (DEBUG_KEY);
+        DEBUG = this.settings.get_int (DEBUG_KEY);
         let srcs =  this.settings.get_string (SOURCES_KEY);
         if (srcs.length > 0) sources = JSON.parse (srcs);
         else {
@@ -238,8 +238,8 @@ const NewMenuItem = new Lang.Class ({
         this.entry.connect ('secondary-icon-clicked', Lang.bind(this, function () {
             this.on_click ();
         }));
-        this.entry.clutter_text.connect('key-press-event', Lang.bind (this, function (o, event) {
-            let symbol = event.get_key_symbol();
+        this.entry.clutter_text.connect('key-press-event', Lang.bind (this, function (o, e) {
+            let symbol = e.get_key_symbol();
             if (symbol == Clutter.Escape) {
                 this.toggle ();
                 return Clutter.EVENT_STOP;
@@ -247,6 +247,9 @@ const NewMenuItem = new Lang.Class ({
                 this.on_click ();
                 this.toggle ();
                 return Clutter.EVENT_STOP;
+            } else if ((e.get_state() & Clutter.ModifierType.CONTROL_MASK) > 0) {
+                if (e.get_key_code() == 55) this._paste ();
+                else if (e.get_key_code() == 54) this._copy ();
             }
             return Clutter.EVENT_PROPAGATE;
         }));
@@ -290,6 +293,20 @@ const NewMenuItem = new Lang.Class ({
         this.check_box.visible = !this.check_box.visible;
         if (this.entry.visible) Clutter.grab_keyboard (this.entry.clutter_text);
         else Clutter.ungrab_keyboard ();
+    },
+
+    _paste: function() {
+        Clipboard.get_text (St.ClipboardType.CLIPBOARD, Lang.bind(this, function (o, text) {
+            if (!text) return;
+            this.entry.clutter_text.delete_selection();
+            let pos = this.entry.clutter_text.get_cursor_position();
+            this.entry.clutter_text.insert_text(text, pos);
+        }));
+    },
+
+    _copy: function () {
+        let selection = this.entry.clutter_text.get_selection ();
+        Clipboard.set_text (St.ClipboardType.CLIPBOARD, selection);
     },
 
     on_click: function () {

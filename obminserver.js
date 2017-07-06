@@ -107,6 +107,7 @@ const ObminServer = new Lang.Class({
             } else {
                 if (finfo.get_size () < 64*1024) {
                     msg.set_status (200);
+                    msg.response_headers.append ("Server", "Obmin");
                     msg.response_headers.set_content_length (finfo.get_size ());
                     msg.set_response (finfo.get_content_type (), Soup.MemoryUse.COPY, file.load_contents (null)[1]);
                 } else {
@@ -123,22 +124,26 @@ const ObminServer = new Lang.Class({
             self.unpause_message (msg);
         } else if (path == '/favicon.ico') {
             msg.set_status (200);
+            msg.response_headers.append ("Server", "Obmin");
             msg.set_response ("image/vnd.microsoft.icon", Soup.MemoryUse.COPY, GLib.file_get_contents (APPDIR + "/data/www/favicon.ico")[1]);
             self.unpause_message (msg);
             return;
         } else if (path.endsWith ('style.css')) {
             msg.set_status (200);
+            msg.response_headers.append ("Server", "Obmin");
             msg.set_response ("text/css", Soup.MemoryUse.COPY, GLib.file_get_contents (APPDIR + "/data/www/style.css")[1]);
             self.unpause_message (msg);
             return;
         } else if (path.endsWith ('home.png')) {
             msg.set_status (200);
+            msg.response_headers.append ("Server", "Obmin");
             msg.set_response ("image/png", Soup.MemoryUse.COPY, GLib.file_get_contents (APPDIR + "/data/www/home.png")[1]);
             self.unpause_message (msg);
             return;
         } else {
             msg.set_response ("text/html", Soup.MemoryUse.COPY, "<html><head><title>404</title></head><body><h1>404</h1></body></html>");
             msg.set_status (404);
+            msg.response_headers.append ("Server", "Obmin");
             self.unpause_message (msg);
         }
         return;
@@ -210,13 +215,14 @@ const ObminServer = new Lang.Class({
             html_body += "<div class=\"size\">" + size + "</div></section></div></a>";
         });
         html_body += "</div></body>";
+        msg.response_headers.append ("Server", "Obmin");
         msg.set_response ("text/html", Soup.MemoryUse.COPY, "<html>" + html_head + html_body + "</html>");
         msg.set_status (200);
     },
 
     _root_handler: function (server, msg) {
         let self = server, i = 0, slash, size, d = new Date(0), ds;
-        let html_body = "<body><h1>Directory listing /</h1><hr><ul>";
+        let html_body = "<body><div class=\"path\"><a href=\"/\"><img src=\"home.png\" class=\"home\">> </a></div><div class=\"contents\">";
         files = [];
         sources.forEach (s => {
             var fl = Gio.File.new_for_path (s.path);
@@ -224,7 +230,6 @@ const ObminServer = new Lang.Class({
                 this.add_file (fl.query_info ("*", 0, null), s.path);
             }
         });
-        let html_body = "<body><div class=\"path\"><a href=\"/\"><img src=\"home.png\" class=\"home\">> </a></div><div class=\"contents\">";
         files.forEach (f => {
             if (f.type == 2) { slash = "/"; size = "Folder";}
             else {slash = ""; size = " " + GLib.format_size (f.size);}
@@ -238,6 +243,7 @@ const ObminServer = new Lang.Class({
             i++;
         });
         html_body += "</div></body>";
+        msg.response_headers.append ("Server", "Obmin");
         msg.set_response ("text/html", Soup.MemoryUse.COPY, "<html>" + html_head + html_body + "</html>");
         msg.set_status (200);
         self.unpause_message (msg);
@@ -367,7 +373,7 @@ const ContentStream = new Lang.Class({
             this.msg.response_headers.set_content_length (this.size);
             this.msg.response_headers.append ("Last-Modified", this.date);
             this.msg.response_headers.append ("Accept-Ranges", "bytes");
-            //this.msg.response_headers.append ("ETag", "18c50e1bbe972bdf9c7d9b8f6f019959");
+            this.msg.response_headers.append ("Server", "Obmin");
             this.msg.response_body.set_accumulate (false);
             this.stream = this.file.read_finish (result);
             if (this.version == 1) this.msg.set_status (206);
