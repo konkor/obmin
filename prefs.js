@@ -128,11 +128,15 @@ const PageGeneral = new Lang.Class({
             this.theme.append_text (s);
         });
         this.theme.connect ('changed', Lang.bind (this, ()=>{
-            let dir = Gio.File.new_for_path (EXTENSIONDIR + "/data/themes/" + this.theme.get_active_text() + ".css");
-            debug (EXTENSIONDIR + "/data/themes/" + this.theme.active_text + ".css");
+            let finfo;
+            let dir = Gio.File.new_for_path (EXTENSIONDIR + "/data/themes/" + this.theme.get_active_text());
+            debug (EXTENSIONDIR + "/data/themes/" + this.theme.get_active_text());
             if (!dir.query_exists (null)) return;
-            dir.copy (Gio.File.new_for_path (EXTENSIONDIR + "/data/www/style.css"), Gio.FileCopyFlags.OVERWRITE, null, null);
-            debug (EXTENSIONDIR + "/data/www/style.css");
+            var e = dir.enumerate_children ("*", Gio.FileQueryInfoFlags.NONE, null);
+            while ((finfo = e.next_file (null)) != null) {
+                if (finfo.get_file_type () != Gio.FileType.DIRECTORY)
+                 Gio.File.new_for_path(dir.get_path() + "/" + finfo.get_name()).copy (Gio.File.new_for_path (EXTENSIONDIR + "/data/www/" + finfo.get_name()), Gio.FileCopyFlags.OVERWRITE, null, null);
+            }
         }));
         hbox.pack_end (this.theme, false, false, 0);
 
@@ -140,14 +144,15 @@ const PageGeneral = new Lang.Class({
     },
 
     get themes () {
-        let list = [], finfo, fname;
+        let list = [], finfo;
         let dir = Gio.File.new_for_path (EXTENSIONDIR + "/data/themes");
         if (!dir.query_exists (null)) return list;
         var e = dir.enumerate_children ("*", Gio.FileQueryInfoFlags.NONE, null);
         while ((finfo = e.next_file (null)) != null) {
-            fname = finfo.get_name ();
-            if (fname.endsWith (".css") && (finfo.get_content_type () == "text/css"))
-                list.push (fname.substring (0, fname.length - 4));
+            if (finfo.get_file_type () != Gio.FileType.DIRECTORY) continue;
+            if (!Gio.File.new_for_path(dir.get_path() + "/" + finfo.get_name() + "/style.css").query_exists (null))
+                continue;
+            list.push (finfo.get_name ());
         }
         return list;
     }

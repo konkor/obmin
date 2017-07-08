@@ -1,13 +1,13 @@
 /* Obmin style */
 body {background: #f0f0f0;color:#212121;font-family: sans;font-size: 0.9em; margin: 0px;}
-a,a:visited,a:focus {text-decoration:none;color: #343a3a;}
-a:hover,a:active {text-decoration:none;color: #f8595b;}
+a,a:visited,a:focus {text-decoration:none;color: #f0f0f0;}
+a:hover,a:active {text-decoration:none;color: #0c99d5;}
 .home {height:24px;}
-.path {color: #464e4e; margin: 0px auto 0px auto; padding: .5em;font-weight: bold;font-size: 1.2em;}
+.path {color: #f0f0f0;background-color: #323843; margin: 0px auto 0px auto; padding: .5em;font-weight: bold;font-size: 1.2em;line-height:140%;}
 .contents {width: 97%; margin: 0px auto 0px auto;}
 .content {color:#343a3a;padding: 4px; margin: 2px auto 2px auto;border: 0px solid;border-bottom-width: 2px;border-color: #a4aaaa;}
-.content:hover, .content:focus, .content:active {background-color: #d7d7d4;color: #212121;}
-.file {font-weight: bold;}
+.content:hover, .content:focus, .content:active {background-color: #0c99d5;color: #ffffff;}
+.file {font-weight: bold; padding-bottom: .3em;}
 .fileinfo {color: #464e4e;font-style: italic;margin: auto;height: 1em;}
 .date {width: 80%;float: left;height: 1em;}
 .size {margin-left: 60%;text-align: end;height: 1em;}
