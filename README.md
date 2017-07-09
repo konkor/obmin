@@ -1,5 +1,4 @@
 # obmin
-Gnome Simple File Sharing.
+Simple File Sharing.
 
-![](/data/www/obmin.png?raw=true)
-
+![screencast](https://user-images.githubusercontent.com/1944781/27997375-a73383c2-64ff-11e7-8a86-b9fddca45f42.png)
