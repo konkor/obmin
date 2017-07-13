@@ -70,6 +70,7 @@ const ObminIndicator = new Lang.Class({
         _box.add_actor(this.statusIcon);
         this.actor.add_actor (_box);
 
+        GLib.spawn_command_line_async ("chmod +x " + EXTENSIONDIR + "/obmin-server")
         startup = this.settings.get_boolean (STARTUP_KEY);
         port = this.settings.get_int (PORT_KEY);
         DEBUG = this.settings.get_int (DEBUG_KEY);
@@ -120,12 +121,16 @@ const ObminIndicator = new Lang.Class({
         this.smenu.menu.addMenuItem (newItem);
         newItem.connect ('save', Lang.bind (this, function () {
             let exist = false;
+            if (!GLib.file_test (newItem.entry.text, GLib.FileTest.EXISTS)) {
+                show_warn (_("File source location\n") + newItem.entry.text + _("\nDoesn't exist..."));
+                return;
+            }
             sources.forEach (s => {if (s.path == newItem.entry.text) exist = true;});
             if (!exist) {
                 sources.push ({path: newItem.entry.text, recursive: newItem.state});
                 this._add_source (sources.length -1);
                 this.settings.set_string (SOURCES_KEY, JSON.stringify (sources));
-            }
+            } else show_notify (_("File source is already exist."));
         }));
         for (let p in sources) {
             this._add_source (p);
@@ -171,7 +176,7 @@ const ObminIndicator = new Lang.Class({
     _enable: function (state) {
         server = state;
         if (state) {
-            if (GLib.spawn_command_line_async (EXTENSIONDIR + "/obminserver.js")) {
+            if (GLib.spawn_command_line_async (EXTENSIONDIR + "/obmin-server")) {
                 //this.statusLabel.text = "ON";
                 this.statusIcon.icon_name = 'obmin-on-symbolic';
             } else {
@@ -180,7 +185,7 @@ const ObminIndicator = new Lang.Class({
                 this.server_switch.setToggleState (false);
             }
         } else {
-            GLib.spawn_command_line_async ("killall obminserver.js");
+            GLib.spawn_command_line_async ("killall obmin-server");
             //this.statusLabel.text = "OFF";
             this.statusIcon.icon_name = 'obmin-symbolic';
         }
@@ -191,7 +196,7 @@ const ObminIndicator = new Lang.Class({
         let o;
         if (res[0]) o = res[1].toString().split("\n");
         for (let i = 0; i < o.length; i++) {
-            if (o[i].indexOf ("obminserver.js") > -1) return true;
+            if (o[i].indexOf ("obmin-server") > -1) return true;
         }
         return false;
     },
@@ -477,6 +482,10 @@ function show_notify (message, style) {
             text = null;
         })
     });
+}
+
+function show_warn (message) {
+    show_notify (message, "warn-label");
 }
 
 let obmin_menu;

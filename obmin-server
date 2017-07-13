@@ -27,9 +27,9 @@ const Lang = imports.lang;
 const Mainloop = imports.mainloop;
 const System = imports.system;
 
-imports.searchPath.unshift(getCurrentFile ()[1]);
-const Convenience = imports.convenience;
 const APPDIR = getCurrentFile ()[1];
+imports.searchPath.unshift (APPDIR);
+const Convenience = imports.convenience;
 
 const ATTRIBUTES = "standard," +
     Gio.FILE_ATTRIBUTE_TIME_MODIFIED + "," +
@@ -482,16 +482,25 @@ function error (msg) {
 }
 
 let settings = Convenience.getSettings();
-mounts = settings.get_boolean (MOUNTS_KEY);
-follow_links = settings.get_boolean (LINKS_KEY);
-check_hidden = settings.get_boolean (HIDDENS_KEY);
-check_backup = settings.get_boolean (BACKUPS_KEY);
-port = settings.get_int (PORT_KEY);
-DEBUG = settings.get_int (DEBUG_KEY);
-let srcs =  settings.get_string (SOURCES_KEY);
-if (srcs.length > 0) sources = JSON.parse (srcs);
-else sources.push ({path: GLib.get_home_dir (), recursive: true});
 
+function load_settings () {
+    mounts = settings.get_boolean (MOUNTS_KEY);
+    follow_links = settings.get_boolean (LINKS_KEY);
+    check_hidden = settings.get_boolean (HIDDENS_KEY);
+    check_backup = settings.get_boolean (BACKUPS_KEY);
+    port = settings.get_int (PORT_KEY);
+    DEBUG = settings.get_int (DEBUG_KEY);
+    let srcs =  settings.get_string (SOURCES_KEY);
+    if (srcs.length > 0) check_sources (JSON.parse (srcs));
+    else sources.push ({path: GLib.get_home_dir (), recursive: true});
+}
+
+function check_sources (list) {
+    sources = [];
+    list.forEach (s => {if (GLib.file_test (s.path, GLib.FileTest.EXISTS)) sources.push (s);});
+}
+
+load_settings ();
 let obmin = new ObminServer ();
 
 Mainloop.run ('obminMainloop');

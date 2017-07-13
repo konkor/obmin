@@ -21,6 +21,7 @@
 
 const Gtk = imports.gi.Gtk;
 const Gio = imports.gi.Gio;
+//const GLib = imports.gi.GLib;
 const Lang = imports.lang;
 
 const STARTUP_KEY = 'startup-settings';
@@ -35,10 +36,9 @@ const DEBUG_KEY = 'debug';
 const Gettext = imports.gettext.domain('gnome-shell-extensions-obmin');
 const _ = Gettext.gettext;
 
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension ();
-const EXTENSIONDIR = Me.dir.get_path ();
-const Convenience = Me.imports.convenience;
+const EXTENSIONDIR = getCurrentFile ()[1];
+imports.searchPath.unshift (EXTENSIONDIR);
+const Convenience = imports.convenience;
 
 let startup = false;
 let links = true;
@@ -237,6 +237,19 @@ const PageNotify = new Lang.Class({
     }
 });
 
+function getCurrentFile () {
+    let stack = (new Error()).stack;
+    let stackLine = stack.split('\n')[1];
+    if (!stackLine)
+        throw new Error ('Could not find current file');
+    let match = new RegExp ('@(.+):\\d+').exec(stackLine);
+    if (!match)
+        throw new Error ('Could not find current file');
+    let path = match[1];
+    let file = Gio.File.new_for_path (path);
+    return [file.get_path(), file.get_parent().get_path(), file.get_basename()];
+}
+
 function info (msg) {
     if (DEBUG > 0) print ("[obmin][prefs] " + msg);
 }
@@ -251,6 +264,8 @@ function error (msg) {
 
 function init() {
     Convenience.initTranslations ();
+    let theme = imports.gi.Gtk.IconTheme.get_default();
+    theme.append_search_path (EXTENSIONDIR + "/data/icons");
     settings = Convenience.getSettings ();
 }
 
