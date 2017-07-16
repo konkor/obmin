@@ -118,7 +118,7 @@ const PageGeneral = new Lang.Class({
         }));
         hbox.pack_end (this.port, false, false, 0);
 
-        this.box.add (new Gtk.Label ({label: _("<b>Content</b>"), use_markup:true, xalign:0}));
+        this.box.add (new Gtk.Label ({label: _("<b>Content</b>"), use_markup:true, xalign:0, margin_top:12}));
         hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
         this.box.pack_start (hbox, false, false, 0);
         hbox.add (new Gtk.Label ({label: _("Theme")}));

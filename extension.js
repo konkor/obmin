@@ -216,6 +216,7 @@ const PrefsMenuItem = new Lang.Class({
         this.actor.add (this.preferences, { expand: true, x_fill: false });
         this.preferences.connect ('clicked', Lang.bind (this, function () {
             GLib.spawn_command_line_async ('gnome-shell-extension-prefs ' + Me.uuid);
+            this.emit ('activate');
         }));
         this.actor.add (new St.Label ({text: ' '}), { expand: true });
         //this.about = new St.Button ({ label: '?', style_class: 'prefs-button'});
@@ -223,6 +224,7 @@ const PrefsMenuItem = new Lang.Class({
         this.actor.add (this.about, { expand: false });
         this.about.connect ('clicked', Lang.bind (this, function () {
             GLib.spawn_command_line_async ("gedit --new-window " + EXTENSIONDIR + "/README.md");
+            this.emit ('activate');
         }));
         this.actor.add (new St.Label ({text: ' '}), { expand: true });
     }
