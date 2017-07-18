@@ -1,4 +1,4 @@
-# OBMIN
+# [OBMIN](https://extensions.gnome.org/extension/1254/obmin/)
 **One-Click** File Sharing Solution for your home network or/and even worldwide.
 -----
 _It's very first alpha version. So the project can have some issues and it's looking for [your contribution](#contributions) for better supporting and growing._
@@ -38,6 +38,8 @@ _It's very first alpha version. So the project can have some issues and it's loo
 ## Dependencies
 * gjs (apt-get install gjs)
 * Gnome Shell 3.14+ (the extension only)
+
+### Official repository [extensions.gnome.org](https://extensions.gnome.org/extension/1254/obmin/)
 
 ### Install from GitHub branch (default master)
 1. Download [install_obmin.sh](https://github.com/konkor/obmin/raw/master/install_obmin.sh)
