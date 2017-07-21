@@ -30,6 +30,7 @@ const MOUNTS_KEY = 'mounts-settings';
 const HIDDENS_KEY = 'hidden-settings';
 const BACKUPS_KEY = 'backup-settings';
 const SOURCES_KEY = 'content-sources';
+const THEME_KEY = 'theme';
 const PORT_KEY = 'port';
 const DEBUG_KEY = 'debug';
 
@@ -45,6 +46,7 @@ let links = true;
 let mounts = true;
 let hiddens = false;
 let backups = false;
+let theme = '';
 let port = 8088;
 let DEBUG = 1;
 
@@ -64,6 +66,8 @@ const ObminWidget = new Lang.Class({
         mounts = settings.get_boolean (MOUNTS_KEY);
         hiddens = settings.get_boolean (HIDDENS_KEY);
         backups = settings.get_boolean (BACKUPS_KEY);
+        theme = settings.get_string (THEME_KEY);
+        if (theme.length < 1) theme = "default";
         let srcs =  settings.get_string (SOURCES_KEY);
         if (srcs.length > 0) sources = JSON.parse (srcs);
 
@@ -123,10 +127,13 @@ const PageGeneral = new Lang.Class({
         this.box.pack_start (hbox, false, false, 0);
         hbox.add (new Gtk.Label ({label: _("Theme")}));
         this.theme = new Gtk.ComboBoxText ();
-        this.theme.append_text ("");
+        let id = 0, i = 0;
         this.themes.forEach (s => {
             this.theme.append_text (s);
+            if (s == theme) id = i;
+            i++;
         });
+        this.theme.active = id;
         this.theme.connect ('changed', Lang.bind (this, ()=>{
             let finfo;
             let dir = Gio.File.new_for_path (EXTENSIONDIR + "/data/themes/" + this.theme.get_active_text());
@@ -137,6 +144,7 @@ const PageGeneral = new Lang.Class({
                 if (finfo.get_file_type () != Gio.FileType.DIRECTORY)
                  Gio.File.new_for_path(dir.get_path() + "/" + finfo.get_name()).copy (Gio.File.new_for_path (EXTENSIONDIR + "/data/www/" + finfo.get_name()), Gio.FileCopyFlags.OVERWRITE, null, null);
             }
+            settings.set_string (THEME_KEY, this.theme.get_active_text());
         }));
         hbox.pack_end (this.theme, false, false, 0);
 

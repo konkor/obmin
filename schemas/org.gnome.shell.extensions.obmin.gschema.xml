@@ -87,5 +87,11 @@
       <description>Log file size (MiB)</description>
     </key>
 
+    <key type="s" name="theme">
+        <default>''</default>
+        <summary>Content theme</summary>
+        <description>Last selected theme</description>
+    </key>
+
   </schema>
 </schemalist>
