@@ -78,25 +78,31 @@ const ObminServer = new Lang.Class({
     },
 
     _default_handler: function (server, msg, path, query, client) {
-        let self = server, drop = false;
+        let self = server, drop = false, num;
         this.access_counter++;
+        num = this.access_counter;
         info ("Request (" + this.access_counter + ") from " + client.get_host () +
             " " + msg.method + " " + path + " HTTP/1." + msg.get_http_version ());
         msg.request_headers.foreach ( (n, v) => {
             debug (n + ": " + v);
+            if (n.indexOf ("Accept") > -1)
+                if (v.indexOf ("application/metalink") > -1)
+                    meta = true;
+            if (n.indexOf ("Host") > -1)
+                host = v;
         });
         if (msg.method == "POST") return;
         if (msg.request_body.length > 0) debug (msg.request_body);
         debug ("Default handler start (" + this.access_counter + ")");
         GLib.timeout_add_seconds (0, 0, Lang.bind (this, function () {
             if (path == '/') this._root_handler (server, msg);
-            else this._send_content (self, msg, path);
+            else this._send_content (self, msg, path, num);
             return false;
         }));
         self.pause_message (msg);
     },
 
-    _send_content: function (server, msg, path) {
+    _send_content: function (server, msg, path, num) {
         let self = server;
         let file, r, finfo;
         [file, r] = this.get_file (path);
@@ -104,15 +110,17 @@ const ObminServer = new Lang.Class({
             finfo = file.query_info ("*", 0, null);
             if (finfo.get_file_type () == 2) {
                 this.get_dir (self, msg, file, r, path);
+                self.unpause_message (msg);
             } else {
                 if (finfo.get_size () < 64*1024) {
                     msg.set_status (200);
                     msg.response_headers.append ("Server", "Obmin");
                     msg.response_headers.set_content_length (finfo.get_size ());
                     msg.set_response (finfo.get_content_type (), Soup.MemoryUse.COPY, file.load_contents (null)[1]);
+                    self.unpause_message (msg);
                 } else {
                     debug ("start chunking");
-                    let st = new ContentStream (self, msg, file, finfo, this.access_counter);
+                    let st = new ContentStream (self, msg, file, finfo, num);
                     msg.connect ("finished", (o)=>{
                         debug ("st finished" + st);
                         st = null;
@@ -121,7 +129,6 @@ const ObminServer = new Lang.Class({
                     return;
                 }
             }
-            self.unpause_message (msg);
         } else if (path == '/favicon.ico') {
             msg.set_status (200);
             msg.response_headers.append ("Server", "Obmin");
@@ -325,7 +332,7 @@ const ContentStream = new Lang.Class({
                 Mainloop.source_remove (this.read_event);
                 this.read_event = 0;
             }
-            try{this.stream.close (null);
+            try{if (this.stream) this.stream.close (null);
             }catch (err) {
             error ("Error close stream " + err);
             }
@@ -348,6 +355,7 @@ const ContentStream = new Lang.Class({
         this.file = file;
         this.mime = finfo.get_content_type ();
         this.size = finfo.get_size ();
+        this.range = this.size - 1;
         this.date = new Date (finfo.get_attribute_uint64 (Gio.FILE_ATTRIBUTE_TIME_MODIFIED)*1000).toUTCString();
         this.num = count.toString();
         this.stream = null;
@@ -356,6 +364,21 @@ const ContentStream = new Lang.Class({
         this.reads = 0;
         this.read_event = 0;
         this.done = false;
+        this.msg.request_headers.foreach ( (n, v) => {
+            if (n.indexOf ("Range") > -1)
+                if (v.indexOf ("bytes=") > -1) {
+                    let s = v.slice (6).split("-");
+                    if (s[0]) this.offset = parseInt(s[0]);
+                    if (s[1]) this.range = parseInt(s[1]);
+                }
+        });
+        debug ("Request(" + this.num + ") offset " + this.offset + ":" + this.range + " from " + this.size);
+        if (this.offset >= this.size) {
+            this.done = true;
+            this.msg.set_status (200);
+            this.msg.response_body.complete ();
+            this.server.unpause_message (this.msg);
+        }
         debug ("Start steamimg");
         this.file.read_async (GLib.PRIORITY_DEFAULT, null, Lang.bind (this, this.opened));
         //System.gc();
@@ -363,29 +386,22 @@ const ContentStream = new Lang.Class({
 
     wrote_chunk: function (sender, msg) {
         this.wrotes++;
-        debug ("Request(" + this.num + ") wrote_chunk: " + this.wrotes + "/" + this.reads);
+        //debug ("Request(" + this.num + ") wrote_chunk: " + this.wrotes + "/" + this.reads);
     },
 
     opened: function (sender, result) {
         try {
             this.msg.response_headers.set_encoding (Soup.Encoding.CHUNKED);
             this.msg.response_headers.set_content_type (this.mime, null);
-            this.msg.response_headers.set_content_length (this.size);
+            this.msg.response_headers.set_content_length (this.range - this.offset + 1);
             this.msg.response_headers.append ("Last-Modified", this.date);
             this.msg.response_headers.append ("Accept-Ranges", "bytes");
             this.msg.response_headers.append ("Server", "Obmin");
+            this.msg.response_headers.set_content_range (this.offset,this.range,this.size);
             this.msg.response_body.set_accumulate (false);
             this.stream = this.file.read_finish (result);
             if (this.version == 1) this.msg.set_status (206);
-            else this.msg.set_status (200)
-            this.msg.request_headers.foreach ( (n, v) => {
-                if (n.indexOf ("Range") > -1)
-                    if (v.indexOf ("bytes=") > -1) {
-                        let s = v.slice (6).split("-");
-                        if (s[0]) this.offset = parseInt(s[0]);
-                    }
-            });
-            debug ("Request(" + this.num + ") offset " + this.offset);
+            else this.msg.set_status (200);
             this.read_more (this.offset > 0);
         } catch (err) {
             error (err);
@@ -427,17 +443,17 @@ const ContentStream = new Lang.Class({
                 this.stream.close (null);
             } else {
                 this.offset += this.b.get_size();
-                this.msg.response_headers.set_content_range (this.offset - this.b.get_size(),this.offset-1,this.size);
-                //this.msg.response_headers.set_range (this.offset - this.b.get_size(),-1);
+                //this.msg.response_headers.set_content_range (this.offset - this.b.get_size(),this.offset-1,this.size);
                 this.msg.response_body.append_buffer (new Soup.Buffer (this.b.get_data()));
                 /*debug ("Request(" + this.num + ")\n" + this.msg.method + " HTTP/1." + this.msg.get_http_version ());
                 this.msg.request_headers.foreach ( (n, v) => {debug (n + ": " + v);});*/
                 //if (this.msg.request_body.length > 0) debug (this.msg.request_body);
                 /*debug ("Response(" + this.num + ")");
                 this.msg.response_headers.foreach ( (n, v) => {debug (n + ": " + v);});*/
-                debug ("Stream " + this.num + " " + this.offset + ":" + this.size);
+                //debug ("Stream " + this.num + " " + this.offset + ":" + this.size);
                 this.server.unpause_message (this.msg);
-                this.read_event = Mainloop.timeout_add (10, Lang.bind (this, this.read_more));//this.read_more ();
+                if (this.offset < this.range)
+                    this.read_event = Mainloop.timeout_add (10, Lang.bind (this, this.read_more));
             }
         } catch (err) {
             error ("read_done" + err);
