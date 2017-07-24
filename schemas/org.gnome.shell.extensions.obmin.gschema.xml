@@ -69,6 +69,12 @@
       <description>Debug level (0-error,1-info,2-debug)</description>
     </key>
 
+    <key type="i" name="server-mode">
+      <default>0</default>
+      <summary>Server mode</summary>
+      <description>Server behavior (0-file,1-mix,2-web)</description>
+    </key>
+
     <key type="b" name="notify">
       <default>true</default>
       <summary>Notify</summary>

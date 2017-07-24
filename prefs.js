@@ -31,6 +31,7 @@ const HIDDENS_KEY = 'hidden-settings';
 const BACKUPS_KEY = 'backup-settings';
 const SOURCES_KEY = 'content-sources';
 const THEME_KEY = 'theme';
+const MODE_KEY = 'server-mode';
 const PORT_KEY = 'port';
 const DEBUG_KEY = 'debug';
 
@@ -47,6 +48,7 @@ let mounts = true;
 let hiddens = false;
 let backups = false;
 let theme = '';
+let mode = 0;
 let port = 8088;
 let DEBUG = 1;
 
@@ -62,6 +64,7 @@ const ObminWidget = new Lang.Class({
         DEBUG = settings.get_int (DEBUG_KEY);
         startup = settings.get_boolean (STARTUP_KEY);
         port = settings.get_int (PORT_KEY);
+        mode = settings.get_int (MODE_KEY);
         links = settings.get_boolean (LINKS_KEY);
         mounts = settings.get_boolean (MOUNTS_KEY);
         hiddens = settings.get_boolean (HIDDENS_KEY);
@@ -77,6 +80,11 @@ const ObminWidget = new Lang.Class({
         this.notebook.add (this.general);
         let label = new Gtk.Label ({label: _("General")});
         this.notebook.set_tab_label (this.general, label);
+
+        this.behavior = new PageBehavior ();
+        this.notebook.add (this.behavior);
+        let label = new Gtk.Label ({label: _("Behavior")});
+        this.notebook.set_tab_label (this.behavior, label);
 
         this.display = new PageDisplay ();
         this.notebook.add (this.display);
@@ -240,6 +248,58 @@ const PageNotify = new Lang.Class({
             settings.set_int (DEBUG_KEY, DEBUG);
         }));
         hbox.pack_end (this.level, false, false, 0);
+
+        this.show_all ();
+    }
+});
+
+const PageBehavior = new Lang.Class({
+    Name: 'PageBehavior',
+    Extends: Gtk.ScrolledWindow,
+
+    _init: function () {
+        this.parent ();
+        this.box = new Gtk.Box ({orientation:Gtk.Orientation.VERTICAL, margin:6});
+        this.box.border_width = 6;
+        this.add (this.box);
+
+        this.file_server = Gtk.RadioButton.new_with_label_from_widget (null, _("File Server"));
+		this.box.pack_start (this.file_server, false, false, 0);
+		let label = new Gtk.Label ({
+		    label: "<i>"+_("Show the folder's list on requests.")+"</i>",
+		    use_markup:true, xalign:0, margin_left:24, margin_bottom:12});
+        label.wrap = true;
+        this.box.add (label);
+
+        this.mix_server = Gtk.RadioButton.new_with_label_from_widget (this.file_server, _("WEB/File Server"));
+		this.box.pack_start (this.mix_server, false, false, 0);
+		label = new Gtk.Label ({
+		    label: "<i>"+_("Look for \'index.html\' first if it is not exist show the folder's list.")+"</i>",
+		    use_markup:true, xalign:0, margin_left:24, margin_bottom:12});
+		label.wrap = true;
+        this.box.add (label);
+
+        this.web_server = Gtk.RadioButton.new_with_label_from_widget (this.file_server, _("WEB Server"));
+		this.box.pack_start (this.web_server, false, false, 0);
+		label = new Gtk.Label ({
+		    label: "<i>"+_("Look for \'index.html\' and direct links only if it is not exist show error \'404.html\'.")+"</i>",
+		    use_markup:true, xalign:0, margin_left:24, margin_bottom:12});
+		label.wrap = true;
+        this.box.add (label);
+
+
+        if (mode == 1) this.mix_server.active = true;
+        else if (mode == 2) this.web_server.active = true;
+
+		this.file_server.connect ('toggled', Lang.bind (this, ()=>{
+		    if (this.file_server.active) settings.set_int (MODE_KEY, 0);
+		}));
+		this.mix_server.connect ('toggled', Lang.bind (this, ()=>{
+		    if (this.mix_server.active) settings.set_int (MODE_KEY, 1);
+		}));
+        this.web_server.connect ('toggled', Lang.bind (this, ()=>{
+		    if (this.web_server.active) settings.set_int (MODE_KEY, 2);
+		}));
 
         this.show_all ();
     }

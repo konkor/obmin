@@ -44,6 +44,7 @@ const MOUNTS_KEY = 'mounts-settings';
 const HIDDENS_KEY = 'hidden-settings';
 const BACKUPS_KEY = 'backup-settings';
 const SOURCES_KEY = 'content-sources';
+const MODE_KEY = 'server-mode';
 const PORT_KEY = 'port';
 const DEBUG_KEY = 'debug';
 const SETTINGS_ID = 'org.gnome.shell.extensions.obmin';
@@ -54,6 +55,7 @@ let mounts = true;
 let follow_links = true;
 let check_hidden = false;
 let check_backup = false;
+let mode = 0;
 let port = 8088;
 let DEBUG = 1;
 
@@ -85,11 +87,6 @@ const ObminServer = new Lang.Class({
             " " + msg.method + " " + path + " HTTP/1." + msg.get_http_version ());
         msg.request_headers.foreach ( (n, v) => {
             debug (n + ": " + v);
-            if (n.indexOf ("Accept") > -1)
-                if (v.indexOf ("application/metalink") > -1)
-                    meta = true;
-            if (n.indexOf ("Host") > -1)
-                host = v;
         });
         if (msg.method == "POST") return;
         if (msg.request_body.length > 0) debug (msg.request_body);
@@ -109,6 +106,8 @@ const ObminServer = new Lang.Class({
         if (file) {
             finfo = file.query_info ("*", 0, null);
             if (finfo.get_file_type () == 2) {
+                if (mode > 0)
+                    if (this._send_content (server, msg, path + 'index.html', this.access_counter) || (mode == 2)) return;
                 this.get_dir (self, msg, file, r, path);
                 self.unpause_message (msg);
             } else {
@@ -126,7 +125,6 @@ const ObminServer = new Lang.Class({
                         st = null;
                         System.gc();
                     });
-                    return;
                 }
             }
         } else if (path == '/favicon.ico') {
@@ -134,35 +132,41 @@ const ObminServer = new Lang.Class({
             msg.response_headers.append ("Server", "Obmin");
             msg.set_response ("image/vnd.microsoft.icon", Soup.MemoryUse.COPY, GLib.file_get_contents (APPDIR + "/data/www/favicon.ico")[1]);
             self.unpause_message (msg);
-            return;
         } else if (path.endsWith ('style.css')) {
             msg.set_status (200);
             msg.response_headers.append ("Server", "Obmin");
             msg.set_response ("text/css", Soup.MemoryUse.COPY, GLib.file_get_contents (APPDIR + "/data/www/style.css")[1]);
             self.unpause_message (msg);
-            return;
         } else if (path.endsWith ('home.png')) {
             msg.set_status (200);
             msg.response_headers.append ("Server", "Obmin");
             msg.set_response ("image/png", Soup.MemoryUse.COPY, GLib.file_get_contents (APPDIR + "/data/www/home.png")[1]);
             self.unpause_message (msg);
-            return;
+        } else if (path.endsWith ('index.html') && (mode == 1)) {
+            return false;
         } else {
             msg.set_response ("text/html", Soup.MemoryUse.COPY, "<html><head><title>404</title></head><body><h1>404</h1></body></html>");
             msg.set_status (404);
             msg.response_headers.append ("Server", "Obmin");
             self.unpause_message (msg);
         }
-        return;
+        return true;
     },
 
     get_file: function (path) {
-        let s = path, file, id, src, i, res = [null, null];
+        let s = path, file, id = -1, src, i, res = [null, null], index = null;
         if (s.length == 0) return res;
         if (s[0] != '/') return res;
         s = s.slice (1);
         i = s.indexOf ('/');
         if (i == -1) {
+            if (mode > 0) {
+                sources.forEach (p => {
+                    var fl = Gio.File.new_for_path (p.path);
+                    if (fl.query_exists (null) && (fl.get_basename () == s)) index = fl;
+                });
+                if (index) return [index, false];
+            }
             if (!this.is_int (s)) return res;
             id = parseInt (s);
             if (id >= sources.length) return res;
@@ -171,8 +175,18 @@ const ObminServer = new Lang.Class({
         } else {
             src = s.substring (0, i);
             s = s.slice (i + 1);
-            if (!this.is_int (src)) return res;
-            id = parseInt (src);
+            if (mode > 0) {
+                i = 0;
+                sources.forEach (p => {
+                    var fl = Gio.File.new_for_path (p.path);
+                    if (fl.query_exists (null) && (fl.get_basename () == src)) id = i;
+                    i++;
+                });
+            }
+            if (id == -1) {
+                if (!this.is_int (src)) return res;
+                id = parseInt (src);
+            }
             if (id >= sources.length) return res;
             if (s.indexOf ('/') > -1 && !sources[id].recursive) return res;
             if (s.length == 0) src = sources[id].path;
@@ -228,8 +242,10 @@ const ObminServer = new Lang.Class({
     },
 
     _root_handler: function (server, msg) {
-        let self = server, i = 0, slash, size, d = new Date(0), ds;
+        let self = server, i = 0, slash, size, d = new Date(0), ds, index = null;
         let html_body = "<body><div class=\"path\"><a href=\"/\"><img src=\"home.png\" class=\"home\">> </a></div><div class=\"contents\">";
+        if (mode > 0)
+            if (this._send_content (server, msg, '/index.html', this.access_counter) || (mode == 2)) return;
         files = [];
         sources.forEach (s => {
             var fl = Gio.File.new_for_path (s.path);
@@ -350,7 +366,10 @@ const ContentStream = new Lang.Class({
             }catch (err) {
             error ("Error free body " + err);
             }
-            System.gc ();
+            try{System.gc ();
+            }catch (err) {
+            error ("Error gc " + err);
+            }
         });
         this.file = file;
         this.mime = finfo.get_content_type ();
@@ -504,6 +523,7 @@ function load_settings () {
     follow_links = settings.get_boolean (LINKS_KEY);
     check_hidden = settings.get_boolean (HIDDENS_KEY);
     check_backup = settings.get_boolean (BACKUPS_KEY);
+    mode = settings.get_int (MODE_KEY);
     port = settings.get_int (PORT_KEY);
     DEBUG = settings.get_int (DEBUG_KEY);
     let srcs =  settings.get_string (SOURCES_KEY);
