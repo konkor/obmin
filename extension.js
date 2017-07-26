@@ -91,6 +91,7 @@ const ObminIndicator = new Lang.Class({
 
     on_menu_state_changed: function (source, state) {
         if (state) {
+            port = this.settings.get_int (PORT_KEY);
             this.info_local.update ();
             this.info_public.update ();
         } else {
