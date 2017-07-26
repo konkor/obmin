@@ -83,7 +83,7 @@ const ObminWidget = new Lang.Class({
 
         this.behavior = new PageBehavior ();
         this.notebook.add (this.behavior);
-        let label = new Gtk.Label ({label: _("Behavior")});
+        label = new Gtk.Label ({label: _("Behavior")});
         this.notebook.set_tab_label (this.behavior, label);
 
         this.display = new PageDisplay ();
