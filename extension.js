@@ -427,7 +427,7 @@ const PublicItem = new Lang.Class ({
     },
 
     get ip () {
-        let l = get_info_string ("dig +short myip.opendns.com @resolver1.opendns.com");
+        let l = get_info_string ("curl http://ipecho.net/plain");
         if (l.length > 6) return l;
         return "";
     },
