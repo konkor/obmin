@@ -1,0 +1,2 @@
+SUBDIRS = icons www themes
+
