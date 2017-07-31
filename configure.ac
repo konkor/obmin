@@ -18,4 +18,5 @@ data/Makefile
 data/icons/Makefile
 data/www/Makefile
 data/themes/Makefile
+schemas/Makefile
 ])

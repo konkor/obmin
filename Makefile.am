@@ -4,7 +4,7 @@ EXTENSION_ID = obmin
 
 packagedir = gnome-shell/extensions
 
-SUBDIRS = data
+SUBDIRS = data schemas
 
 jsdir = $(prefix)/$(EXTENSION_ID)@konkor
 js_DATA = \
