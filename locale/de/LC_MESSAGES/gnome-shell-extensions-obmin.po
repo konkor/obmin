@@ -1,0 +1,168 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2017-08-20 17:44+0200\n"
+"PO-Revision-Date: 2017-08-20 17:53+0200\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Last-Translator: Jonatan Hatakeyama Zeidler <jonatan_zeidler@gmx.de>\n"
+"Language-Team: \n"
+"X-Generator: Poedit 2.0.1\n"
+
+#: extension.js:108
+msgid "Obmin Server "
+msgstr "Obmin-Server "
+
+#: extension.js:119
+msgid "Locations"
+msgstr "Freigabeordner"
+
+#: extension.js:121
+msgid "New Location..."
+msgstr "Neuer Freigabeordner …"
+
+#: extension.js:121
+msgid "Path"
+msgstr "Pfad"
+
+#: extension.js:126
+msgid "File source location\n"
+msgstr "Dateiquellverzeichnis\n"
+
+#: extension.js:126
+msgid ""
+"\n"
+"Doesn't exist..."
+msgstr ""
+"\n"
+"Existiert nicht …"
+
+#: extension.js:134
+msgid "File source is already exist."
+msgstr "Dateiquelle existiert bereits."
+
+#: extension.js:268
+msgid "Recursive"
+msgstr "Rekursiv"
+
+#: extension.js:395
+msgid "Local IP"
+msgstr "Lokale IP-Adresse"
+
+#: extension.js:400
+msgid "Local IP address copied to clipboard."
+msgstr "Lokale IP-Adresse in Zwischenablage kopiert."
+
+#: extension.js:420
+msgid "Public IP"
+msgstr "Öffentliche IP-Adresse"
+
+#: extension.js:425
+msgid "Public IP address copied to clipboard."
+msgstr "Öffentliche IP-Adresse in Zwischenablage kopiert."
+
+#: prefs.js:81
+msgid "General"
+msgstr "Allgemein"
+
+#: prefs.js:86
+msgid "Behavior"
+msgstr "Verhalten"
+
+#: prefs.js:91
+msgid "Display"
+msgstr "Anzeige"
+
+#: prefs.js:96
+msgid "Notifications"
+msgstr "Benachrichtigungen"
+
+#: prefs.js:113
+msgid "Load on startup"
+msgstr "Beim Start laden"
+
+#: prefs.js:121
+msgid "<b>Network</b>"
+msgstr "<b>Netzwerk</b>"
+
+#: prefs.js:124
+msgid "Listening Port"
+msgstr "Empfangender Port"
+
+#: prefs.js:133
+msgid "<b>Content</b>"
+msgstr "<b>Inhalt</b>"
+
+#: prefs.js:136
+msgid "Theme"
+msgstr "Thema"
+
+#: prefs.js:187
+msgid "Show mount points"
+msgstr "Einhängepunkte anzeigen"
+
+#: prefs.js:195
+msgid "Show symbolic links"
+msgstr "Symbolische Verknüpfungen anzeigen"
+
+#: prefs.js:203
+msgid "Show hidden content"
+msgstr "Versteckte Inhalte anzeigen"
+
+#: prefs.js:211
+msgid "Show backups"
+msgstr "Sicherungsdateien anzeigen"
+
+#: prefs.js:239
+msgid "Debugging level"
+msgstr "Fehlerdiagnosestufe"
+
+#: prefs.js:242
+msgid "ERROR"
+msgstr "Nur Fehler"
+
+#: prefs.js:242
+msgid "INFO"
+msgstr "Informativ"
+
+#: prefs.js:242
+msgid "DEBUG"
+msgstr "Ausführlich"
+
+#: prefs.js:266
+msgid "File Server"
+msgstr "Dateiserver"
+
+#: prefs.js:269
+msgid "Show the folder's list on requests."
+msgstr "Ordnerliste bei Anfragen anzeigen."
+
+#: prefs.js:274
+msgid "WEB/File Server"
+msgstr "Web-/Dateiserver"
+
+#: prefs.js:277
+msgid "Look for 'index.html' first if it is not exist show the folder's list."
+msgstr ""
+"Zuerst nach 'index.html' schauen, falls nicht vorhanden, Ordnerliste "
+"anzeigen."
+
+#: prefs.js:282
+msgid "WEB Server"
+msgstr "Web-Server "
+
+#: prefs.js:285
+msgid ""
+"Look for 'index.html' and direct links only if it is not exist show error "
+"'404.html'."
+msgstr ""
+"Nur nach 'index.html' schauen, falls nicht vorhanden, Fehler '404.html' "
+"anzeigen."
