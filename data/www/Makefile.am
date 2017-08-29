@@ -1,4 +1,4 @@
-wwwdir=$(prefix)/obmin@konkor/data/www
+wwwdir=$(datadir)/gnome-shell/extensions/obmin@konkor/data/www
 www_DATA= \
     favicon.ico \
     $(top_srcdir)/data/themes/default/home.png \

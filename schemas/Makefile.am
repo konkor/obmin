@@ -1,4 +1,4 @@
-schemadir=$(prefix)/obmin@konkor/schemas
+schemadir=$(datadir)/gnome-shell/extensions/obmin@konkor/schemas
 schema_DATA= \
     org.gnome.shell.extensions.obmin.gschema.xml \
     gschemas.compiled

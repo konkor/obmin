@@ -1,0 +1,11 @@
+obmin (2.0-1) UNRELEASED; urgency=medium
+
+  * Add bin scripts obmin-server and obmin-preferences
+
+ -- Kostiantyn K <kapa76@gmail.com>  Tue, 29 Aug 2017 11:45:25 +0300
+
+obmin (1.0-1) UNRELEASED; urgency=medium
+
+  * Initial release. (Closes: #XXXXXX)
+
+ -- Kostiantyn K <kapa76@gmail.com>  Mon, 28 Aug 2017 13:45:25 +0300

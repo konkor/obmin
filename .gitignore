@@ -1,9 +1,13 @@
 *~
 *.bak
 *.zip
+*.tar.xz
 Makefile
+depcomp
 Makefile.in
 aclocal.m4
+zip-files/
+.deps/
 autom4te.cache/
 compile
 config.guess

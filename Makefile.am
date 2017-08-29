@@ -6,13 +6,17 @@ packagedir = gnome-shell/extensions
 
 SUBDIRS = data schemas
 
-jsdir = $(prefix)/$(EXTENSION_ID)@konkor
+jsdir = $(datadir)/$(packagedir)/$(EXTENSION_ID)@konkor
 js_DATA = \
     README.md \
 	metadata.json \
 	stylesheet.css
 
 js_SCRIPTS = extension.js prefs.js convenience.js obmin-server obmin-preferences
+
+bin_SCRIPTS = obmin-server obmin-preferences
+
+dist_js_DATA = $(js_SCRIPTS)
 
 EXTRA_DIST = $(js_DATA)
 

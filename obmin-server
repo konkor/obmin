@@ -107,7 +107,7 @@ const ObminServer = new Lang.Class({
             finfo = file.query_info ("*", 0, null);
             if (finfo.get_file_type () == 2) {
                 if (mode > 0)
-                    if (this._send_content (server, msg, path + 'index.html', this.access_counter) || (mode == 2)) return;
+                    if (this._send_content (server, msg, path + 'index.html', this.access_counter) || (mode == 2)) return true;
                 this.get_dir (self, msg, file, r, path);
                 self.unpause_message (msg);
             } else {

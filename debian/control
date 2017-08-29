@@ -1,0 +1,17 @@
+Source: obmin
+Maintainer: Kostiantyn K <kapa76@gmail.com>
+Section: misc
+Priority: optional
+Standards-Version: 3.9.2
+Build-Depends: debhelper (>= 9),
+               dh-autoreconf,
+               intltool
+
+Package: obmin
+Architecture: all
+Depends: ${shlibs:Depends},
+         ${misc:Depends},
+         gjs
+Recommends: gnome-shell
+Description: Lightweight HTTP/File Server Extension
+ One-Click File Sharing Solution for your home network or/and even worldwide.

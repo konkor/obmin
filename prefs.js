@@ -96,6 +96,11 @@ const ObminWidget = new Lang.Class({
         label = new Gtk.Label ({label: _("Notifications")});
         this.notebook.set_tab_label (this.notify, label);
 
+        this.support = new PageSupport ();
+        this.notebook.add (this.support);
+        label = new Gtk.Label ({label: _("Supporting")});
+        this.notebook.set_tab_label (this.support, label);
+
         this.notebook.show_all ();
     }
 });
@@ -248,6 +253,33 @@ const PageNotify = new Lang.Class({
             settings.set_int (DEBUG_KEY, DEBUG);
         }));
         hbox.pack_end (this.level, false, false, 0);
+
+        this.show_all ();
+    }
+});
+
+const PageSupport = new Lang.Class({
+    Name: 'PageSupport',
+    Extends: Gtk.ScrolledWindow,
+
+    _init: function () {
+        this.parent ();
+        this.box = new Gtk.Box ({orientation:Gtk.Orientation.VERTICAL, margin:6});
+        this.box.border_width = 6;
+        this.add (this.box);
+
+        let label = new Gtk.Label ({label: "<b>"+_("Make Donation")+"</b>", use_markup:true, xalign:0, margin:8});
+        this.box.add (label);
+        let hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
+        this.box.pack_start (hbox, false, false, 0);
+        this.pp = new Gtk.Button ();
+        this.pp.image = Gtk.Image.new_from_file (EXTENSIONDIR + "/data/icons/pp.png");
+        hbox.add (this.pp);
+        hbox.pack_start (label, false, false, 12);
+        this.pp.connect ('clicked', Lang.bind (this, ()=>{
+            let app = Gio.AppInfo.get_default_for_uri_scheme ("https");
+            app.launch_uris (["https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=HGAFMMMQ9MQJ2"], null);
+        }));
 
         this.show_all ();
     }

@@ -26,9 +26,9 @@
 .obmin-ip-label {
 }
 
-.separator-item {
-    padding: 0em 3.5em 0em 1.75em;
-    height: 11px;
+.obmin-separator-item {
+    padding: 0em 2.25em 0em 0em;
+    height: 15px;
 }
 
 .obmin-entry {
@@ -88,9 +88,10 @@
 }
 
 .obmin-separator-menu-item {
-  padding: 0;
-  -gradient-start: rgba(68,113,191,0.0);
-  -gradient-end: rgba(255,255,255,0.4);
-  -gradient-height: 1px;
-  -margin-horizontal: 24px;
+  height: 1px;
+  margin: 6px 24px;
+  background-color: transparent;
+  border-color: rgba(48,44,47,0.6);
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
 }

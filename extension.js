@@ -21,6 +21,7 @@
 
 const St = imports.gi.St;
 const GLib = imports.gi.GLib;
+const Gio = imports.gi.Gio;
 const Clutter = imports.gi.Clutter;
 const Tweener = imports.ui.tweener;
 const Main = imports.ui.main;
@@ -64,8 +65,16 @@ const ObminIndicator = new Lang.Class({
 
         this.settings = Convenience.getSettings();
 
+        this._icon_on = new St.Icon ({
+            gicon:Gio.icon_new_for_string (EXTENSIONDIR + "/data/icons/obmin-on.png"),
+            style: 'icon-size: 20px;'
+        });
+        this._icon_off = new St.Icon ({
+            gicon:Gio.icon_new_for_string (EXTENSIONDIR + "/data/icons/obmin-off.png"),
+            style: 'icon-size: 20px;'
+        });
         this.statusIcon = new St.Icon ({ style: 'icon-size: 20px;' });
-        this.statusIcon.icon_name = 'obmin-symbolic';
+        this.icon_off ();
         let _box = new St.BoxLayout();
         _box.add_actor(this.statusIcon);
         this.actor.add_actor (_box);
@@ -81,7 +90,7 @@ const ObminIndicator = new Lang.Class({
             this.settings.set_string (SOURCES_KEY, JSON.stringify (sources));
         }
 
-        if (server = this.server_enabled) this.statusIcon.icon_name = 'obmin-on-symbolic';
+        if (server = this.server_enabled) this.icon_on ();
         if (startup && !server) this._enable (true);
         this._build_ui ();
         this.menu.actor.add_style_class_name ('obmin-menu');
@@ -98,6 +107,10 @@ const ObminIndicator = new Lang.Class({
             Clutter.ungrab_keyboard ();
         }
     },
+
+    icon_on: function () { this.statusIcon.gicon = this._icon_on.gicon; },
+
+    icon_off: function () { this.statusIcon.gicon = this._icon_off.gicon; },
 
     _build_ui: function () {
         this._build_popup ();
@@ -179,16 +192,16 @@ const ObminIndicator = new Lang.Class({
         if (state) {
             if (GLib.spawn_command_line_async (EXTENSIONDIR + "/obmin-server")) {
                 //this.statusLabel.text = "ON";
-                this.statusIcon.icon_name = 'obmin-on-symbolic';
+                this.icon_on ();
             } else {
                 server = false;
-                this.statusIcon.icon_name = 'obmin-symbolic';
+                this.icon_off ();
                 this.server_switch.setToggleState (false);
             }
         } else {
             GLib.spawn_command_line_async ("killall obmin-server");
             //this.statusLabel.text = "OFF";
-            this.statusIcon.icon_name = 'obmin-symbolic';
+            this.icon_off ();
         }
     },
 
@@ -442,9 +455,11 @@ const SeparatorItem = new Lang.Class({
     Extends: PopupMenu.PopupBaseMenuItem,
 
     _init: function () {
-        this.parent({ reactive: false, style_class: 'separator-item', can_focus: false});
-        this._separator = new Separator.HorizontalSeparator ({ style_class: 'cpufreq-separator-menu-item' });
-        this.actor.add (this._separator.actor, { expand: true });
+        this.parent({reactive: false, can_focus: false, style_class: 'obmin-separator-item'});
+        this._separator = new St.Widget({ style_class: 'obmin-separator-menu-item',
+                                          y_expand: true,
+                                          y_align: Clutter.ActorAlign.CENTER });
+        this.actor.add(this._separator, {expand: true});
     }
 });
 
@@ -494,8 +509,6 @@ function show_warn (message) {
 let obmin_menu;
 function init () {
     Convenience.initTranslations ();
-    let theme = imports.gi.Gtk.IconTheme.get_default();
-    theme.append_search_path (EXTENSIONDIR + "/data/icons");
 }
 
 function enable () {
