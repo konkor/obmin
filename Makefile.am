@@ -14,9 +14,9 @@ js_DATA = \
 	metadata.json \
 	stylesheet.css
 
-js_SCRIPTS = extension.js prefs.js convenience.js obmin-server obmin-preferences
+js_SCRIPTS = extension.js prefs.js convenience.js obmin-server obmin-preferences obmin-indicator
 
-bin_SCRIPTS = obmin-server obmin-preferences
+bin_SCRIPTS = obmin-server obmin-preferences obmin-indicator
 
 dist_js_DATA = $(js_SCRIPTS)
 

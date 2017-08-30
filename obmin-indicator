@@ -1,0 +1,169 @@
+#!/usr/bin/gjs
+/*
+ * Obmin - Simple File Sharing Server For GNOME Desktop
+ *
+ * Copyright (C) 2017 Kostiantyn Korienkov <kapa76@gmail.com>
+ *
+ * This file is part of Obmin File Server.
+ *
+ * Obmin is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Filefinder is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+const Gtk = imports.gi.Gtk;
+const Gio = imports.gi.Gio;
+const GLib = imports.gi.GLib;
+const AI = imports.gi.AppIndicator3;
+const Lang = imports.lang;
+
+const APPDIR = get_appdir ();
+imports.searchPath.unshift(APPDIR);
+
+const Gettext = imports.gettext.domain('gnome-shell-extensions-obmin');
+const _ = Gettext.gettext;
+const Convenience = imports.convenience;
+
+const DEBUG_KEY = 'debug';
+const STARTUP_KEY = 'startup-settings';
+const PORT_KEY = 'port';
+
+let startup = false;
+let port = 8088;
+let DEBUG = 1;
+
+let settings = null;
+let server = false;
+
+const ObminIndicator = new Lang.Class ({
+    Name: 'ObminIndicator',
+
+    _init: function () {
+        DEBUG = settings.get_int (DEBUG_KEY);
+        startup = settings.get_boolean (STARTUP_KEY);
+        port = settings.get_int (PORT_KEY);
+
+        this.application = new Gtk.Application ();
+        this.application.connect ('activate', Lang.bind (this, this._onActivate));
+        this.application.connect ('startup', Lang.bind (this, this._onStartup));
+    },
+
+    _onActivate: function (){
+        this._window.hide ();
+    },
+
+    _onStartup: function () {
+        this._window = new Gtk.Window ();
+        this._window.title = "Obmin";
+        this._window.set_default_size (512, 320);
+        this.application.add_window (this._window);
+        server = this.server_enabled;
+        if (startup && !server) this._enable (true);
+        this.build_menu ();
+        if (server) this.indicator.set_icon ("obmin-on");
+    },
+
+    build_menu: function () {
+        this.menu = new Gtk.Menu ();
+        this.indicator = AI.Indicator.new ("Obmin", "obmin-indicator", AI.IndicatorCategory.APPLICATION_STATUS);
+        this.indicator.set_icon_theme_path (APPDIR + "/data/icons");
+        this.server_switch = Gtk.CheckMenuItem.new_with_label (_("Obmin Server"));
+        this.server_switch.tooltip_text = _("Activate Obmin Server");
+        this.server_switch.active = server;
+        this.server_switch.connect ('toggled', Lang.bind (this, function () {
+            this._enable (this.server_switch.active);
+        }));
+        this.menu.append (this.server_switch);
+
+        this.menu.append (new Gtk.SeparatorMenuItem ());
+
+        var item = Gtk.MenuItem.new_with_label (_("Exit"));
+        item.connect ('activate', Lang.bind (this, function () {
+            app.application.quit ();
+        }));
+        this.menu.append (item);
+
+        this.menu.show_all ();
+        this.indicator.set_status (AI.IndicatorStatus.ACTIVE);
+        this.indicator.set_icon ("obmin-off");
+        this.indicator.set_menu (this.menu);
+    },
+
+    _enable: function (state) {
+        server = state;
+        if (state) {
+            if (GLib.spawn_command_line_async (APPDIR + "/obmin-server")) {
+                this.indicator.set_icon ("obmin-on");
+            } else {
+                server = false;
+                this.indicator.set_icon ("obmin-off");
+                this.server_switch.setToggleState (false);
+            }
+        } else {
+            GLib.spawn_command_line_async ("killall obmin-server");
+            this.indicator.set_icon ("obmin-off");
+        }
+    },
+
+    get server_enabled () {
+        let res = GLib.spawn_command_line_sync ("ps -A");
+        let o;
+        if (res[0]) o = res[1].toString().split("\n");
+        for (let i = 0; i < o.length; i++) {
+            if (o[i].indexOf ("obmin-server") > -1) return true;
+        }
+        return false;
+    }
+});
+
+function getCurrentFile () {
+    let stack = (new Error()).stack;
+    let stackLine = stack.split('\n')[1];
+    if (!stackLine)
+        throw new Error ('Could not find current file');
+    let match = new RegExp ('@(.+):\\d+').exec(stackLine);
+    if (!match)
+        throw new Error ('Could not find current file');
+    let path = match[1];
+    let file = Gio.File.new_for_path (path);
+    return [file.get_path(), file.get_parent().get_path(), file.get_basename()];
+}
+
+function get_appdir () {
+    let s = getCurrentFile ()[1];
+    if (GLib.file_test (s + "/prefs.js", GLib.FileTest.EXISTS)) return s;
+    s = GLib.get_home_dir () + "/.local/share/gnome-shell/extensions/obmin@konkor";
+    if (GLib.file_test (s + "/prefs.js", GLib.FileTest.EXISTS)) return s;
+    s = "/usr/share/gnome-shell/extensions/obmin@konkor";
+    if (GLib.file_test (s + "/prefs.js", GLib.FileTest.EXISTS)) return s;
+    throw "Obmin installation not found...";
+    return s;
+}
+
+function info (msg) {
+    if (DEBUG > 0) print ("[obmin][indicator] " + msg);
+}
+
+function debug (msg) {
+    if (DEBUG > 1) print ("[obmin][indicator] " + msg);
+}
+
+function error (msg) {
+    print ("[obmin][indicator] (EE) " + msg);
+}
+
+Convenience.initTranslations ();
+
+settings = Convenience.getSettings ();
+
+let app = new ObminIndicator ();
+app.application.run (ARGV);

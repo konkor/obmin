@@ -1,6 +1,14 @@
-obmin (2.0-1) UNRELEASED; urgency=medium
+obmin (3.0-1) UNRELEASED; urgency=medium
 
-  * Add bin scripts obmin-server and obmin-preferences
+  * Add obmin-indicator launcher for non-Gnome systems with AppIndicator supporting
+  * Add full translation supporting
+  * Add german translation
+
+ -- Kostiantyn K <kapa76@gmail.com>  Wed, 39 Aug 2017 22:29:00 +0300
+ 
+ obmin (2.0-1) UNRELEASED; urgency=medium
+
+  * Add bins obmin-server and obmin-preferences
 
  -- Kostiantyn K <kapa76@gmail.com>  Tue, 29 Aug 2017 11:45:25 +0300
 
