@@ -1,8 +1,6 @@
 wwwdir=$(datadir)/gnome-shell/extensions/obmin@konkor/data/www
 www_DATA= \
-    favicon.ico \
-    $(top_srcdir)/data/themes/default/home.png \
-    $(top_srcdir)/data/themes/default/style.css
+    favicon.ico
 
 EXTRA_DIST = \
         $(www_DATA)

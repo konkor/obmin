@@ -27,7 +27,8 @@ const Lang = imports.lang;
 const Mainloop = imports.mainloop;
 const System = imports.system;
 
-const APPDIR = getCurrentFile ()[1];
+const APPDIR = get_appdir ();
+debug ("APPDIR:" + APPDIR);
 imports.searchPath.unshift (APPDIR);
 const Convenience = imports.convenience;
 
@@ -44,6 +45,7 @@ const MOUNTS_KEY = 'mounts-settings';
 const HIDDENS_KEY = 'hidden-settings';
 const BACKUPS_KEY = 'backup-settings';
 const SOURCES_KEY = 'content-sources';
+const THEME_KEY = 'theme';
 const MODE_KEY = 'server-mode';
 const PORT_KEY = 'port';
 const DEBUG_KEY = 'debug';
@@ -55,6 +57,7 @@ let mounts = true;
 let follow_links = true;
 let check_hidden = false;
 let check_backup = false;
+let theme = APPDIR + "/data/themes/default/";
 let mode = 0;
 let port = 8088;
 let DEBUG = 1;
@@ -135,12 +138,12 @@ const ObminServer = new Lang.Class({
         } else if (path.endsWith ('style.css')) {
             msg.set_status (200);
             msg.response_headers.append ("Server", "Obmin");
-            msg.set_response ("text/css", Soup.MemoryUse.COPY, GLib.file_get_contents (APPDIR + "/data/www/style.css")[1]);
+            msg.set_response ("text/css", Soup.MemoryUse.COPY, GLib.file_get_contents (theme + "style.css")[1]);
             self.unpause_message (msg);
         } else if (path.endsWith ('home.png')) {
             msg.set_status (200);
             msg.response_headers.append ("Server", "Obmin");
-            msg.set_response ("image/png", Soup.MemoryUse.COPY, GLib.file_get_contents (APPDIR + "/data/www/home.png")[1]);
+            msg.set_response ("image/png", Soup.MemoryUse.COPY, GLib.file_get_contents (theme + "home.png")[1]);
             self.unpause_message (msg);
         } else if (path.endsWith ('index.html') && (mode == 1)) {
             return false;
@@ -497,6 +500,17 @@ function getCurrentFile () {
     return [file.get_path(), file.get_parent().get_path(), file.get_basename()];
 }
 
+function get_appdir () {
+    let s = getCurrentFile ()[1];
+    if (GLib.file_test (s + "/prefs.js", GLib.FileTest.EXISTS)) return s;
+    s = GLib.get_home_dir () + "/.local/share/gnome-shell/extensions/obmin@konkor";
+    if (GLib.file_test (s + "/prefs.js", GLib.FileTest.EXISTS)) return s;
+    s = "/usr/share/gnome-shell/extensions/obmin@konkor";
+    if (GLib.file_test (s + "/prefs.js", GLib.FileTest.EXISTS)) return s;
+    throw "Obmin installation not found...";
+    return s;
+}
+
 function sorting (a, b) {
     if (a.type != b.type) return b.type - a.type;
     if (a.name.toLowerCase() < b.name.toLowerCase()) return -1;
@@ -526,6 +540,7 @@ function load_settings () {
     mode = settings.get_int (MODE_KEY);
     port = settings.get_int (PORT_KEY);
     DEBUG = settings.get_int (DEBUG_KEY);
+    theme = APPDIR + "/data/themes/" + settings.get_string (THEME_KEY) + "/";
     let srcs =  settings.get_string (SOURCES_KEY);
     if (srcs.length > 0) check_sources (JSON.parse (srcs));
     else sources.push ({path: GLib.get_home_dir (), recursive: true});

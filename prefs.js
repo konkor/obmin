@@ -148,15 +148,7 @@ const PageGeneral = new Lang.Class({
         });
         this.theme.active = id;
         this.theme.connect ('changed', Lang.bind (this, ()=>{
-            let finfo;
-            let dir = Gio.File.new_for_path (EXTENSIONDIR + "/data/themes/" + this.theme.get_active_text());
             debug (EXTENSIONDIR + "/data/themes/" + this.theme.get_active_text());
-            if (!dir.query_exists (null)) return;
-            var e = dir.enumerate_children ("*", Gio.FileQueryInfoFlags.NONE, null);
-            while ((finfo = e.next_file (null)) != null) {
-                if (finfo.get_file_type () != Gio.FileType.DIRECTORY)
-                 Gio.File.new_for_path(dir.get_path() + "/" + finfo.get_name()).copy (Gio.File.new_for_path (EXTENSIONDIR + "/data/www/" + finfo.get_name()), Gio.FileCopyFlags.OVERWRITE, null, null);
-            }
             settings.set_string (THEME_KEY, this.theme.get_active_text());
         }));
         hbox.pack_end (this.theme, false, false, 0);
