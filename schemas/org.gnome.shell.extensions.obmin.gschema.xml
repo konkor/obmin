@@ -94,7 +94,7 @@
     </key>
 
     <key type="s" name="theme">
-        <default>''</default>
+        <default>'default'</default>
         <summary>Content theme</summary>
         <description>Last selected theme</description>
     </key>
