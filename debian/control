@@ -11,6 +11,16 @@ Package: obmin
 Architecture: all
 Depends: ${shlibs:Depends},
          ${misc:Depends},
+         gir1.2-atk-1.0,
+         gir1.2-clutter-1.0,
+         gir1.2-gdkpixbuf-2.0,
+         gir1.2-glib-2.0,
+         gir1.2-gmenu-3.0,
+         gir1.2-gtk-3.0,
+         gir1.2-gtop-2.0,
+         gir1.2-soup-2.4,
+         gir1.2-appindicator3,
+         psmisc,
          gjs
 Recommends: gnome-shell
 Description: Lightweight HTTP/File Server Extension

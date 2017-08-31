@@ -21,6 +21,7 @@
  */
 
 const Gtk = imports.gi.Gtk;
+const Gdk = imports.gi.Gdk;
 const Gio = imports.gi.Gio;
 const GLib = imports.gi.GLib;
 const AI = imports.gi.AppIndicator3;
@@ -32,6 +33,8 @@ imports.searchPath.unshift(APPDIR);
 const Gettext = imports.gettext.domain('gnome-shell-extensions-obmin');
 const _ = Gettext.gettext;
 const Convenience = imports.convenience;
+
+//const Clipboard = Gtk.Clipboard.get_default(Gdk.Display.get_default());
 
 const DEBUG_KEY = 'debug';
 const STARTUP_KEY = 'startup-settings';
@@ -73,10 +76,11 @@ const ObminIndicator = new Lang.Class ({
     },
 
     build_menu: function () {
+        var item;
         this.menu = new Gtk.Menu ();
         this.indicator = AI.Indicator.new ("Obmin", "obmin-indicator", AI.IndicatorCategory.APPLICATION_STATUS);
         this.indicator.set_icon_theme_path (APPDIR + "/data/icons");
-        this.server_switch = Gtk.CheckMenuItem.new_with_label (_("Obmin Server"));
+        this.server_switch = Gtk.CheckMenuItem.new_with_label (" "+_("Obmin Server"));
         this.server_switch.tooltip_text = _("Activate Obmin Server");
         this.server_switch.active = server;
         this.server_switch.connect ('toggled', Lang.bind (this, function () {
@@ -84,9 +88,21 @@ const ObminIndicator = new Lang.Class ({
         }));
         this.menu.append (this.server_switch);
 
-        this.menu.append (new Gtk.SeparatorMenuItem ());
+        this.info_local = new LocalItem ();
+        this.menu.append (this.info_local);
+        this.info_public = new PublicItem ();
+        this.menu.append (this.info_public);
 
-        var item = Gtk.MenuItem.new_with_label (_("Exit"));
+        this.menu.append (new Gtk.SeparatorMenuItem ());
+        item = Gtk.MenuItem.new_with_label (_("Preferences..."));
+        item.tooltip_text = _("Open Obmin Settings.");
+        item.connect ('activate', Lang.bind (this, function () {
+            GLib.spawn_command_line_async (APPDIR + '/obmin-preferences');
+        }));
+        this.menu.append (item);
+        
+        this.menu.append (new Gtk.SeparatorMenuItem ());
+        item = Gtk.MenuItem.new_with_label (_("Exit"));
         item.connect ('activate', Lang.bind (this, function () {
             app.application.quit ();
         }));
@@ -96,6 +112,11 @@ const ObminIndicator = new Lang.Class ({
         this.indicator.set_status (AI.IndicatorStatus.ACTIVE);
         this.indicator.set_icon ("obmin-off");
         this.indicator.set_menu (this.menu);
+        this.menu.connect ('show', Lang.bind (this, function () {
+            port = settings.get_int (PORT_KEY);
+            this.info_local.update ();
+            this.info_public.update ();
+        }));
     },
 
     _enable: function (state) {
@@ -125,6 +146,49 @@ const ObminIndicator = new Lang.Class ({
     }
 });
 
+const LocalItem = new Lang.Class ({
+    Name: 'LocalItem',
+    Extends: Gtk.MenuItem,
+
+    _init: function () {
+        this.prefix = _("Local IP") + ": ";
+        this.parent ({label:this.prefix + this.ip});
+    },
+
+    get ip () {
+        let l = get_info_string ("hostname -I").split (" ");
+        if (l[0]) if (l[0].length > 6) return l[0] + ":" + port;
+        return "127.0.0.1:" + port;
+    },
+
+    update: function () {
+        this.set_label (this.prefix + this.ip);
+    }
+});
+
+const PublicItem = new Lang.Class ({
+    Name: 'PublicItem',
+    Extends: Gtk.MenuItem,
+
+    _init: function () {
+        this.prefix = _("Public IP") + ": ";
+        this.parent ({label:this.prefix + this.ip});
+    },
+
+    get ip () {
+        let l = get_info_string ("curl http://ipecho.net/plain");
+        if (l.length > 6) return l;
+        return "";
+    },
+
+    update: function () {
+        let ip = this.ip;
+        if (ip) this.visible = true;
+        else this.visible = false;
+        this.set_label (this.prefix + ip);
+    }
+});
+
 function getCurrentFile () {
     let stack = (new Error()).stack;
     let stackLine = stack.split('\n')[1];
@@ -147,6 +211,14 @@ function get_appdir () {
     if (GLib.file_test (s + "/prefs.js", GLib.FileTest.EXISTS)) return s;
     throw "Obmin installation not found...";
     return s;
+}
+
+let cmd_out, info_out;
+function get_info_string (cmd) {
+    cmd_out = GLib.spawn_command_line_sync (cmd);
+    if (cmd_out[0]) info_out = cmd_out[1].toString().split("\n")[0];
+    if (info_out) return info_out;
+    return "";
 }
 
 function info (msg) {
