@@ -17,10 +17,10 @@ Depends: ${shlibs:Depends},
          gir1.2-glib-2.0,
          gir1.2-gmenu-3.0,
          gir1.2-gtk-3.0,
-         gir1.2-gtop-2.0,
          gir1.2-soup-2.4,
          gir1.2-appindicator3,
          psmisc,
+         curl,
          gjs
 Recommends: gnome-shell
 Description: Lightweight HTTP/File Server Extension
