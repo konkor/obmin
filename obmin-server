@@ -346,6 +346,7 @@ const ObminServer = new Lang.Class({
 const ContentStream = new Lang.Class({
     Name: 'ContentStream',
     _init: function (server, message, file, finfo, count) {
+        this.BUFFER = 65536;
         this.server = server;
         this.msg = message;
         this.version = message.get_http_version ();
@@ -450,7 +451,8 @@ const ContentStream = new Lang.Class({
             this.read_event = Mainloop.timeout_add (250, Lang.bind (this, this.read_more));
             return;
         }
-        this.stream.read_bytes_async (64*1024, GLib.PRIORITY_DEFAULT, null, Lang.bind (this, this.read_done));
+        if ((this.range - this.offset + 1) < this.BUFFER) this.BUFFER = this.range - this.offset + 1;
+        this.stream.read_bytes_async (this.BUFFER, GLib.PRIORITY_DEFAULT, null, Lang.bind (this, this.read_done));
         this.reads++;
     },
 
