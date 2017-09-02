@@ -99,7 +99,7 @@ const ObminIndicator = new Lang.Class ({
         if (support == 0) {
         this.menu.append (new Gtk.SeparatorMenuItem ());
         item = Gtk.ImageMenuItem.new_with_label (_("Donate..."));
-        item.image = Gtk.Image.new_from_file (APPDIR + "/data/icons/pp.svg", Gtk.IconSize.MENU);
+        item.image = Gtk.Image.new_from_file (APPDIR + "/data/icons/pp.svg");
         item.always_show_image = true;
         item.tooltip_text = _("Make a donation to the project.");
         item.connect ('activate', Lang.bind (this, function () {

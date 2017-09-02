@@ -27,7 +27,6 @@ const Tweener = imports.ui.tweener;
 const Main = imports.ui.main;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
-const Separator = imports.ui.separator;
 const Util = imports.misc.util;
 const Lang = imports.lang;
 //const Mainloop = imports.mainloop;
