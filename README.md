@@ -5,7 +5,7 @@ _It's very first alpha version. So the project can have some issues and it's loo
 
 ![screencast](https://user-images.githubusercontent.com/1944781/27997375-a73383c2-64ff-11e7-8a86-b9fddca45f42.png)
 
-**Obmin** is lightweight HTTP/File Server solution for GNU/Linux systems. The solution divided into a few parts to be more lightweight and flexible. Now Here's two parts: the server backend and the Gnome Shell Extension to control, run and monitor server part with preferences graphical frontend. In the near feature here could be more frontends for Unity/Elementary OS etc.
+**Obmin** is lightweight HTTP/File Server solution for GNU/Linux systems. The solution divided into a few parts to be more lightweight and flexible. Now Here's two parts: the server backend and the Gnome Shell Extension to control, run and monitor server part with preferences GUI. There is a supporting for Unity, KDE, Mate, LXDE, XCFE, Cinnamon, Pantheon, Badgie DE through the **obmin-indicator** and other console applications and tools.
 
 ## Main Features
 * Easy installation.
@@ -19,6 +19,7 @@ _It's very first alpha version. So the project can have some issues and it's loo
 * Content filters: symbolic links, backups, hidden files.
 * Port configuration.
 * Content theming.
+* Various Linux Desktop Environments and distributions.
 
 ## Planned Features
 * Secure HTTPS connections.
@@ -32,12 +33,32 @@ _It's very first alpha version. So the project can have some issues and it's loo
 ## Contributions
 * Report [a bug](https://github.com/konkor/obmin/issues).
 * Test it on your favorite Linux distribution.
-* Contribute with an idea, graphical content, translation or code.
+* Contribute with an idea, graphical content, translation or code [an issue](https://github.com/konkor/obmin/issues).
+* Make donation to the project:
+ * [PayPal EURO](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=WVAS5RXRMYVC4)
+ * [PayPal USD](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=HGAFMMMQ9MQJ2)
+* Contact to the author [here](https://konkor.github.io/index.html#contact).
+
+_Behind the development for the Linux Desktop are ordinary people who spend a lot of time and their own resources to make the Linux Desktop better. Thank you for your contributions!_
+
 
 ## Installation
-## Dependencies
-* gjs (apt-get install gjs)
-* Gnome Shell 3.14+ (the extension only)
+### Dependencies
+* gjs
+* GTK3 libraries:
+ * gir1.2-atk-1.0
+ * gir1.2-clutter-1.0
+ * gir1.2-glib-2.0
+ * gir1.2-gtk-3.0
+ * gir1.2-soup-2.4
+* psmisc, curl
+* gir1.2-appindicator3 (the obmin-indicator gor non-Gnome shell extension)
+* Gnome Shell 3.14+ (the gnome version only)
+
+```
+sudo apt-get update
+sudo apt-get install gjs gir1.2-atk-1.0 gir1.2-glib-2.0 gir1.2-gtk-3.0 gir1.2-soup-2.4 psmisc curl gir1.2-appindicator3
+```
 
 ### Official repository [extensions.gnome.org](https://extensions.gnome.org/extension/1254/obmin/)
 
@@ -63,3 +84,11 @@ or for `devel` branch to example
  * [local extensions page](https://extensions.gnome.org/local/)
  * or `gnome-shell-extension-prefs` tool
  * or in the `gnome-tweak-tool`
+
+[More about compilation and installation...](https://github.com/konkor/obmin/blob/master/INSTALL.md)
+
+### Sources and binary packages
+* [GitHub master branch](https://github.com/konkor/obmin/archive/master.zip)
+* [GitHub development branch](https://github.com/konkor/obmin/archive/devel.zip)
+* [Gnome extensions repository](https://extensions.gnome.org/extension/1254/obmin/)
+* [Latest deb package for Debian/Ubuntu flavors](https://github.com/konkor/obmin/raw/devel/releases/obmin_latest_all.deb)

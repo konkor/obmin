@@ -1,6 +1,5 @@
 *~
 *.bak
-*.zip
 *.tar.xz
 Makefile
 depcomp

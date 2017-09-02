@@ -34,7 +34,7 @@ zip-file: all
 	mv "$(builddir)/_build/$(jsdir)" "$(builddir)/_build/"; \
 	cp -r "$(builddir)/_build$(datadir)/locale" "$(builddir)/_build/$(EXTENSION_ID)@konkor"; \
 	(cd "$(builddir)/_build/$(EXTENSION_ID)@konkor"; \
-	 zip -qr "../../zip-files/$(EXTENSION_ID)@konkor.shell-extension.zip" .; \
+	 zip -qr "../../zip-files/$(EXTENSION_ID)@konkor.zip" .; \
 	);
 	-rm -fR $(builddir)/_build
 

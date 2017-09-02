@@ -38,9 +38,11 @@ const Convenience = imports.convenience;
 
 const DEBUG_KEY = 'debug';
 const STARTUP_KEY = 'startup-settings';
+const SUPPORT_KEY = 'support';
 const PORT_KEY = 'port';
 
 let startup = false;
+let support = 0;
 let port = 8088;
 let DEBUG = 1;
 
@@ -53,6 +55,7 @@ const ObminIndicator = new Lang.Class ({
     _init: function () {
         DEBUG = settings.get_int (DEBUG_KEY);
         startup = settings.get_boolean (STARTUP_KEY);
+        support = settings.get_int (SUPPORT_KEY);
         port = settings.get_int (PORT_KEY);
 
         this.application = new Gtk.Application ();
@@ -92,6 +95,19 @@ const ObminIndicator = new Lang.Class ({
         this.menu.append (this.info_local);
         this.info_public = new PublicItem ();
         this.menu.append (this.info_public);
+
+        if (support == 0) {
+        this.menu.append (new Gtk.SeparatorMenuItem ());
+        item = Gtk.ImageMenuItem.new_with_label (_("Donate..."));
+        item.image = Gtk.Image.new_from_file (APPDIR + "/data/icons/pp.svg", Gtk.IconSize.MENU);
+        item.always_show_image = true;
+        item.tooltip_text = _("Make a donation to the project.");
+        item.connect ('activate', Lang.bind (this, function () {
+            let app = Gio.AppInfo.get_default_for_uri_scheme ("https");
+            app.launch_uris (["https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=WVAS5RXRMYVC4"], null);
+        }));
+        this.menu.append (item);
+        }
 
         this.menu.append (new Gtk.SeparatorMenuItem ());
         item = Gtk.MenuItem.new_with_label (_("Preferences..."));

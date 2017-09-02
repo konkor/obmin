@@ -3,6 +3,7 @@ iconsdir=$(datadir)/gnome-shell/extensions/obmin@konkor/data/icons
 icons_DATA= \
     obmin-off.png \
     obmin-on.png \
+    pp.svg \
     pp.png
 
 #the application icon

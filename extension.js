@@ -34,6 +34,7 @@ const Lang = imports.lang;
 
 const STARTUP_KEY = 'startup-settings';
 const SOURCES_KEY = 'content-sources';
+const SUPPORT_KEY = 'support';
 const PORT_KEY = 'port';
 const DEBUG_KEY = 'debug';
 const SETTINGS_ID = 'org.gnome.shell.extensions.obmin';
@@ -49,6 +50,7 @@ const Gettext = imports.gettext.domain('gnome-shell-extensions-obmin');
 const _ = Gettext.gettext;
 
 let startup = false;
+let support = 0;
 let port = 8088;
 let DEBUG = 1;
 
@@ -81,6 +83,7 @@ const ObminIndicator = new Lang.Class({
 
         GLib.spawn_command_line_async ("chmod +x " + EXTENSIONDIR + "/obmin-server")
         startup = this.settings.get_boolean (STARTUP_KEY);
+        support = this.settings.get_int (SUPPORT_KEY);
         port = this.settings.get_int (PORT_KEY);
         DEBUG = this.settings.get_int (DEBUG_KEY);
         let srcs =  this.settings.get_string (SOURCES_KEY);
@@ -241,6 +244,19 @@ const PrefsMenuItem = new Lang.Class({
             this.emit ('activate');
         }));
         this.actor.add (new St.Label ({text: ' '}), { expand: true });
+        if (support == 0) {
+        this.support = new St.Button ({ child: new St.Icon ({
+            gicon:Gio.icon_new_for_string (EXTENSIONDIR + "/data/icons/pp.svg"),
+            style: 'icon-size: 18px;'
+        }), style_class: 'system-menu-action'});
+        this.actor.add (this.support, { expand: false, x_fill: false });
+        this.support.connect ('clicked', Lang.bind (this, function () {
+            let app = Gio.AppInfo.get_default_for_uri_scheme ("https");
+            app.launch_uris (["https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=WVAS5RXRMYVC4"], null);
+            this.emit ('activate');
+        }));
+        this.actor.add (new St.Label ({text: ' '}), { expand: true });
+        }
     }
 });
 

@@ -21,7 +21,6 @@
 
 const Gtk = imports.gi.Gtk;
 const Gio = imports.gi.Gio;
-//const GLib = imports.gi.GLib;
 const Lang = imports.lang;
 
 const STARTUP_KEY = 'startup-settings';
@@ -30,6 +29,7 @@ const MOUNTS_KEY = 'mounts-settings';
 const HIDDENS_KEY = 'hidden-settings';
 const BACKUPS_KEY = 'backup-settings';
 const SOURCES_KEY = 'content-sources';
+const SUPPORT_KEY = 'support';
 const THEME_KEY = 'theme';
 const MODE_KEY = 'server-mode';
 const PORT_KEY = 'port';
@@ -47,6 +47,7 @@ let links = true;
 let mounts = true;
 let hiddens = false;
 let backups = false;
+let support = 0;
 let theme = '';
 let mode = 0;
 let port = 8088;
@@ -65,6 +66,7 @@ const ObminWidget = new Lang.Class({
         startup = settings.get_boolean (STARTUP_KEY);
         port = settings.get_int (PORT_KEY);
         mode = settings.get_int (MODE_KEY);
+        support = settings.get_int (SUPPORT_KEY);
         links = settings.get_boolean (LINKS_KEY);
         mounts = settings.get_boolean (MOUNTS_KEY);
         hiddens = settings.get_boolean (HIDDENS_KEY);
@@ -115,7 +117,9 @@ const PageGeneral = new Lang.Class({
         this.box.border_width = 6;
         this.add (this.box);
 
-        this.cb_startup = Gtk.CheckButton.new_with_label (_("Load on startup"));
+        this.box.add (new Gtk.Label ({label: _("<b>System</b>"), use_markup:true, xalign:0, margin_top:8}));
+        this.cb_startup = Gtk.CheckButton.new_with_label (_("Start server on the loading"));
+        this.cb_startup.margin = 6;
         this.box.add (this.cb_startup);
         this.cb_startup.active = startup;
         this.cb_startup.connect ('toggled', Lang.bind (this, ()=>{
@@ -260,18 +264,49 @@ const PageSupport = new Lang.Class({
         this.box.border_width = 6;
         this.add (this.box);
 
-        let label = new Gtk.Label ({label: "<b>"+_("Make Donation")+"</b>", use_markup:true, xalign:0, margin:8});
+        let label = new Gtk.Label ({label: "<b>"+_("Make Donation to the project")+"</b>", use_markup:true, xalign:0, margin:8});
         this.box.add (label);
-        let hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
+        label = new Gtk.Label ({label: "<i>"+_("Behind the development for the Linux Desktop are ordinary people who spend a lot of time and their own resources to make the Linux Desktop better.")+"</i>", use_markup:true, xalign:0, margin:8});
+        label.wrap = true;
+        this.box.pack_start (label, false, false, 0);
+        let hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6, spacing:24});
         this.box.pack_start (hbox, false, false, 0);
         this.pp = new Gtk.Button ();
         this.pp.image = Gtk.Image.new_from_file (EXTENSIONDIR + "/data/icons/pp.png");
+        this.pp.tooltip_text = _("Make Donation") + " (EUR)";
         hbox.add (this.pp);
-        hbox.pack_start (label, false, false, 12);
+        this.pp.connect ('clicked', Lang.bind (this, ()=>{
+            let app = Gio.AppInfo.get_default_for_uri_scheme ("https");
+            app.launch_uris (["https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=WVAS5RXRMYVC4"], null);
+        }));
+        this.pp = new Gtk.Button ();
+        this.pp.image = Gtk.Image.new_from_file (EXTENSIONDIR + "/data/icons/pp.png");
+        this.pp.tooltip_text = _("Make Donation") + " (USD)";
+        hbox.add (this.pp);
         this.pp.connect ('clicked', Lang.bind (this, ()=>{
             let app = Gio.AppInfo.get_default_for_uri_scheme ("https");
             app.launch_uris (["https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=HGAFMMMQ9MQJ2"], null);
         }));
+        label = new Gtk.Label ({label: "<a href=\"https://github.com/konkor/obmin#contributions\" title=\"&lt;i&gt;Project&lt;/i&gt; website\">" + _("Find more about contributions...")+"</a>", use_markup:true, xalign:0, margin:8});
+        this.box.add (label);
+
+        hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
+        this.box.pack_start (hbox, false, false, 0);
+        label = new Gtk.Label ({label: _("Level of the donation notifications")});
+        hbox.add (label);
+        this.level = new Gtk.ComboBoxText ();
+        [_("INTERFACE"),_("SERVER"),_("NONE")].forEach (s => {
+            this.level.append_text (s);
+        });
+        this.level.active = support;
+        this.level.connect ('changed', Lang.bind (this, ()=>{
+            support = this.level.active;
+            settings.set_int (SUPPORT_KEY, support);
+        }));
+        hbox.pack_end (this.level, false, false, 0);
+        label = new Gtk.Label ({label: "<i>"+_("Feel free to set up a disired supporting level of the notifications if some forms anoyong you or you are already a project's contributor.")+"</i>", use_markup:true, xalign:0, margin:8});
+        label.wrap = true;
+        this.box.pack_start (label, false, false, 0);
 
         this.show_all ();
     }

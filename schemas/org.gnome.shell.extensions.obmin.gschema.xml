@@ -99,5 +99,11 @@
         <description>Last selected theme</description>
     </key>
 
+    <key type="i" name="support">
+      <default>0</default>
+      <summary>Support level</summary>
+      <description>Support level (0-full,1-part,2-none)</description>
+    </key>
+
   </schema>
 </schemalist>
