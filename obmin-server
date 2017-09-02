@@ -45,6 +45,7 @@ const MOUNTS_KEY = 'mounts-settings';
 const HIDDENS_KEY = 'hidden-settings';
 const BACKUPS_KEY = 'backup-settings';
 const SOURCES_KEY = 'content-sources';
+const SUPPORT_KEY = 'support';
 const THEME_KEY = 'theme';
 const MODE_KEY = 'server-mode';
 const PORT_KEY = 'port';
@@ -52,12 +53,16 @@ const DEBUG_KEY = 'debug';
 const SETTINGS_ID = 'org.gnome.shell.extensions.obmin';
 
 const html_head = "<head><meta charset=\"utf-8\"><title>Obmin - Simple File Sharing</title><meta name=\"viewport\" content=\"width=device-width\"><link href=\"style.css\" rel=\"stylesheet\" type=\"text/css\"></head>";
-
+const h_menu_btn = "<a class=\"nmenu-button\" href=\"javascript:void(0);\" onclick=\"toggle()\" title=\"Toggle Menu\">&#x2630;</a>";
+let h_menu = "<div id=\"navmenu\" class=\"nmenu hide\"></div>";
+const h_menu1 = "<a href=\"https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=WVAS5RXRMYVC4\" class=\"nmenu-item\" onclick=\"toggle()\" title=\"Make donation to the project\">Donate ...</a>";
+const h_js = "<script>function toggle(){var x=document.getElementById(\"navmenu\");if(x.className.indexOf(\"show\")==-1){x.className += \" show\";}else{x.className=x.className.replace(\" show\",\"\");}}</script>";
 let mounts = true;
 let follow_links = true;
 let check_hidden = false;
 let check_backup = false;
 let theme = APPDIR + "/data/themes/default/";
+let support = 0;
 let mode = 0;
 let port = 8088;
 let DEBUG = 1;
@@ -73,6 +78,7 @@ const ObminServer = new Lang.Class({
     _init: function () {
         this.parent ();
         this.access_counter = 0;
+        if (support < 2) h_menu = h_menu.replace ("</div>", h_menu1 + "</div>");
         this.add_handler (null, Lang.bind (this, this._default_handler));
         try {
             this.listen_all (port, 0);
@@ -226,7 +232,7 @@ const ObminServer = new Lang.Class({
         let self = server, slash, size, d = new Date(0), ds;
         debug ("LOCAL PATH:"+dir.get_path ());
         this.list_dir ({path: dir.get_path (), recursive: r});
-        let html_body = "<body><div class=\"path\"><a href=\"/\"><img src=\"home.png\" class=\"home\">> </a>" + this.get_path (path) + "</div><div class=\"contents\">";
+        let html_body = "<body><div class=\"path\"><a href=\"/\"><img src=\"home.png\" class=\"home\">> </a>" + this.get_path (path) + h_menu_btn + "</div>" + h_menu + "<div class=\"contents\">";
         files.forEach (f => {
             if (f.type == 2) { slash = "/"; size = "Folder";}
             else {slash = ""; size = " " + GLib.format_size (f.size);}
@@ -238,7 +244,7 @@ const ObminServer = new Lang.Class({
             html_body += "<section class=\"fileinfo\"><div class=\"date\">" + ds + "</div>";
             html_body += "<div class=\"size\">" + size + "</div></section></div></a>";
         });
-        html_body += "</div></body>";
+        html_body += "</div>" + h_js + "</body>";
         msg.response_headers.append ("Server", "Obmin");
         msg.set_response ("text/html", Soup.MemoryUse.COPY, "<html>" + html_head + html_body + "</html>");
         msg.set_status (200);
@@ -246,7 +252,7 @@ const ObminServer = new Lang.Class({
 
     _root_handler: function (server, msg) {
         let self = server, i = 0, slash, size, d = new Date(0), ds, index = null;
-        let html_body = "<body><div class=\"path\"><a href=\"/\"><img src=\"home.png\" class=\"home\">> </a></div><div class=\"contents\">";
+        let html_body = "<body><div class=\"path\"><a href=\"/\"><img src=\"home.png\" class=\"home\">> </a>" + h_menu_btn + "</div>" + h_menu + "<div class=\"contents\">";
         if (mode > 0)
             if (this._send_content (server, msg, '/index.html', this.access_counter) || (mode == 2)) return;
         files = [];
@@ -268,7 +274,7 @@ const ObminServer = new Lang.Class({
             html_body += "<div class=\"size\">" + size + "</div></section></div></a>";
             i++;
         });
-        html_body += "</div></body>";
+        html_body += "</div>" + h_js + "</body>";
         msg.response_headers.append ("Server", "Obmin");
         msg.set_response ("text/html", Soup.MemoryUse.COPY, "<html>" + html_head + html_body + "</html>");
         msg.set_status (200);
@@ -394,6 +400,7 @@ const ContentStream = new Lang.Class({
                     if (s[1]) this.range = parseInt(s[1]);
                 }
         });
+        this.range_type = (this.range - this.offset +1) < this.size;
         debug ("Request(" + this.num + ") offset " + this.offset + ":" + this.range + " from " + this.size);
         if (this.offset >= this.size) {
             this.done = true;
@@ -422,7 +429,7 @@ const ContentStream = new Lang.Class({
             this.msg.response_headers.set_content_range (this.offset,this.range,this.size);
             this.msg.response_body.set_accumulate (false);
             this.stream = this.file.read_finish (result);
-            if (this.version == 1) this.msg.set_status (206);
+            if ((this.version == 1) && this.range_type) this.msg.set_status (206);
             else this.msg.set_status (200);
             this.read_more (this.offset > 0);
         } catch (err) {
@@ -540,6 +547,7 @@ function load_settings () {
     mode = settings.get_int (MODE_KEY);
     port = settings.get_int (PORT_KEY);
     DEBUG = settings.get_int (DEBUG_KEY);
+    support = settings.get_int (SUPPORT_KEY);
     theme = APPDIR + "/data/themes/" + settings.get_string (THEME_KEY) + "/";
     let srcs =  settings.get_string (SOURCES_KEY);
     if (srcs.length > 0) check_sources (JSON.parse (srcs));

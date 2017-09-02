@@ -47,7 +47,6 @@ _Behind the development for the Linux Desktop are ordinary people who spend a lo
 * gjs
 * GTK3 libraries:
  * gir1.2-atk-1.0
- * gir1.2-clutter-1.0
  * gir1.2-glib-2.0
  * gir1.2-gtk-3.0
  * gir1.2-soup-2.4
