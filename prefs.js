@@ -173,6 +173,8 @@ const LocationEditor = new Lang.Class({
             new LocationItem (
                 this.rows.length,{path: GLib.get_home_dir(), recursive: true})
         );
+        sources.push (this.rows[this.rows.length-1].source);
+        settings.set_string (SOURCES_KEY, JSON.stringify (sources));
     },
 
     add_row: function (item) {
@@ -185,10 +187,19 @@ const LocationEditor = new Lang.Class({
     on_closed: function (o) {
         o.get_parent().destroy ();
         this.invalidate_sort ();
+        let id = o.id;
+        sources.splice (id, 1);
+        this.rows.splice (id, 1);
+        settings.set_string (SOURCES_KEY, JSON.stringify (sources));
+        for (let key = id; key < sources.length; key++) {
+            this.rows[key].id -=1;
+        }
     },
 
     on_changed: function (o) {
         this.invalidate_sort ();
+        sources[o.id] = o.source;
+        settings.set_string (SOURCES_KEY, JSON.stringify (sources));
     },
 
     sort_boxes: function (a, b) {
@@ -219,7 +230,7 @@ const LocationItem = new Lang.Class({
         [_("FOLDER"),_("FILE")].forEach (s => {
             this.ltype.append_text (s);
         });
-        debug (src.path);
+        debug (src.path + " recursive: " + src.recursive);
         if (GLib.file_test (src.path, GLib.FileTest.IS_DIR))
             this.ltype.active = 0;
         else
@@ -264,7 +275,7 @@ const LocationItem = new Lang.Class({
         }));
         this.chk_rec = new Gtk.CheckButton ();
         this.chk_rec.tooltip_text = "Recursively";
-        this.chk_rec.active = true;
+        this.chk_rec.active = this.source.recursive;
         this.hbox.add (this.chk_rec);
         this.chk_rec.connect ('toggled', Lang.bind (this, ()=>{
             this.source.recursive = this.chk_rec.active;
