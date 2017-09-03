@@ -21,6 +21,6 @@ Depends: ${shlibs:Depends},
          psmisc,
          curl,
          gjs
-Recommends: gnome-shell
+Recommends: fonts-roboto
 Description: Lightweight HTTP/File Server Extension
  One-Click File Sharing Solution for your home network or/and even worldwide.

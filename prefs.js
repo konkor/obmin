@@ -19,9 +19,10 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const Gtk = imports.gi.Gtk;
-const Gio = imports.gi.Gio;
 const Lang = imports.lang;
+const GLib = imports.gi.GLib;
+const Gio = imports.gi.Gio;
+const Gtk = imports.gi.Gtk;
 
 const STARTUP_KEY = 'startup-settings';
 const LINKS_KEY = 'links-settings';
@@ -75,12 +76,18 @@ const ObminWidget = new Lang.Class({
         if (theme.length < 1) theme = "default";
         let srcs =  settings.get_string (SOURCES_KEY);
         if (srcs.length > 0) sources = JSON.parse (srcs);
+        Gtk.Settings.get_default().set_property ("gtk-application-prefer-dark-theme", true);
 
         this.notebook = new Gtk.Notebook ({expand:true});
 
+        this.location = new PageLocation ();
+        this.notebook.add (this.location);
+        let label = new Gtk.Label ({label: _("Locations")});
+        this.notebook.set_tab_label (this.location, label);
+
         this.general = new PageGeneral ();
         this.notebook.add (this.general);
-        let label = new Gtk.Label ({label: _("General")});
+        label = new Gtk.Label ({label: _("General")});
         this.notebook.set_tab_label (this.general, label);
 
         this.behavior = new PageBehavior ();
@@ -104,6 +111,178 @@ const ObminWidget = new Lang.Class({
         this.notebook.set_tab_label (this.support, label);
 
         this.notebook.show_all ();
+    }
+});
+
+const PageLocation = new Lang.Class({
+    Name: 'PageLocation',
+    Extends: Gtk.ScrolledWindow,
+
+    _init: function () {
+        this.parent ();
+        this.box = new Gtk.Box ({orientation:Gtk.Orientation.VERTICAL, margin:0, spacing:0});
+        this.box.border_width = 0;
+        this.add (this.box);
+
+        this.hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:8});
+        this.box.add (this.hbox);
+        this.hbox.add (new Gtk.Label ({label:"<b>" + _("Shared Locations Editor") + "</b>", use_markup:true, xalign:0}));
+        this.btn  = Gtk.Button.new_from_icon_name ("list-add-symbolic", Gtk.IconSize.BUTTON);
+        this.btn.get_style_context ().add_class (Gtk.STYLE_CLASS_SUGGESTED_ACTION);
+		this.btn.tooltip_text = _("Add a location to share");
+		this.hbox.pack_end (this.btn, false, false, 0);
+
+        this.editor = new LocationEditor ();
+        this.editor.expand = true;
+        this.scroll = new Gtk.ScrolledWindow ();
+        this.scroll.vscrollbar_policy = Gtk.PolicyType.AUTOMATIC;
+        this.scroll.shadow_type = Gtk.ShadowType.NONE;
+        this.scroll.get_style_context ().add_class ("search-bar");
+        this.box.pack_start (this.scroll, false, true, 0);
+        this.scroll.add (this.editor);
+
+		this.btn.connect ('clicked', Lang.bind (this, ()=>{
+            this.editor.add_new ();
+        }));
+
+        this.show_all ();
+    }
+});
+
+const LocationEditor = new Lang.Class({
+    Name: 'LocationEditor',
+    Extends: Gtk.FlowBox,
+
+    _init: function () {
+        this.parent ();
+        this.homogeneous = false;
+		this.get_style_context ().add_class ("search-bar");
+		this.margin = 0;
+		this.selection_mode = Gtk.SelectionMode.NONE;
+		this.max_children_per_line = 1;
+		this.valign = Gtk.Align.START;
+		this.set_sort_func (this.sort_boxes);
+		this.rows = [];
+		sources.forEach (s => {
+		    this.add_row (new LocationItem (this.rows.length, s));
+		});
+    },
+
+    add_new: function () {
+        this.add_row (
+            new LocationItem (
+                this.rows.length,{path: GLib.get_home_dir(), recursive: true})
+        );
+    },
+
+    add_row: function (item) {
+        this.add (item);
+        this.rows.push (item);
+        item.connect ('closed', Lang.bind (this, this.on_closed));
+        item.connect ('changed', Lang.bind (this, this.on_changed));
+    },
+
+    on_closed: function (o) {
+        o.get_parent().destroy ();
+        this.invalidate_sort ();
+    },
+
+    on_changed: function (o) {
+        this.invalidate_sort ();
+    },
+
+    sort_boxes: function (a, b) {
+        var row1 = a.get_child ();
+        var row2 = b.get_child ();
+        if (row1 == null) return 1;
+		if (row2 == null) return -1;
+		if (row1.ltype.active == row2.ltype.active) return 0;
+		if (row1.ltype.active < row2.ltype.active) return -1;
+        return 1;
+    }
+});
+
+const LocationItem = new Lang.Class({
+    Name: 'LocationItem',
+    Extends: Gtk.Box,
+    Signals: {
+        'closed': {},
+        'changed': {},
+    },
+
+    _init: function (id, src) {
+        this.parent ({orientation:Gtk.Orientation.HORIZONTAL, margin:2, spacing:8});
+        this.id = id;
+        this.margin_right = 4;
+        this.source = src;//{path: GLib.get_home_dir (), recursive: true};
+        this.ltype = new Gtk.ComboBoxText ();
+        [_("FOLDER"),_("FILE")].forEach (s => {
+            this.ltype.append_text (s);
+        });
+        debug (src.path);
+        if (GLib.file_test (src.path, GLib.FileTest.IS_DIR))
+            this.ltype.active = 0;
+        else
+            this.ltype.active = 1;
+        this.ltype.connect ('changed', Lang.bind (this, ()=>{
+            this.create_type_widgets ();
+			this.emit ('changed');
+        }));
+        this.add (this.ltype);
+        this.hbox = null;
+        this.create_type_widgets ();
+        this.btn  = Gtk.Button.new_from_icon_name ("window-close-symbolic",
+														Gtk.IconSize.BUTTON);
+		this.btn.get_style_context ().add_class (Gtk.STYLE_CLASS_ACCELERATOR);
+		this.btn.tooltip_text = _("Remove this location from the sharing");
+		this.pack_end (this.btn, false, false, 0);
+		this.btn.connect ('clicked', Lang.bind (this, ()=>{
+            this.emit ('closed');
+        }));
+		this.show_all ();
+    },
+
+    create_type_widgets: function () {
+        if (this.hbox) this.hbox.destroy ();
+        this.hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, spacing:8});
+        this.pack_start (this.hbox, true, true, 0);
+        if (this.ltype.active == 0) this._dir_widget ();
+        else this._file_widget ();
+        this.hbox.show_all ();
+    },
+
+    _dir_widget: function () {
+        this.chooser = new Gtk.FileChooserButton ({title: _("Select folder"),
+                           action: Gtk.FileChooserAction.SELECT_FOLDER});
+        this.chooser.set_current_folder (this.source.path);
+        this.chooser.tooltip_text = this.source.path;
+        this.hbox.pack_start (this.chooser, true, true, 0);
+        this.chooser.connect ('file_set', Lang.bind (this, ()=>{
+            this.source.path = this.chooser.get_filename ();
+            this.chooser.tooltip_text = this.source.path;
+            this.emit ('changed');
+        }));
+        this.chk_rec = new Gtk.CheckButton ();
+        this.chk_rec.tooltip_text = "Recursively";
+        this.chk_rec.active = true;
+        this.hbox.add (this.chk_rec);
+        this.chk_rec.connect ('toggled', Lang.bind (this, ()=>{
+            this.source.recursive = this.chk_rec.active;
+            this.emit ('changed');
+        }));
+    },
+
+    _file_widget: function () {
+        this.chooser = new Gtk.FileChooserButton ({title:_("Select file"),
+                           action:Gtk.FileChooserAction.OPEN});
+        this.chooser.set_filename (this.source.path);
+        this.chooser.tooltip_text = this.source.path;
+        this.hbox.pack_start (this.chooser, true, true, 0);
+        this.chooser.connect ('file_set', Lang.bind (this, ()=>{
+            this.source.path = this.chooser.get_filename ();
+            this.chooser.tooltip_text = this.source.path;
+            this.emit ('changed');
+        }));
     }
 });
 
