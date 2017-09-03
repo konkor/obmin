@@ -192,9 +192,17 @@ const PublicItem = new Lang.Class ({
     },
 
     get ip () {
-        let l = get_info_string ("curl http://ipecho.net/plain");
-        if (l.length > 6) return l;
-        return "";
+        let l = "";
+        this.curl = GLib.find_program_in_path ('curl');
+        if (this.curl) {
+            l = get_info_string ("curl http://ipecho.net/plain");
+        } else {
+            this.curl = GLib.find_program_in_path ('wget');
+            if (this.curl) {
+                l = get_info_string ("wget -qO- http://ipecho.net/plain | less");
+            }
+        }
+        return l;
     },
 
     update: function () {
