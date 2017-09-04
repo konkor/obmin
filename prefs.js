@@ -76,7 +76,7 @@ const ObminWidget = new Lang.Class({
         if (theme.length < 1) theme = "default";
         let srcs =  settings.get_string (SOURCES_KEY);
         if (srcs.length > 0) sources = JSON.parse (srcs);
-        Gtk.Settings.get_default().set_property ("gtk-application-prefer-dark-theme", true);
+        //Gtk.Settings.get_default().set_property ("gtk-application-prefer-dark-theme", true);
 
         this.notebook = new Gtk.Notebook ({expand:true});
 
