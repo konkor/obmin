@@ -70,6 +70,7 @@ const ObminIndicator = new Lang.Class ({
     _onStartup: function () {
         this._window = new Gtk.Window ();
         this._window.title = "Obmin";
+        this._window.set_icon_name ('obmin');
         this._window.set_default_size (512, 320);
         this.application.add_window (this._window);
         server = this.server_enabled;

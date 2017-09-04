@@ -1,3 +1,11 @@
+obmin (4.0-1) UNRELEASED; urgency=medium
+
+  * Add supporting for non-Gnome
+  * Update UI, documentations
+  * Fix minnor issues
+
+ -- Kostiantyn K <kapa76@gmail.com>  Mon, 4 Sep 2017 16:48:00 +0300
+
 obmin (3.0-1) UNRELEASED; urgency=medium
 
   * Add obmin-indicator launcher for non-Gnome systems with AppIndicator supporting
@@ -14,6 +22,6 @@ obmin (3.0-1) UNRELEASED; urgency=medium
 
 obmin (1.0-1) UNRELEASED; urgency=medium
 
-  * Initial release. (Closes: #XXXXXX)
+  * Initial release
 
  -- Kostiantyn K <kapa76@gmail.com>  Mon, 28 Aug 2017 13:45:25 +0300

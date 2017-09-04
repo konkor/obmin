@@ -45,6 +45,7 @@ const Preferences = new Lang.Class ({
     _onStartup: function () {
         this._window = new Gtk.Window ();
         this._window.title = "Obmin";
+        this._window.set_icon_name ('obmin');
         this._window.set_default_size (512, 380);
         Prefs.init ();
         let w = new Prefs.ObminWidget ();

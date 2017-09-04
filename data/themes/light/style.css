@@ -1,5 +1,5 @@
 /* Obmin style */
-body {background: #f0f0f0;font-family: sans;font-size: 1.0em; margin: 0px;}
+body {background: #f0f0f0;font-family:roboto,sans;font-size: 1.0em; margin: 0px;}
 a,a:visited,a:focus {text-decoration:none;color: #f0f0f0;}
 a:hover,a:active {color: #0c3955;}
 .home {height:32px;}

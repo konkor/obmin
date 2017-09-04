@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="3.0"
+VERSION="4.0"
 
 rm -rf debs
 mkdir debs
