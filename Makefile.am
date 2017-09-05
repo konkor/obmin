@@ -4,18 +4,22 @@ EXTENSION_ID = obmin
 
 packagedir = gnome-shell/extensions
 
-DIST_SUBDIRS = data schemas po
+DIST_SUBDIRS = man data schemas po
 
 SUBDIRS = man data schemas po
 
 jsdir = $(datadir)/$(packagedir)/$(EXTENSION_ID)@konkor
 js_DATA = \
     README.md \
+	INSTALL.md \
+    extension.js \
+    prefs.js \
+    convenience.js \
 	metadata.json \
 	stylesheet.css \
 	config_sample.json
 
-js_SCRIPTS = extension.js prefs.js convenience.js obmin-server obmin-preferences obmin-indicator
+js_SCRIPTS = obmin-server obmin-preferences obmin-indicator
 
 bin_SCRIPTS = obmin-server obmin-preferences obmin-indicator
 
@@ -23,9 +27,7 @@ dist_js_DATA = $(js_SCRIPTS)
 
 dist_doc_DATA = \
 	README.md \
-	INSTALL.md \
-	config_sample.json \
-	debian/changelog
+	config_sample.json
 
 EXTRA_DIST = $(js_DATA)
 

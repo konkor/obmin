@@ -5,6 +5,6 @@ Exec=obmin-indicator
 Icon=obmin
 Terminal=false
 Type=Application
-Categories=Network;Server;GNOME;Utility;
+Categories=Network;FileTransfer;GNOME;Application;
 Keywords=obmin;internet;server;share;
 StartupNotify=true

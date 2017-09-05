@@ -12,9 +12,9 @@ obmin (3.0-1) UNRELEASED; urgency=medium
   * Add full translation supporting
   * Add german translation
 
- -- Kostiantyn K <kapa76@gmail.com>  Wed, 39 Aug 2017 22:29:00 +0300
+ -- Kostiantyn K <kapa76@gmail.com>  Wed, 29 Aug 2017 22:29:00 +0300
  
- obmin (2.0-1) UNRELEASED; urgency=medium
+obmin (2.0-1) UNRELEASED; urgency=medium
 
   * Add bins obmin-server and obmin-preferences
 
