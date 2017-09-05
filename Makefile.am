@@ -6,7 +6,7 @@ packagedir = gnome-shell/extensions
 
 DIST_SUBDIRS = data schemas po
 
-SUBDIRS = data schemas po
+SUBDIRS = man data schemas po
 
 jsdir = $(datadir)/$(packagedir)/$(EXTENSION_ID)@konkor
 js_DATA = \
