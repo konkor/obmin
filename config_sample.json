@@ -1,0 +1,14 @@
+{
+"port":8087,
+"mode":0,
+"debug":1,
+"mounts":true,
+"links":true,
+"hiddens":false,
+"backups":true,
+"theme":"default",
+"sources":[
+    {"path":"/mnt/archive/src/obmin","recursive":true},
+    {"path":"/home/kapa","recursive":true}
+]
+}

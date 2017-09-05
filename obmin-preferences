@@ -46,7 +46,7 @@ const Preferences = new Lang.Class ({
         this._window = new Gtk.Window ();
         this._window.title = "Obmin";
         this._window.set_icon_name ('obmin');
-        this._window.set_default_size (512, 380);
+        this._window.set_default_size (512, 420);
         Prefs.init ();
         let w = new Prefs.ObminWidget ();
         this._window.add (w.notebook);

@@ -12,13 +12,20 @@ jsdir = $(datadir)/$(packagedir)/$(EXTENSION_ID)@konkor
 js_DATA = \
     README.md \
 	metadata.json \
-	stylesheet.css
+	stylesheet.css \
+	config_sample.json
 
 js_SCRIPTS = extension.js prefs.js convenience.js obmin-server obmin-preferences obmin-indicator
 
 bin_SCRIPTS = obmin-server obmin-preferences obmin-indicator
 
 dist_js_DATA = $(js_SCRIPTS)
+
+dist_doc_DATA = \
+	README.md \
+	INSTALL.md \
+	config_sample.json \
+	debian/changelog
 
 EXTRA_DIST = $(js_DATA)
 

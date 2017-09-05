@@ -12,7 +12,6 @@ Architecture: all
 Depends: ${shlibs:Depends},
          ${misc:Depends},
          gir1.2-atk-1.0,
-         gir1.2-clutter-1.0,
          gir1.2-gdkpixbuf-2.0,
          gir1.2-glib-2.0,
          gir1.2-gtk-3.0,
@@ -21,6 +20,6 @@ Depends: ${shlibs:Depends},
          psmisc,
          curl,
          gjs
-Recommends: fonts-roboto
-Description: Lightweight HTTP/File Server Extension
- One-Click File Sharing Solution for your home network or/and even worldwide.
+Recommends: fonts-roboto, wget
+Description: Lightweight HTTP File Server
+ One-Click File Sharing Solution for your network.

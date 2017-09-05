@@ -542,20 +542,59 @@ function error (msg) {
 }
 
 let settings = Convenience.getSettings();
+let config = {};
 
 function load_settings () {
-    mounts = settings.get_boolean (MOUNTS_KEY);
-    follow_links = settings.get_boolean (LINKS_KEY);
-    check_hidden = settings.get_boolean (HIDDENS_KEY);
-    check_backup = settings.get_boolean (BACKUPS_KEY);
-    mode = settings.get_int (MODE_KEY);
-    port = settings.get_int (PORT_KEY);
-    DEBUG = settings.get_int (DEBUG_KEY);
+    let cfg = false, s, f, srcs;
+    for (let i = 0; i < ARGV.length; i++) {
+        s = ARGV[i];
+        if (cfg) {
+            cfg = false;
+            f = Gio.File.new_for_path (s);
+            if (f.query_exists (null)) {
+                try {
+                srcs = f.load_contents (null)[1];
+                if (srcs && (srcs.length > 0)) {
+                    debug (srcs);
+                    config = JSON.parse (srcs);
+                }
+                } catch (e) {error (e);}
+            }
+        }
+        if ((s == "-h") || (s == "--help")) {
+            print ("obmin-server [[OPTIONS] [PARAMETERS]]\n" +
+            " --help : Show this screen\n" +
+            " --config FILENAME : Load JSON configuration from the FILENAME\n");
+            return false;
+        }
+        if (s == "--config") {
+            cfg = true;
+        }
+    }
+    if (config.mounts) mounts = config.mounts;
+    else mounts = settings.get_boolean (MOUNTS_KEY);
+    if (config.links) follow_links = config.links;
+    else follow_links = settings.get_boolean (LINKS_KEY);
+    if (config.hiddens) check_hidden = config.hiddens;
+    else check_hidden = settings.get_boolean (HIDDENS_KEY);
+    if (config.backups) check_backup = config.backups;
+    else check_backup = settings.get_boolean (BACKUPS_KEY);
+    if (config.mode) mode = config.mode;
+    else mode = settings.get_int (MODE_KEY);
+    if (config.port) port = config.port;
+    else port = settings.get_int (PORT_KEY);
+    if (config.debug) DEBUG = config.debug;
+    else DEBUG = settings.get_int (DEBUG_KEY);
     support = settings.get_int (SUPPORT_KEY);
-    theme = APPDIR + "/data/themes/" + settings.get_string (THEME_KEY) + "/";
-    let srcs =  settings.get_string (SOURCES_KEY);
-    if (srcs.length > 0) check_sources (JSON.parse (srcs));
-    else sources.push ({path: GLib.get_home_dir (), recursive: true});
+    if (config.theme) theme = APPDIR + "/data/themes/" + config.theme + "/";
+    else theme = APPDIR + "/data/themes/" + settings.get_string (THEME_KEY) + "/";
+    if (config.sources) check_sources (config.sources);
+    else {
+        srcs = settings.get_string (SOURCES_KEY);
+        if (srcs.length > 0) check_sources (JSON.parse (srcs));
+        else sources.push ({path: GLib.get_home_dir (), recursive: true});
+    }
+    return true;
 }
 
 function check_sources (list) {
@@ -563,7 +602,8 @@ function check_sources (list) {
     list.forEach (s => {if (GLib.file_test (s.path, GLib.FileTest.EXISTS)) sources.push (s);});
 }
 
-load_settings ();
-let obmin = new ObminServer ();
-
-Mainloop.run ('obminMainloop');
+let obmin;
+if (load_settings ()) {
+    obmin = new ObminServer ();
+    Mainloop.run ('obminMainloop');
+}
