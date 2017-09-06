@@ -8,7 +8,7 @@
 "backups":true,
 "theme":"default",
 "sources":[
-    {"path":"/mnt/archive/src/obmin","recursive":true},
-    {"path":"/home/kapa","recursive":true}
+    {"path":"/mnt/archive","recursive":true},
+    {"path":"/home/user","recursive":true}
 ]
 }

@@ -4,24 +4,24 @@
 
 ## Installation
 ### Dependencies
-* gjs
+* gjs (core dependency)
 * GTK3 libraries:
  * gir1.2-atk-1.0
- * gir1.2-clutter-1.0
  * gir1.2-glib-2.0
  * gir1.2-gtk-3.0
  * gir1.2-soup-2.4
-* psmisc, curl
-* gir1.2-appindicator3 (the obmin-indicator gor non-Gnome shell extension)
+* psmisc, curl or wget (mics tools for applets)
+* gir1.2-appindicator3 (the obmin-indicator for non-Gnome shell extension)
 * Gnome Shell 3.14+ (the gnome version only)
-* Font Roboto (recommendation)
+* Font Roboto (recommended for the client side browsers)
 
 ```
 sudo apt-get update
 sudo apt-get install gjs gir1.2-atk-1.0 gir1.2-glib-2.0 gir1.2-gtk-3.0 gir1.2-soup-2.4 psmisc curl gir1.2-appindicator3
 ```
 
-### Official repository [extensions.gnome.org](https://extensions.gnome.org/extension/1254/obmin/)
+### Install From Gnome repository [extensions.gnome.org](https://extensions.gnome.org/extension/1254/obmin/)
+_Notice about Gnome repo a releasing can take some time from few hours to few weeks here._
 
 ### Install on Debian/Ubuntu flavors [binary package](#sources-and-binary-packages)
 `This method is useful for almost distributions and desktop environments`
@@ -103,5 +103,5 @@ cd packaging
 
 ## Check your installation
 1. Enable Obmin Server from user interface or run it in terminal.
-2. Open your browser and enter the local IP address and obmin server port (default 8088). So you can look your local address in the gnome or obmin-indicator applets it's looking like http:/192.168.1.10:8088 to an example or just enter localhost:8088. You should see obmin home page with selected file locations or link to your Home Folder if it's not configured yet.
-3. Now you can check it from other devices (mobile phones, other machines) connected to the same the network. Do the same at 2 for your local IP address (ex. http:/192.168.1.10:8088). `If not you have to check your Firewalls on the server and/or guest sides.`
+2. Open your browser and enter the local IP address and obmin server port (default 8088). So you can look your local address in the gnome or obmin-indicator applets it's looking like http://192.168.1.10:8088 to an example or just enter localhost:8088. You should see obmin home page with selected file locations or link to your Home Folder if it's not configured yet.
+3. Now you can check it from other devices (mobile phones, other machines) connected to the same the network. Do the same at 2 for your local IP address (ex. http://192.168.1.10:8088). `If not you have to check your Firewalls on the server and/or guest sides.`

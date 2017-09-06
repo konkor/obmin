@@ -1,11 +1,11 @@
 # [OBMIN](https://extensions.gnome.org/extension/1254/obmin/)
-**One-Click** File Sharing Solution for your home network or/and even worldwide.
+**One-Click** File Sharing Solution for your home network and even worldwide.
 -----
-_It's very first alpha version. So the project can have some issues and it's looking for [your contribution](#contributions) for better supporting and growing._
+_The project is under development. So the project can have some issues and it's looking for [your contribution](#contributions) for better supporting and growing._
 
 ![screencast](https://user-images.githubusercontent.com/1944781/27997375-a73383c2-64ff-11e7-8a86-b9fddca45f42.png)
 
-**Obmin** is lightweight HTTP/File Server solution for GNU/Linux systems. The solution divided into a few parts to be more lightweight and flexible. Now Here's two parts: the server backend and the Gnome Shell Extension to control, run and monitor server part with preferences GUI. There is a supporting for Unity, KDE, Mate, LXDE, XCFE, Cinnamon, Pantheon, Badgie DE through the **obmin-indicator** and other console applications and tools.
+**Obmin** has convenient user-friendly systray applets for many Desktop Environments like Gnome Shell, Unity, KDE, Mate, LXDE, XCFE, Cinnamon, Pantheon, Badgie DE through the **obmin-indicator** and [Gnome Obmin Extension](https://extensions.gnome.org/extension/1254/obmin/).
 
 ## Main Features
 * Easy installation.
@@ -25,10 +25,10 @@ _It's very first alpha version. So the project can have some issues and it's loo
 * Secure HTTPS connections.
 * HTTP authorization.
 * Detailed statistic about traffic, incoming connections so.
-* Other security options like run on a local home network only.
-* Allowed IP Addresses.
 * Embedded JavaScript applications for compressing, slideshow, music player, playlist/file lists generator, video player.
 * More
+
+## Project [Wiki](https://github.com/konkor/obmin/wiki)
 
 ## Contributions
 * Report [a bug](https://github.com/konkor/obmin/issues).
@@ -44,22 +44,24 @@ _Behind the development for the Linux Desktop are ordinary people who spend a lo
 
 ## Installation
 ### Dependencies
-* gjs
+* gjs (core dependency)
 * GTK3 libraries:
  * gir1.2-atk-1.0
  * gir1.2-glib-2.0
  * gir1.2-gtk-3.0
  * gir1.2-soup-2.4
-* psmisc, curl
-* gir1.2-appindicator3 (the obmin-indicator gor non-Gnome shell extension)
+* psmisc, curl or wget (mics tools for applets)
+* gir1.2-appindicator3 (the obmin-indicator for non-Gnome shell extension)
 * Gnome Shell 3.14+ (the gnome version only)
 
+Debian/Ubuntu flavors:
 ```
 sudo apt-get update
-sudo apt-get install gjs gir1.2-atk-1.0 gir1.2-glib-2.0 gir1.2-gtk-3.0 gir1.2-soup-2.4 psmisc curl gir1.2-appindicator3
+sudo apt-get install gjs gir1.2-gtk-3.0 gir1.2-soup-2.4 psmisc curl gir1.2-appindicator3
 ```
 
-### Official repository [extensions.gnome.org](https://extensions.gnome.org/extension/1254/obmin/)
+### Install From Gnome repository [extensions.gnome.org](https://extensions.gnome.org/extension/1254/obmin/)
+_Notice about Gnome repo a releasing can take some time from few hours to few weeks here._
 
 ### Install from GitHub branch (default master)
 1. Download [install_obmin.sh](https://github.com/konkor/obmin/raw/master/install_obmin.sh)
