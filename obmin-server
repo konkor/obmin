@@ -38,6 +38,7 @@ const ATTRIBUTES = "standard," +
     Gio.FILE_ATTRIBUTE_UNIX_MODE + "," +
     Gio.FILE_ATTRIBUTE_UNIX_INODE + "," +
     Gio.FILE_ATTRIBUTE_UNIX_DEVICE + "," +
+    Gio.FILE_ATTRIBUTE_UNIX_IS_MOUNTPOINT + "," +
     Gio.FILE_ATTRIBUTE_ACCESS_CAN_READ;
 
 const LINKS_KEY = 'links-settings';
@@ -72,6 +73,7 @@ let DEBUG = 1;
 let server = null;
 let files = [];
 let sources = [];
+let excluded = [];
 
 const ObminServer = new Lang.Class({
     Name: 'ObminServer',
@@ -289,7 +291,7 @@ const ObminServer = new Lang.Class({
         files = [];
         if (!dir.query_exists (null)) return;
         try {
-            finfo = dir.query_info ("*", 0, null);
+            finfo = dir.query_info (ATTRIBUTES, 0, null);
             if (finfo.get_is_symlink ()) {
                 if (follow_links) {
                     loc.path = finfo.get_symlink_target ();
@@ -299,6 +301,7 @@ const ObminServer = new Lang.Class({
                 } else return;
             }
             if (!finfo.get_attribute_boolean (Gio.FILE_ATTRIBUTE_ACCESS_CAN_READ)) return;
+            if (!mounts && finfo.get_attribute_boolean (Gio.FILE_ATTRIBUTE_UNIX_IS_MOUNTPOINT)) return;
             if (finfo.get_file_type () == Gio.FileType.REGULAR) {
                 this.add_file (finfo, loc.path);
                 return;
@@ -573,6 +576,7 @@ function load_settings () {
     }
     if (config.mounts) mounts = config.mounts;
     else mounts = settings.get_boolean (MOUNTS_KEY);
+    get_excluded_locations ();
     if (config.links) follow_links = config.links;
     else follow_links = settings.get_boolean (LINKS_KEY);
     if (config.hiddens) check_hidden = config.hiddens;
@@ -600,6 +604,14 @@ function load_settings () {
 function check_sources (list) {
     sources = [];
     list.forEach (s => {if (GLib.file_test (s.path, GLib.FileTest.EXISTS)) sources.push (s);});
+}
+
+function get_excluded_locations () {
+    excluded = [];
+    excluded.push ("/dev");
+    excluded.push ("/proc");
+    excluded.push ("/sys");
+    excluded.push ("/selinux");
 }
 
 let obmin;
