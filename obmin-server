@@ -56,7 +56,7 @@ const SETTINGS_ID = 'org.gnome.shell.extensions.obmin';
 const html_head = "<head><meta charset=\"utf-8\"><title>Obmin - Simple File Sharing</title><meta name=\"viewport\" content=\"width=device-width\"><link href=\"style.css\" rel=\"stylesheet\" type=\"text/css\"></head>";
 const h_menu_btn = "<a class=\"nmenu-button\" href=\"javascript:void(0);\" onclick=\"toggle()\" title=\"Toggle Menu\">&#x2630;</a>";
 let h_menu = "<div id=\"navmenu\" class=\"nmenu hide\">" +
-    "<a href=\"?filelist=all\" class=\"nmenu-item\" onclick=\"toggle()\" title=\"Generate URL File List\">Filelist ...</a>" +
+    "<a href=\"?list=urls\" class=\"nmenu-item\" onclick=\"toggle()\" title=\"Generate URL File List\">Filelist ...</a>" +
     "<a href=\"https://konkor.github.io\" class=\"nmenu-item\" onclick=\"toggle()\" title=\"Project Website\">About ...</a>" +
     "</div>";
 const h_menu1 = "<a href=\"https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=WVAS5RXRMYVC4\" class=\"nmenu-item\" onclick=\"toggle()\" title=\"Make donation to the project\">Donate ...</a>";
@@ -107,13 +107,13 @@ const ObminServer = new Lang.Class({
         debug ("Default handler start (" + this.access_counter + ")");
         GLib.timeout_add_seconds (0, 0, Lang.bind (this, function () {
             if (path == '/') this._root_handler (server, msg);
-            else this._send_content (self, msg, path, num);
+            else this._send_content (self, msg, path, num, query);
             return false;
         }));
         self.pause_message (msg);
     },
 
-    _send_content: function (server, msg, path, num) {
+    _send_content: function (server, msg, path, num, query) {
         let self = server;
         let file, r, finfo;
         [file, r] = this.get_file (path);
@@ -122,7 +122,9 @@ const ObminServer = new Lang.Class({
             if (finfo.get_file_type () == 2) {
                 if (mode > 0)
                     if (this._send_content (server, msg, path + 'index.html', this.access_counter) || (mode == 2)) return true;
-                this.get_dir (self, msg, file, r, path);
+                if (query && query.list) {
+                    if (query.list == "urls") this.get_urls (self, msg, file, r, path);
+                } else this.get_dir (self, msg, file, r, path);
                 self.unpause_message (msg);
             } else {
                 if (finfo.get_size () < 65536) {
@@ -234,9 +236,25 @@ const ObminServer = new Lang.Class({
         return res;
     },
 
+    get_urls: function (server, msg, dir, r, path) {
+        let list = "", ref = "";
+        debug ("list: " + dir.get_path ());
+        msg.request_headers.foreach ( (n, v) => {
+            if (n.toLowerCase() == "referer") ref = v;
+        });
+        this.list_dir ({path: dir.get_path (), recursive: r}, true);
+        files.forEach (f => {
+            list += ref + "" + f.name + "\n";
+        });
+        msg.response_headers.append ("Server", "Obmin");
+        msg.response_headers.append ("Content-Disposition", "filename=\"" + dir.get_basename () + ".urls\"");
+        msg.set_response ("text/plain", Soup.MemoryUse.COPY, list);
+        msg.set_status (200);
+    },
+
     get_dir: function (server, msg, dir, r, path) {
         let self = server, slash, size, d = new Date(0), ds;
-        debug ("LOCAL PATH:"+dir.get_path ());
+        debug ("DIR:"+dir.get_path ());
         this.list_dir ({path: dir.get_path (), recursive: r});
         let html_body = "<body><div class=\"path\"><a href=\"/\"><img src=\"home.png\" class=\"home\">> </a>" + this.get_path (path) + h_menu_btn + "</div>" + h_menu + "<div class=\"contents\">";
         files.forEach (f => {
@@ -287,7 +305,7 @@ const ObminServer = new Lang.Class({
         self.unpause_message (msg);
     },
 
-    list_dir: function (loc) {
+    list_dir: function (loc, list) {
         var finfo;
         var dir = Gio.File.new_for_path (loc.path);
         files = [];
@@ -320,7 +338,7 @@ const ObminServer = new Lang.Class({
                 }
                 switch (finfo.get_file_type ()) {
                     case Gio.FileType.DIRECTORY:
-                        if (loc.recursive) {
+                        if (loc.recursive && !list) {
                             let l = {path: loc.path + "/" + finfo.get_name (), recursive: true};
                             this.add_file (finfo, loc.path);
                         }

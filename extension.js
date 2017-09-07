@@ -403,7 +403,8 @@ const InfoMenuItem = new Lang.Class ({
         this.parent (label, {reactive: reactive, style_class: style?style:'obmin-info-item'});
         this.label.x_expand = true;
         this.info = new St.Label ({text: ' ', style_class: style_info?style_info:"", reactive:true, can_focus: true, track_hover: true });
-        this.actor.add_child (this.info, {align:St.Align.END});
+        this.info.align = St.Align.END;
+        this.actor.add_child (this.info);
         this.info.connect ('notify::text', Lang.bind (this, function () {
             this.actor.visible = this.info.text.length > 0;
         }));
