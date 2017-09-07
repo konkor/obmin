@@ -5,7 +5,7 @@ _The project is under development. So the project can have some issues and it's 
 
 ![screencast](https://user-images.githubusercontent.com/1944781/27997375-a73383c2-64ff-11e7-8a86-b9fddca45f42.png)
 
-**Obmin** has convenient user-friendly systray applets for many Desktop Environments like Gnome Shell, Unity, KDE, Mate, LXDE, XCFE, Cinnamon, Pantheon, Badgie DE through the **obmin-indicator** and [Gnome Obmin Extension](https://extensions.gnome.org/extension/1254/obmin/).
+**Obmin** has convenient user-friendly systray applets for many Desktop Environments like Gnome Shell, Unity, KDE, Mate, LXDE, XFCE, Cinnamon, Pantheon, Badgie DE through the **obmin-indicator** and [Gnome Obmin Extension](https://extensions.gnome.org/extension/1254/obmin/).
 
 ## Main Features
 * Easy installation.
@@ -61,7 +61,10 @@ sudo apt-get install gjs gir1.2-gtk-3.0 gir1.2-soup-2.4 psmisc curl gir1.2-appin
 ```
 
 ### Install From Gnome repository [extensions.gnome.org](https://extensions.gnome.org/extension/1254/obmin/)
-_Notice about Gnome repo a releasing can take some time from few hours to few weeks here._
+
+_Notice about Gnome repository a releasing can take some time from few hours to few weeks here._ So to install the latest stable version you can install it via [Gnome extension package](https://github.com/konkor/obmin/raw/master/releases/obmin%40konkor.zip) through gnome-tweak-tool or simply by extracting the downloaded package to ~/.local/share/gnome-shell/extensions/obmin@konkor home folder.
+
+**Remember** if you have installed Obmin on the system widely by deb package or manual installation the local extension installation has a priority and overriding system installation on Gnome Shell. So if you want to install newest different version you have to remove the local installation first at [Installed Extensions](https://extensions.gnome.org/local/) page.
 
 ### Install from GitHub branch (default master)
 1. Download [install_obmin.sh](https://github.com/konkor/obmin/raw/master/install_obmin.sh)
