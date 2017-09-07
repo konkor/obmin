@@ -56,6 +56,7 @@ const SETTINGS_ID = 'org.gnome.shell.extensions.obmin';
 const html_head = "<head><meta charset=\"utf-8\"><title>Obmin - Simple File Sharing</title><meta name=\"viewport\" content=\"width=device-width\"><link href=\"style.css\" rel=\"stylesheet\" type=\"text/css\"></head>";
 const h_menu_btn = "<a class=\"nmenu-button\" href=\"javascript:void(0);\" onclick=\"toggle()\" title=\"Toggle Menu\">&#x2630;</a>";
 let h_menu = "<div id=\"navmenu\" class=\"nmenu hide\">" +
+    "<a href=\"?filelist=all\" class=\"nmenu-item\" onclick=\"toggle()\" title=\"Generate URL File List\">Filelist ...</a>" +
     "<a href=\"https://konkor.github.io\" class=\"nmenu-item\" onclick=\"toggle()\" title=\"Project Website\">About ...</a>" +
     "</div>";
 const h_menu1 = "<a href=\"https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=WVAS5RXRMYVC4\" class=\"nmenu-item\" onclick=\"toggle()\" title=\"Make donation to the project\">Donate ...</a>";
@@ -88,7 +89,7 @@ const ObminServer = new Lang.Class({
             this.listen_all (port, 0);
             info ("Obmin server started at 127.0.0.1:" + port);
         } catch (err) {
-            error (err);
+            throw err;
         }
     },
 
@@ -124,9 +125,10 @@ const ObminServer = new Lang.Class({
                 this.get_dir (self, msg, file, r, path);
                 self.unpause_message (msg);
             } else {
-                if (finfo.get_size () < 64*1024) {
+                if (finfo.get_size () < 65536) {
                     msg.set_status (200);
                     msg.response_headers.append ("Server", "Obmin");
+                    msg.response_headers.append ("Content-Disposition", "filename=\"" + finfo.get_name () + "\"");
                     msg.response_headers.set_content_length (finfo.get_size ());
                     msg.set_response (finfo.get_content_type (), Soup.MemoryUse.COPY, file.load_contents (null)[1]);
                     self.unpause_message (msg);
@@ -432,6 +434,7 @@ const ContentStream = new Lang.Class({
             this.msg.response_headers.append ("Last-Modified", this.date);
             this.msg.response_headers.append ("Accept-Ranges", "bytes");
             this.msg.response_headers.append ("Server", "Obmin");
+            this.msg.response_headers.append ("Content-Disposition", "filename=\"" + this.file.get_basename () + "\"");
             this.msg.response_headers.set_content_range (this.offset,this.range,this.size);
             this.msg.response_body.set_accumulate (false);
             this.stream = this.file.read_finish (result);
