@@ -15,5 +15,5 @@ a:hover,a:active {text-decoration:none;color: #464e4e;}
 .hide {display:none!important} .show {display:block!important}
 .nmenu {background:rgba(43,43,43,0.93);min-width:100%;width:100%;text-align:right;padding:8px 0px}
 .nmenu-button {padding:8px 16px;width:auto;border:none;outline:none;display:block;float:right}
-.nmenu-item {display:block;padding:4px 0px}
+.nmenu-item {display:block;padding:12px 0px}
 .nmenu a,.nmenu a:visited,.nmenu a:focus{color:#ccc}.nmenu a:hover,.nmenu a:active{color:#333;background: #ffcc0c}

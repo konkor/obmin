@@ -265,6 +265,7 @@ const NewMenuItem = new Lang.Class ({
 
     _init: function (text, text_entry, hint_text, recursive, params) {
         this.parent (text, params);
+        this.edit_mode = false;
         this.entry = new St.Entry ({ text:text_entry, hint_text:hint_text, style_class: 'obmin-entry', track_hover: true, can_focus: true, x_expand: true });
         this.actor.add_child (this.entry);
         this.entry.set_primary_icon (new St.Icon({ style_class: 'obmin-entry-icon', icon_name: 'emblem-ok-symbolic', icon_size: 14 }));
@@ -320,7 +321,10 @@ const NewMenuItem = new Lang.Class ({
     },
 
     activate: function (event) {
-        if (this.entry.text != '') this.toggle ();
+        if (!this.entry.visible) {
+            this.edit_mode = true;
+            this.toggle ();
+        } else if (!this.edit_mode) this.toggle ();
     },
 
     toggle: function () {
@@ -346,6 +350,7 @@ const NewMenuItem = new Lang.Class ({
     },
 
     on_click: function () {
+        this.edit_mode = false;
         this.emit ('save');
     }
 });
@@ -358,7 +363,6 @@ const SourceMenuItem = new Lang.Class ({
         this.parent (src.path, src.path, "", src.recursive, params);
         this.path = src.path;
         this.label.x_expand = true;
-        this.edit_mode = false;
         this.edit_button = new St.Button ({ child: new St.Icon ({ icon_name: 'open-menu-symbolic', icon_size: 14 }), style_class: 'edit-button'});
         this.actor.add_child (this.edit_button);
         this.edit_button.connect ('clicked', Lang.bind (this, function () {

@@ -56,10 +56,10 @@ const SETTINGS_ID = 'org.gnome.shell.extensions.obmin';
 const html_head = "<head><meta charset=\"utf-8\"><title>Obmin - Simple File Sharing</title><meta name=\"viewport\" content=\"width=device-width\"><link href=\"style.css\" rel=\"stylesheet\" type=\"text/css\"></head>";
 const h_menu_btn = "<a class=\"nmenu-button\" href=\"javascript:void(0);\" onclick=\"toggle()\" title=\"Toggle Menu\">&#x2630;</a>";
 let h_menu = "<div id=\"navmenu\" class=\"nmenu hide\">" +
-    "<a href=\"?list=urls\" class=\"nmenu-item\" onclick=\"toggle()\" title=\"Generate URL File List\">Filelist ...</a>" +
-    "<a href=\"https://konkor.github.io\" class=\"nmenu-item\" onclick=\"toggle()\" title=\"Project Website\">About ...</a>" +
+    "<a href=\"?list=urls\" class=\"nmenu-item\" onclick=\"toggle()\" title=\"Generate URLs File List\">Filelist ...</a>" +
+    "<a href=\"https://konkor.github.io\" class=\"nmenu-item right\" onclick=\"toggle()\" title=\"About Obmin\">About ...</a>" +
     "</div>";
-const h_menu1 = "<a href=\"https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=WVAS5RXRMYVC4\" class=\"nmenu-item\" onclick=\"toggle()\" title=\"Make donation to the project\">Donate ...</a>";
+const h_menu1 = "<a href=\"https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=WVAS5RXRMYVC4\" class=\"nmenu-item right\" onclick=\"toggle()\" title=\"Make donation to the project\">Donate ...</a>";
 const h_js = "<script>function toggle(){var x=document.getElementById(\"navmenu\");if(x.className.indexOf(\"show\")==-1){x.className += \" show\";}else{x.className=x.className.replace(\" show\",\"\");}}</script>";
 let mounts = true;
 let follow_links = true;
@@ -69,7 +69,7 @@ let theme = APPDIR + "/data/themes/default/";
 let support = 0;
 let mode = 0;
 let port = 8088;
-let DEBUG = 1;
+var DEBUG = 1;
 
 let server = null;
 let files = [];
