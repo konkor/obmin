@@ -244,7 +244,7 @@ const ObminServer = new Lang.Class({
         });
         this.list_dir ({path: dir.get_path (), recursive: r}, true);
         files.forEach (f => {
-            list += ref + "" + f.name + "\n";
+            list += GLib.uri_escape_string (ref + f.name, "/:", true) + "\n";
         });
         msg.response_headers.append ("Server", "Obmin");
         msg.response_headers.append ("Content-Disposition", "filename=\"" + dir.get_basename () + ".urls\"");
