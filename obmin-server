@@ -125,7 +125,7 @@ const ObminServer = new Lang.Class({
         if (msg.method == "POST") return;
         if (msg.request_body.length > 0) debug (msg.request_body);
         debug ("Default handler start (" + this.access_counter + ")");
-        GLib.timeout_add_seconds (0, 0, Lang.bind (this, function () {
+        Mainloop.timeout_add (100, Lang.bind (this, function () {
             if (path == '/') this._root_handler (server, msg);
             else this._send_content (self, msg, path, num, query);
             return false;
