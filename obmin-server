@@ -53,14 +53,34 @@ const PORT_KEY = 'port';
 const DEBUG_KEY = 'debug';
 const SETTINGS_ID = 'org.gnome.shell.extensions.obmin';
 
+const MEDIA = [
+"3g2",  "3gp",  "3gp2", "3gpp", "aac",  "ac3",  "aif",  "aifc",
+"aiff", "al",   "alaw", "ape",  "asf",  "asx",  "au",   "avi",
+"cda",  "cdr",  "divx", "dv",   "flac", "flv",  "gvi",  "gvp",
+"m1v",  "m21",  "m2p",  "m2v",  "m4a",  "m4b",  "m4e",  "m4p",
+"m4u",  "m4v",  "mp+",  "mid",  "midi", "mjp",  "mkv",  "moov",
+"mov",  "movie","mp1",  "mp2",  "mp21", "mp3",  "mp4",  "mpa",
+"mpc",  "mpe",  "mpeg", "mpg",  "mpga", "mpp",  "mpu",  "mpv",
+"mpv2", "oga",  "ogg",  "ogv",  "ogm",  "omf",  "qt",   "ra",
+"ram",  "raw",  "rm",   "rmvb", "rts",  "smil", "swf",  "tivo",
+"u",    "vfw",  "vob",  "wav",  "wave", "wax",  "wm",   "wma",
+"wmd",  "wmv",  "wmx",  "wv",   "wvc",  "wvx",  "yuv",  "f4v",
+"f4a",  "f4b",  "669",  "it",   "med",  "mod",  "mol",  "mtm",
+"nst",  "s3m",  "stm",  "ult",  "wow",  "xm",   "xnm",  "spx",
+"ts",   "webm", "spc",  "mka",  "opus", "amr"
+];
+
 const html_head = "<head><meta charset=\"utf-8\"><title>Obmin - Simple File Sharing</title><meta name=\"viewport\" content=\"width=device-width\"><link href=\"style.css\" rel=\"stylesheet\" type=\"text/css\"></head>";
 const h_menu_btn = "<a class=\"nmenu-button\" href=\"javascript:void(0);\" onclick=\"toggle()\" title=\"Toggle Menu\">&#x2630;</a>";
 let h_menu = "<div id=\"navmenu\" class=\"nmenu hide\">" +
-    "<a href=\"?list=urls\" class=\"nmenu-item\" onclick=\"toggle()\" title=\"Generate URLs File List\">Filelist ...</a>" +
+    "<a href=\"?list=urls\" class=\"nmenu-item\" onclick=\"toggle()\" title=\"Generate URLs File List\">Filelist URLs...</a>" +
+    "<a href=\"?list=pls\" class=\"nmenu-item\" onclick=\"toggle()\" title=\"Generate PLS Playlist\">Playlist PLS ...</a>" +
+    "<a href=\"?list=m3u\" class=\"nmenu-item\" onclick=\"toggle()\" title=\"Generate M3U Playlist\">Playlist M3U...</a>" +
     "<a href=\"https://konkor.github.io\" class=\"nmenu-item right\" onclick=\"toggle()\" title=\"About Obmin\">About ...</a>" +
     "</div>";
 const h_menu1 = "<a href=\"https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=WVAS5RXRMYVC4\" class=\"nmenu-item right\" onclick=\"toggle()\" title=\"Make donation to the project\">Donate ...</a>";
 const h_js = "<script>function toggle(){var x=document.getElementById(\"navmenu\");if(x.className.indexOf(\"show\")==-1){x.className += \" show\";}else{x.className=x.className.replace(\" show\",\"\");}}</script>";
+
 let mounts = true;
 let follow_links = true;
 let check_hidden = false;
@@ -117,13 +137,16 @@ const ObminServer = new Lang.Class({
         let self = server;
         let file, r, finfo;
         [file, r] = this.get_file (path);
+        if (!file) [file, r] = this.get_file (GLib.uri_unescape_string (path, null));
         if (file) {
             finfo = file.query_info ("*", 0, null);
             if (finfo.get_file_type () == 2) {
                 if (mode > 0)
                     if (this._send_content (server, msg, path + 'index.html', this.access_counter) || (mode == 2)) return true;
                 if (query && query.list) {
-                    if (query.list == "urls") this.get_urls (self, msg, file, r, path);
+                    if (query.list == "urls") this.get_list (self, msg, file, r, path, "urls");
+                    else if (query.list == "pls") this.get_list (self, msg, file, r, path, "pls");
+                    else if (query.list == "m3u") this.get_list (self, msg, file, r, path, "m3u");
                 } else this.get_dir (self, msg, file, r, path);
                 self.unpause_message (msg);
             } else {
@@ -236,20 +259,43 @@ const ObminServer = new Lang.Class({
         return res;
     },
 
-    get_urls: function (server, msg, dir, r, path) {
-        let list = "", ref = "";
+    get_list: function (server, msg, dir, r, path, ext) {
+        let list = "", ref = "", idx = 1;
         debug ("list: " + dir.get_path ());
         msg.request_headers.foreach ( (n, v) => {
             if (n.toLowerCase() == "referer") ref = v;
         });
         this.list_dir ({path: dir.get_path (), recursive: r}, true);
         files.forEach (f => {
-            list += GLib.uri_escape_string (ref + f.name, "/:", true) + "\n";
+            if (ext == "urls")
+                list += ref + GLib.uri_escape_string (f.name, "/:", true) + "\n";
+            else if (ext == "pls") {
+                if (this.is_media (f.name)) {
+                    list += "File" + idx + "=" + ref + GLib.uri_escape_string (f.name, "/:", true) + "\n";
+                    //list += "Title" + idx + "=" + f.name + "\n";
+                    idx++;
+                }
+            } else if (ext == "m3u") {
+                if (this.is_media (f.name)) {
+                    list += "#EXTINF:," + f.name + "\n";
+                    list += ref + GLib.uri_escape_string (f.name, "/:", true) + "\n";
+                }
+            }
         });
+        if (ext == "pls") {
+            msg.response_headers.set_content_type ("audio/x-scpls", null);
+            list = "[playlist]\nNumberOfEntries=" + (idx -1) + "\n" + list;
+        } else if (ext == "m3u") msg.response_headers.set_content_type ("audio/x-mpegurl", null);
         msg.response_headers.append ("Server", "Obmin");
-        msg.response_headers.append ("Content-Disposition", "filename=\"" + dir.get_basename () + ".urls\"");
+        msg.response_headers.append ("Content-Disposition", "filename=\"" + dir.get_basename () + "." + ext + "\"");
         msg.set_response ("text/plain", Soup.MemoryUse.COPY, list);
         msg.set_status (200);
+    },
+
+    is_media: function (name) {
+        let f = false;
+        MEDIA.forEach ((e)=>{if (name.endsWith ("." + e)) f = true;});
+        return f;
     },
 
     get_dir: function (server, msg, dir, r, path) {
