@@ -92,7 +92,8 @@ const ObminIndicator = new Lang.Class({
             this.settings.set_string (SOURCES_KEY, JSON.stringify (sources));
         }
 
-        if (server = this.server_enabled) this.icon_on ();
+        server = this.server_enabled;
+        if (server) this.icon_on ();
         if (startup && !server) this._enable (true);
         this._build_ui ();
         this.menu.actor.add_style_class_name ('obmin-menu');
@@ -461,13 +462,13 @@ const PublicItem = new Lang.Class ({
 
     get ip () {
         let l = "";
-        this.curl = GLib.find_program_in_path ('curl');
+        this.curl = GLib.find_program_in_path ('wget');
         if (this.curl) {
-            l = get_info_string ("curl http://ipecho.net/plain");
+            l = get_info_string ("wget -qO- http://ipecho.net/plain");
         } else {
-            this.curl = GLib.find_program_in_path ('wget');
+            this.curl = GLib.find_program_in_path ('curl');
             if (this.curl) {
-                l = get_info_string ("wget -qO- http://ipecho.net/plain | less");
+                l = get_info_string ("curl http://ipecho.net/plain");
             }
         }
         return l;
