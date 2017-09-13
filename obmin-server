@@ -95,14 +95,19 @@ let server = null;
 let files = [];
 let sources = [];
 let excluded = [];
+var counter = {};
 
 const ObminServer = new Lang.Class({
     Name: 'ObminServer',
     Extends: Soup.Server,
+    Signals: {
+        'counters': {},
+    },
 
     _init: function () {
         this.parent ();
-        this.access_counter = 0;
+        if (!counter.access)
+            counter = {access:0, ready:0, upload:0};
         if (support < 2) h_menu = h_menu.replace ("</div>", h_menu1 + "</div>");
         this.add_handler (null, Lang.bind (this, this._default_handler));
         try {
@@ -111,26 +116,36 @@ const ObminServer = new Lang.Class({
         } catch (err) {
             throw err;
         }
+        /*Mainloop.timeout_add (5000, Lang.bind (this, function () {
+            debug (counter.access + "(" + counter.ready + ") " + GLib.format_size (counter.upload));
+            return true;
+        }));*/
     },
 
     _default_handler: function (server, msg, path, query, client) {
         let self = server, drop = false, num;
-        this.access_counter++;
-        num = this.access_counter;
-        info ("Request (" + this.access_counter + ") from " + client.get_host () +
+        counter.access++;
+        num = counter.access;
+        debug (counter.access + "(" + counter.ready + ") " + GLib.format_size (counter.upload));
+        info ("Request (" + counter.access + ") from " + client.get_host () +
             " " + msg.method + " " + path + " HTTP/1." + msg.get_http_version ());
         msg.request_headers.foreach ( (n, v) => {
             debug (n + ": " + v);
         });
-        if (msg.method == "POST") return;
+        if (msg.method == "POST") {
+            counter.ready++;
+            this.emit ('counters');
+            return;
+        }
         if (msg.request_body.length > 0) debug (msg.request_body);
-        debug ("Default handler start (" + this.access_counter + ")");
+        debug ("Default handler start (" + counter.access + ")");
         Mainloop.timeout_add (100, Lang.bind (this, function () {
             if (path == '/') this._root_handler (server, msg);
             else this._send_content (self, msg, path, num, query);
             return false;
         }));
         self.pause_message (msg);
+        this.emit ('counters');
     },
 
     _send_content: function (server, msg, path, num, query) {
@@ -142,7 +157,9 @@ const ObminServer = new Lang.Class({
             finfo = file.query_info ("*", 0, null);
             if (finfo.get_file_type () == 2) {
                 if (mode > 0)
-                    if (this._send_content (server, msg, path + 'index.html', this.access_counter) || (mode == 2)) return true;
+                    if (this._send_content (self, msg, path + 'index.html', num, query) || (mode == 2)) {
+                        return true;
+                    }
                 if (query && query.list) {
                     if (query.list == "urls") this.get_list (self, msg, file, r, path, "urls");
                     else if (query.list == "pls") this.get_list (self, msg, file, r, path, "pls");
@@ -160,11 +177,13 @@ const ObminServer = new Lang.Class({
                 } else {
                     debug ("start chunking");
                     let st = new ContentStream (self, msg, file, finfo, num);
-                    msg.connect ("finished", (o)=>{
+                    msg.connect ("finished", (o)=> {
                         debug ("st finished" + st);
+                        counter.ready++;
                         st = null;
                         System.gc();
                     });
+                    counter.ready--;
                 }
             }
         } else if (path == '/favicon.ico') {
@@ -190,6 +209,8 @@ const ObminServer = new Lang.Class({
             msg.response_headers.append ("Server", "Obmin");
             self.unpause_message (msg);
         }
+        counter.ready++;
+        counter.upload += msg.response_body.length;
         return true;
     },
 
@@ -260,25 +281,25 @@ const ObminServer = new Lang.Class({
     },
 
     get_list: function (server, msg, dir, r, path, ext) {
-        let list = "", ref = "", idx = 1;
+        let list = "", ref = "", idx = 1, ac = "/:_-()"; //ac = "/:_-();@&=+$";
         debug ("list: " + dir.get_path ());
         msg.request_headers.foreach ( (n, v) => {
-            if (n.toLowerCase() == "referer") ref = v;
+            if (n.toLowerCase() == "referer") ref = GLib.uri_unescape_string (v, null);
         });
         this.list_dir ({path: dir.get_path (), recursive: r}, true);
         files.forEach (f => {
             if (ext == "urls")
-                list += ref + GLib.uri_escape_string (f.name, "/:", true) + "\n";
+                list += GLib.uri_escape_string (ref + f.name, ac, true) + "\n";
             else if (ext == "pls") {
                 if (this.is_media (f.name)) {
-                    list += "File" + idx + "=" + ref + GLib.uri_escape_string (f.name, "/:", true) + "\n";
+                    list += "File" + idx + "=" + GLib.uri_escape_string (ref + f.name, ac, true) + "\n";
                     //list += "Title" + idx + "=" + f.name + "\n";
                     idx++;
                 }
             } else if (ext == "m3u") {
                 if (this.is_media (f.name)) {
                     list += "#EXTINF:," + f.name + "\n";
-                    list += ref + GLib.uri_escape_string (f.name, "/:", true) + "\n";
+                    list += GLib.uri_escape_string (ref + f.name, ac, true) + "\n";
                 }
             }
         });
@@ -349,6 +370,7 @@ const ObminServer = new Lang.Class({
         msg.set_response ("text/html", Soup.MemoryUse.COPY, "<html>" + html_head + html_body + "</html>");
         msg.set_status (200);
         self.unpause_message (msg);
+        counter.ready++;
     },
 
     list_dir: function (loc, list) {
@@ -536,6 +558,7 @@ const ContentStream = new Lang.Class({
                 this.b = [];
                 this.msg.response_body.complete ();
                 this.stream.close (null);
+                counter.upload += this.b.get_size ();
                 return;
             }
             if (this.b.get_size() == 0) {
@@ -545,7 +568,7 @@ const ContentStream = new Lang.Class({
                 this.server.unpause_message (this.msg);
                 this.stream.close (null);
             } else {
-                this.offset += this.b.get_size();
+                this.offset += this.b.get_size ();
                 //this.msg.response_headers.set_content_range (this.offset - this.b.get_size(),this.offset-1,this.size);
                 this.msg.response_body.append_buffer (new Soup.Buffer (this.b.get_data()));
                 /*debug ("Request(" + this.num + ")\n" + this.msg.method + " HTTP/1." + this.msg.get_http_version ());
@@ -555,6 +578,7 @@ const ContentStream = new Lang.Class({
                 this.msg.response_headers.foreach ( (n, v) => {debug (n + ": " + v);});*/
                 //debug ("Stream " + this.num + " " + this.offset + ":" + this.size);
                 this.server.unpause_message (this.msg);
+                counter.upload += this.b.get_size ();
                 if (this.offset < this.range)
                     this.read_event = Mainloop.timeout_add (10, Lang.bind (this, this.read_more));
             }
