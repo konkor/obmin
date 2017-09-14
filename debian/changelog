@@ -1,3 +1,25 @@
+obmin (7.0-1) UNRELEASED; urgency=medium
+
+  * Add internal counters for requests, responds and uploaded data
+  * Update URI playlist escaping
+
+ -- Kostiantyn K <kapa76@gmail.com>  Mon, 4 Sep 2017 16:48:00 +0300
+
+obmin (6.0-1) UNRELEASED; urgency=medium
+
+  * Add file and playlist
+  * Update ES6 standards
+
+ -- Kostiantyn K <kapa76@gmail.com>  Mon, 4 Sep 2017 16:48:00 +0300
+
+obmin (5.0-1) UNRELEASED; urgency=medium
+
+  * Add configuration via json config file
+  * Fix mount points filter
+  * Update docs
+
+ -- Kostiantyn K <kapa76@gmail.com>  Mon, 4 Sep 2017 16:48:00 +0300
+
 obmin (4.0-1) UNRELEASED; urgency=medium
 
   * Add supporting for non-Gnome
