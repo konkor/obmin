@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-09-14 10:43-0300\n"
-"PO-Revision-Date: 2017-09-14 10:53-0300\n"
+"PO-Revision-Date: 2017-09-14 11:15-0300\n"
 "Last-Translator: Fábio Nogueira <fnogueira@gnome.org>\n"
 "Language-Team: \n"
 "Language: pt_BR\n"
@@ -96,7 +96,7 @@ msgstr "Editor de locais compartilhados"
 
 #: prefs.js:132
 msgid "Add a location to share"
-msgstr "Adicionar um local para compartilhar"
+msgstr "Adiciona um local para compartilhar"
 
 #: prefs.js:230
 msgid "FOLDER"
@@ -108,7 +108,7 @@ msgstr "ARQUIVO"
 
 #: prefs.js:248
 msgid "Remove this location from the sharing"
-msgstr "Remover este local do compartilhamento"
+msgstr "Remove o compartilhamento deste local"
 
 #: prefs.js:266
 msgid "Select folder"
