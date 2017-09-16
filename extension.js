@@ -237,7 +237,7 @@ const ObminIndicator = new Lang.Class({
     },
 
     remove_events: function () {
-        Mainloop.source_remove (status_event);
+        GLib.Source.remove (status_event);
         status_event = 0;
     }
 });
