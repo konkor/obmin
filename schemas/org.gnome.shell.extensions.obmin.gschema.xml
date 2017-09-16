@@ -105,5 +105,11 @@
       <description>Support level (0-full,1-part,2-none)</description>
     </key>
 
+    <key type="i" name="status">
+      <default>5</default>
+      <summary>Applets running status monitor</summary>
+      <description>(0 - disable, 5 seconds default)</description>
+    </key>
+
   </schema>
 </schemalist>

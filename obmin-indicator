@@ -40,11 +40,14 @@ const DEBUG_KEY = 'debug';
 const STARTUP_KEY = 'startup-settings';
 const SUPPORT_KEY = 'support';
 const PORT_KEY = 'port';
+const STATUS_KEY = 'status';
 
 let startup = false;
 let support = 0;
 let port = 8088;
 let DEBUG = 1;
+let status = 5;
+let status_event = 0;
 
 let settings = null;
 let server = false;
@@ -57,6 +60,7 @@ const ObminIndicator = new Lang.Class ({
         startup = settings.get_boolean (STARTUP_KEY);
         support = settings.get_int (SUPPORT_KEY);
         port = settings.get_int (PORT_KEY);
+        status = settings.get_int (STATUS_KEY);
 
         this.application = new Gtk.Application ();
         this.application.connect ('activate', Lang.bind (this, this._onActivate));
@@ -77,6 +81,22 @@ const ObminIndicator = new Lang.Class ({
         if (startup && !server) this._enable (true);
         this.build_menu ();
         if (server) this.indicator.set_icon ("obmin-on");
+        if (status > 0) status_event = GLib.timeout_add_seconds (0, status, Lang.bind (this, function () {
+            this.check_status ();
+            return true;
+        }));
+    },
+
+    check_status: function () {
+        let run = this.server_enabled;
+        if (run != server) {
+            server = run;
+            this.lock = true;
+            this.server_switch.set_active (server);
+            this.lock = false;
+            if (server) this.indicator.set_icon ("obmin-on");
+            else this.indicator.set_icon ("obmin-off");
+        }
     },
 
     build_menu: function () {
@@ -88,7 +108,7 @@ const ObminIndicator = new Lang.Class ({
         this.server_switch.tooltip_text = _("Activate Obmin Server");
         this.server_switch.active = server;
         this.server_switch.connect ('toggled', Lang.bind (this, function () {
-            this._enable (this.server_switch.active);
+            if (!this.lock) this._enable (this.server_switch.active);
         }));
         this.menu.append (this.server_switch);
 
@@ -121,6 +141,7 @@ const ObminIndicator = new Lang.Class ({
         this.menu.append (new Gtk.SeparatorMenuItem ());
         item = Gtk.MenuItem.new_with_label (_("Exit"));
         item.connect ('activate', Lang.bind (this, function () {
+            this.remove_events ();
             app.application.quit ();
         }));
         this.menu.append (item);
@@ -130,6 +151,7 @@ const ObminIndicator = new Lang.Class ({
         this.indicator.set_icon ("obmin-off");
         this.indicator.set_menu (this.menu);
         this.menu.connect ('show', Lang.bind (this, function () {
+            this.check_status ();
             port = settings.get_int (PORT_KEY);
             this.info_local.update ();
             this.info_public.update ();
@@ -160,6 +182,11 @@ const ObminIndicator = new Lang.Class ({
             if (o[i].indexOf ("obmin-server") > -1) return true;
         }
         return false;
+    },
+
+    remove_events: function () {
+        GLib.Source.remove (status_event);
+        status_event = 0;
     }
 });
 

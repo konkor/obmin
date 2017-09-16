@@ -1,3 +1,10 @@
+obmin (8.0-1) UNRELEASED; urgency=medium
+
+  * Development version
+  * Add brazilian portuguese locale, pt_BR
+
+ -- Kostiantyn K <kapa76@gmail.com>  Mon, 16 Sep 2017 11:45:00 +0300
+
 obmin (7.0-1) UNRELEASED; urgency=medium
 
   * Add internal counters for requests, responds and uploaded data

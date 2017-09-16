@@ -29,13 +29,13 @@ const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 const Util = imports.misc.util;
 const Lang = imports.lang;
-//const Mainloop = imports.mainloop;
 
 const STARTUP_KEY = 'startup-settings';
 const SOURCES_KEY = 'content-sources';
 const SUPPORT_KEY = 'support';
 const PORT_KEY = 'port';
 const DEBUG_KEY = 'debug';
+const STATUS_KEY = 'status';
 const SETTINGS_ID = 'org.gnome.shell.extensions.obmin';
 
 const ExtensionUtils = imports.misc.extensionUtils;
@@ -52,6 +52,8 @@ let startup = false;
 let support = 0;
 let port = 8088;
 let DEBUG = 1;
+let status = 5;
+let status_event = 0;
 
 let server = false;
 let sources = [];
@@ -61,7 +63,7 @@ const ObminIndicator = new Lang.Class({
     Extends: PanelMenu.Button,
 
     _init: function () {
-        this.parent (0.0, "Obmin Indicator", false);
+        this.parent (0.0, "Obmin Server Indicator", false);
         this.edit_item = null;
 
         this.settings = Convenience.getSettings();
@@ -84,6 +86,7 @@ const ObminIndicator = new Lang.Class({
         startup = this.settings.get_boolean (STARTUP_KEY);
         support = this.settings.get_int (SUPPORT_KEY);
         port = this.settings.get_int (PORT_KEY);
+        status = this.settings.get_int (STATUS_KEY);
         DEBUG = this.settings.get_int (DEBUG_KEY);
         let srcs =  this.settings.get_string (SOURCES_KEY);
         if (srcs.length > 0) sources = JSON.parse (srcs);
@@ -99,10 +102,25 @@ const ObminIndicator = new Lang.Class({
         this.menu.actor.add_style_class_name ('obmin-menu');
 
         this.menu.connect ('open-state-changed', Lang.bind (this, this.on_menu_state_changed));
+        if (status > 0) status_event = GLib.timeout_add_seconds (0, status, Lang.bind (this, function () {
+            this.check_status ();
+            return true;
+        }));
+    },
+
+    check_status: function () {
+        let run = this.server_enabled;
+        if (run != server) {
+            server = run;
+            this.server_switch.setToggleState (server);
+            if (server) this.icon_on ();
+            else this.icon_off ();
+        }
     },
 
     on_menu_state_changed: function (source, state) {
         if (state) {
+            this.check_status ();
             port = this.settings.get_int (PORT_KEY);
             this.info_local.update ();
             this.info_public.update ();
@@ -219,6 +237,8 @@ const ObminIndicator = new Lang.Class({
     },
 
     remove_events: function () {
+        Mainloop.source_remove (status_event);
+        status_event = 0;
     }
 });
 
