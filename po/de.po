@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-09-14 10:43-0300\n"
-"PO-Revision-Date: 2017-08-20 17:53+0200\n"
+"POT-Creation-Date: 2017-09-17 10:15+0200\n"
+"PO-Revision-Date: 2017-09-17 10:23+0200\n"
 "Last-Translator: Jonatan Hatakeyama Zeidler <jonatan_zeidler@gmx.de>\n"
 "Language-Team: \n"
 "Language: de\n"
@@ -87,44 +87,43 @@ msgstr "Benachrichtigungen"
 
 #: prefs.js:110
 msgid "Supporting"
-msgstr ""
+msgstr "Unterstützen"
 
 #: prefs.js:129
 msgid "Shared Locations Editor"
-msgstr ""
+msgstr "Editor für Freigabeordner"
 
 #: prefs.js:132
 msgid "Add a location to share"
-msgstr ""
+msgstr "Einen Freigabeordner hinzufügen"
 
 #: prefs.js:230
 msgid "FOLDER"
-msgstr ""
+msgstr "ORDNER"
 
 #: prefs.js:230
 msgid "FILE"
-msgstr ""
+msgstr "DATEI"
 
 #: prefs.js:248
 msgid "Remove this location from the sharing"
-msgstr ""
+msgstr "Freigabeordner nicht mehr teilen"
 
 #: prefs.js:266
 msgid "Select folder"
-msgstr ""
+msgstr "Freigabeordner wählen"
 
 #: prefs.js:287
 msgid "Select file"
-msgstr ""
+msgstr "Freigabedatei wählen"
 
 #: prefs.js:310
-#, fuzzy
 msgid "<b>System</b>"
-msgstr "<b>Inhalt</b>"
+msgstr "<b>System</b>"
 
 #: prefs.js:311
 msgid "Start server on the loading"
-msgstr ""
+msgstr "Server automatisch starten"
 
 #: prefs.js:320
 msgid "<b>Network</b>"
@@ -176,43 +175,49 @@ msgstr "Ausführlich"
 
 #: prefs.js:457
 msgid "Make Donation to the project"
-msgstr ""
+msgstr "An das Projekt spenden"
 
 #: prefs.js:459
 msgid ""
 "Behind the development for the Linux Desktop are ordinary people who spend a "
 "lot of time and their own resources to make the Linux Desktop better."
 msgstr ""
+"Hinder der Entwicklung des Linux-Desktops stecken gewöhnliche Leute, die "
+"eine Menge Zeit und eigene Ressourcen investieren, um den Linux-Desktop "
+"besser zu machen."
 
 #: prefs.js:466 prefs.js:474
 msgid "Make Donation"
-msgstr ""
+msgstr "Spenden"
 
 #: prefs.js:480
 msgid "Find more about contributions..."
-msgstr ""
+msgstr "Mehr übers Mitmachen lernen …"
 
 #: prefs.js:485
 msgid "Level of the donation notifications"
-msgstr ""
+msgstr "Ebene der Spendenmeldungen"
 
 #: prefs.js:488
 msgid "INTERFACE"
-msgstr ""
+msgstr "NUTZER"
 
 #: prefs.js:488
 msgid "SERVER"
-msgstr ""
+msgstr "SERVER"
 
 #: prefs.js:488
 msgid "NONE"
-msgstr ""
+msgstr "KEINE"
 
 #: prefs.js:497
 msgid ""
 "Feel free to set up a disired supporting level of the notifications if some "
 "forms anoyong you or you are already a project's contributor."
 msgstr ""
+"Fühlen Sie sich frei, die gewünschte Ebene für Spendenmeldungen zu ändern, "
+"falls Sie die eine oder andere Form stört, oder sie bereits das Projekt "
+"unterstützen."
 
 #: prefs.js:515
 msgid "File Server"
