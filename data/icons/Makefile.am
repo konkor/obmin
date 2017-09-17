@@ -11,6 +11,7 @@ icondir=$(datadir)/icons
 nobase_icon_DATA = hicolor/scalable/apps/obmin.svg \
     hicolor/32x32/status/obmin-off.png \
     hicolor/32x32/status/obmin-on.png \
+    hicolor/32x32/apps/obmin.png \
     $(NULL)
 
 EXTRA_DIST = \
