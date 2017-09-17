@@ -7,37 +7,37 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-08-20 17:44+0200\n"
-"PO-Revision-Date: 2017-08-20 17:53+0200\n"
+"POT-Creation-Date: 2017-09-17 10:15+0200\n"
+"PO-Revision-Date: 2017-09-17 10:23+0200\n"
+"Last-Translator: Jonatan Hatakeyama Zeidler <jonatan_zeidler@gmx.de>\n"
+"Language-Team: \n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Last-Translator: Jonatan Hatakeyama Zeidler <jonatan_zeidler@gmx.de>\n"
-"Language-Team: \n"
 "X-Generator: Poedit 2.0.1\n"
 
-#: extension.js:108
+#: extension.js:124
 msgid "Obmin Server "
 msgstr "Obmin-Server "
 
-#: extension.js:119
+#: extension.js:135 prefs.js:85
 msgid "Locations"
 msgstr "Freigabeordner"
 
-#: extension.js:121
+#: extension.js:137
 msgid "New Location..."
 msgstr "Neuer Freigabeordner …"
 
-#: extension.js:121
+#: extension.js:137
 msgid "Path"
 msgstr "Pfad"
 
-#: extension.js:126
+#: extension.js:142
 msgid "File source location\n"
 msgstr "Dateiquellverzeichnis\n"
 
-#: extension.js:126
+#: extension.js:142
 msgid ""
 "\n"
 "Doesn't exist..."
@@ -45,124 +45,209 @@ msgstr ""
 "\n"
 "Existiert nicht …"
 
-#: extension.js:134
+#: extension.js:150
 msgid "File source is already exist."
 msgstr "Dateiquelle existiert bereits."
 
-#: extension.js:268
+#: extension.js:298
 msgid "Recursive"
 msgstr "Rekursiv"
 
-#: extension.js:395
+#: extension.js:429
 msgid "Local IP"
 msgstr "Lokale IP-Adresse"
 
-#: extension.js:400
+#: extension.js:434
 msgid "Local IP address copied to clipboard."
 msgstr "Lokale IP-Adresse in Zwischenablage kopiert."
 
-#: extension.js:420
+#: extension.js:454
 msgid "Public IP"
 msgstr "Öffentliche IP-Adresse"
 
-#: extension.js:425
+#: extension.js:459
 msgid "Public IP address copied to clipboard."
 msgstr "Öffentliche IP-Adresse in Zwischenablage kopiert."
 
-#: prefs.js:81
+#: prefs.js:90
 msgid "General"
 msgstr "Allgemein"
 
-#: prefs.js:86
+#: prefs.js:95
 msgid "Behavior"
 msgstr "Verhalten"
 
-#: prefs.js:91
+#: prefs.js:100
 msgid "Display"
 msgstr "Anzeige"
 
-#: prefs.js:96
+#: prefs.js:105
 msgid "Notifications"
 msgstr "Benachrichtigungen"
 
-#: prefs.js:113
-msgid "Load on startup"
-msgstr "Beim Start laden"
+#: prefs.js:110
+msgid "Supporting"
+msgstr "Unterstützen"
 
-#: prefs.js:121
+#: prefs.js:129
+msgid "Shared Locations Editor"
+msgstr "Editor für Freigabeordner"
+
+#: prefs.js:132
+msgid "Add a location to share"
+msgstr "Einen Freigabeordner hinzufügen"
+
+#: prefs.js:230
+msgid "FOLDER"
+msgstr "ORDNER"
+
+#: prefs.js:230
+msgid "FILE"
+msgstr "DATEI"
+
+#: prefs.js:248
+msgid "Remove this location from the sharing"
+msgstr "Freigabeordner nicht mehr teilen"
+
+#: prefs.js:266
+msgid "Select folder"
+msgstr "Freigabeordner wählen"
+
+#: prefs.js:287
+msgid "Select file"
+msgstr "Freigabedatei wählen"
+
+#: prefs.js:310
+msgid "<b>System</b>"
+msgstr "<b>System</b>"
+
+#: prefs.js:311
+msgid "Start server on the loading"
+msgstr "Server automatisch starten"
+
+#: prefs.js:320
 msgid "<b>Network</b>"
 msgstr "<b>Netzwerk</b>"
 
-#: prefs.js:124
+#: prefs.js:323
 msgid "Listening Port"
 msgstr "Empfangender Port"
 
-#: prefs.js:133
+#: prefs.js:332
 msgid "<b>Content</b>"
 msgstr "<b>Inhalt</b>"
 
-#: prefs.js:136
+#: prefs.js:335
 msgid "Theme"
 msgstr "Thema"
 
-#: prefs.js:187
+#: prefs.js:378
 msgid "Show mount points"
 msgstr "Einhängepunkte anzeigen"
 
-#: prefs.js:195
+#: prefs.js:386
 msgid "Show symbolic links"
 msgstr "Symbolische Verknüpfungen anzeigen"
 
-#: prefs.js:203
+#: prefs.js:394
 msgid "Show hidden content"
 msgstr "Versteckte Inhalte anzeigen"
 
-#: prefs.js:211
+#: prefs.js:402
 msgid "Show backups"
 msgstr "Sicherungsdateien anzeigen"
 
-#: prefs.js:239
+#: prefs.js:430
 msgid "Debugging level"
 msgstr "Fehlerdiagnosestufe"
 
-#: prefs.js:242
+#: prefs.js:433
 msgid "ERROR"
 msgstr "Nur Fehler"
 
-#: prefs.js:242
+#: prefs.js:433
 msgid "INFO"
 msgstr "Informativ"
 
-#: prefs.js:242
+#: prefs.js:433
 msgid "DEBUG"
 msgstr "Ausführlich"
 
-#: prefs.js:266
+#: prefs.js:457
+msgid "Make Donation to the project"
+msgstr "An das Projekt spenden"
+
+#: prefs.js:459
+msgid ""
+"Behind the development for the Linux Desktop are ordinary people who spend a "
+"lot of time and their own resources to make the Linux Desktop better."
+msgstr ""
+"Hinder der Entwicklung des Linux-Desktops stecken gewöhnliche Leute, die "
+"eine Menge Zeit und eigene Ressourcen investieren, um den Linux-Desktop "
+"besser zu machen."
+
+#: prefs.js:466 prefs.js:474
+msgid "Make Donation"
+msgstr "Spenden"
+
+#: prefs.js:480
+msgid "Find more about contributions..."
+msgstr "Mehr übers Mitmachen lernen …"
+
+#: prefs.js:485
+msgid "Level of the donation notifications"
+msgstr "Ebene der Spendenmeldungen"
+
+#: prefs.js:488
+msgid "INTERFACE"
+msgstr "NUTZER"
+
+#: prefs.js:488
+msgid "SERVER"
+msgstr "SERVER"
+
+#: prefs.js:488
+msgid "NONE"
+msgstr "KEINE"
+
+#: prefs.js:497
+msgid ""
+"Feel free to set up a disired supporting level of the notifications if some "
+"forms anoyong you or you are already a project's contributor."
+msgstr ""
+"Fühlen Sie sich frei, die gewünschte Ebene für Spendenmeldungen zu ändern, "
+"falls Sie die eine oder andere Form stört, oder sie bereits das Projekt "
+"unterstützen."
+
+#: prefs.js:515
 msgid "File Server"
 msgstr "Dateiserver"
 
-#: prefs.js:269
+#: prefs.js:518
 msgid "Show the folder's list on requests."
 msgstr "Ordnerliste bei Anfragen anzeigen."
 
-#: prefs.js:274
+#: prefs.js:523
 msgid "WEB/File Server"
 msgstr "Web-/Dateiserver"
 
-#: prefs.js:277
+#: prefs.js:526
 msgid "Look for 'index.html' first if it is not exist show the folder's list."
 msgstr ""
 "Zuerst nach 'index.html' schauen, falls nicht vorhanden, Ordnerliste "
 "anzeigen."
 
-#: prefs.js:282
+#: prefs.js:531
 msgid "WEB Server"
 msgstr "Web-Server "
 
-#: prefs.js:285
+#: prefs.js:534
 msgid ""
 "Look for 'index.html' and direct links only if it is not exist show error "
 "'404.html'."
 msgstr ""
 "Nur nach 'index.html' schauen, falls nicht vorhanden, Fehler '404.html' "
 "anzeigen."
+
+#~ msgid "Load on startup"
+#~ msgstr "Beim Start laden"
