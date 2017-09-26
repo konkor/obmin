@@ -31,7 +31,8 @@ const Util = imports.misc.util;
 const Lang = imports.lang;
 
 const STARTUP_KEY = 'startup-settings';
-const SOURCES_KEY = 'content-sources';
+const STATS_MONITOR_KEY = 'stats-monitor';
+const STATS_DATA_KEY = 'stats';
 const SUPPORT_KEY = 'support';
 const PORT_KEY = 'port';
 const DEBUG_KEY = 'debug';
@@ -53,10 +54,12 @@ let support = 0;
 let port = 8088;
 let DEBUG = 1;
 let status = 5;
-let status_event = 0;
+let stats_monitor = true;
+let stats = {};
 
+let status_event = 0;
+let update_event = 0;
 let server = false;
-let sources = [];
 
 const ObminIndicator = new Lang.Class({
     Name: 'ObminIndicator',
@@ -70,11 +73,15 @@ const ObminIndicator = new Lang.Class({
 
         this._icon_on = new St.Icon ({
             gicon:Gio.icon_new_for_string (EXTENSIONDIR + "/data/icons/obmin-on.png"),
-            style: 'icon-size: 20px;'
+            style: 'icon-size: 22px;'
         });
         this._icon_off = new St.Icon ({
             gicon:Gio.icon_new_for_string (EXTENSIONDIR + "/data/icons/obmin-off.png"),
-            style: 'icon-size: 20px;'
+            style: 'icon-size: 22px;'
+        });
+        this._icon_run = new St.Icon ({
+            gicon:Gio.icon_new_for_string (EXTENSIONDIR + "/data/icons/obmin-run.png"),
+            style: 'icon-size: 22px;'
         });
         this.statusIcon = new St.Icon ({ style: 'icon-size: 20px;' });
         this.icon_off ();
@@ -88,23 +95,34 @@ const ObminIndicator = new Lang.Class({
         port = this.settings.get_int (PORT_KEY);
         status = this.settings.get_int (STATUS_KEY);
         DEBUG = this.settings.get_int (DEBUG_KEY);
-        let srcs =  this.settings.get_string (SOURCES_KEY);
-        if (srcs.length > 0) sources = JSON.parse (srcs);
-        else {
-            sources.push ({path: GLib.get_home_dir (), recursive: true});
-            this.settings.set_string (SOURCES_KEY, JSON.stringify (sources));
-        }
 
         server = this.server_enabled;
-        if (server) this.icon_on ();
         if (startup && !server) this._enable (true);
         this._build_ui ();
         this.menu.actor.add_style_class_name ('obmin-menu');
+
+        stats_monitor = this.settings.get_boolean (STATS_MONITOR_KEY);
+        if (server) {
+            this.icon_on ();
+            stats = JSON.parse (this.settings.get_string (STATS_DATA_KEY));
+            this.update_stats ();
+        }
 
         this.menu.connect ('open-state-changed', Lang.bind (this, this.on_menu_state_changed));
         if (status > 0) status_event = GLib.timeout_add_seconds (0, status, Lang.bind (this, function () {
             this.check_status ();
             return true;
+        }));
+        if (stats_monitor)
+            this.settings.connect ("changed::" + STATS_DATA_KEY, Lang.bind (this, function() {
+            stats = JSON.parse (this.settings.get_string (STATS_DATA_KEY));
+            if ((stats.access - stats.ready) > 0) this.icon_run ();
+            else this.icon_on ();
+            if (this.menu.isOpen) {
+                if (update_event)
+                    GLib.Source.remove (update_event);
+                update_event = GLib.timeout_add (0, 250, Lang.bind (this, this.update_stats ));
+            }
         }));
     },
 
@@ -118,12 +136,32 @@ const ObminIndicator = new Lang.Class({
         }
     },
 
+    update_stats: function () {
+        if (update_event) {
+            GLib.Source.remove (update_event);
+            update_event = 0;
+        }
+        if (stats.access >= 0) {
+            if ((stats.access - stats.ready) > 0)
+                this.connections.set_text ((stats.access - stats.ready).toString());
+            else this.connections.set_text ('');
+            if (stats.access > 0) this.requests.set_text (stats.access.toString());
+            else this.requests.set_text ('');
+            if (stats.upload > 0) this.uploads.set_text (GLib.format_size (stats.upload));
+            else this.uploads.set_text ('');
+            this.separator.actor.visible =
+                (stats.access - stats.ready) > 0 || stats.access > 0 || stats.upload > 0;
+        }
+        return false;
+    },
+
     on_menu_state_changed: function (source, state) {
         if (state) {
             this.check_status ();
             port = this.settings.get_int (PORT_KEY);
             this.info_local.update ();
             this.info_public.update ();
+            this.update_stats ();
         } else {
             Clutter.ungrab_keyboard ();
         }
@@ -132,6 +170,8 @@ const ObminIndicator = new Lang.Class({
     icon_on: function () { this.statusIcon.gicon = this._icon_on.gicon; },
 
     icon_off: function () { this.statusIcon.gicon = this._icon_off.gicon; },
+
+    icon_run: function () { this.statusIcon.gicon = this._icon_run.gicon; },
 
     _build_ui: function () {
         this._build_popup ();
@@ -148,64 +188,19 @@ const ObminIndicator = new Lang.Class({
         this.menu.addMenuItem (this.info_local);
         this.info_public = new PublicItem ();
         this.menu.addMenuItem (this.info_public);
-        //this.menu.addMenuItem (new SeparatorItem ());
-        //Locations
-        this.smenu = new PopupMenu.PopupSubMenuMenuItem (_("Locations"), false);
-        this.menu.addMenuItem (this.smenu);
-        let newItem = new NewMenuItem (_("New Location..."), "", _("Path"), true);
-        this.smenu.menu.addMenuItem (newItem);
-        newItem.connect ('save', Lang.bind (this, function () {
-            let exist = false;
-            if (!GLib.file_test (newItem.entry.text, GLib.FileTest.EXISTS)) {
-                show_warn (_("File source location\n") + newItem.entry.text + _("\nDoesn't exist..."));
-                return;
-            }
-            sources.forEach (s => {if (s.path == newItem.entry.text) exist = true;});
-            if (!exist) {
-                sources.push ({path: newItem.entry.text, recursive: newItem.state});
-                this._add_source (sources.length -1);
-                this.settings.set_string (SOURCES_KEY, JSON.stringify (sources));
-            } else show_notify (_("File source is already exist."));
-        }));
-        for (let p in sources) {
-            this._add_source (p);
-        }
+        this.separator = new InfoMenuItem (_("Usage Statistics"), " ", false, 'obmin-ip-item', 'obmin-ip-label');
+        this.menu.addMenuItem (this.separator);
+        this.connections = new InfoMenuItem (_("Active"), "", true, 'obmin-active', 'obmin-active');
+        this.menu.addMenuItem (this.connections);
+        this.requests = new InfoMenuItem (_("Total Requests"), "", true, 'obmin-ip-item', 'obmin-ip-label');
+        this.menu.addMenuItem (this.requests);
+        this.uploads = new InfoMenuItem (_("Transferred"), "", true, 'obmin-ip-item', 'obmin-ip-label');
+        this.menu.addMenuItem (this.uploads);
         //Preferences
         this.menu.addMenuItem (new SeparatorItem ());
         let sm = new PrefsMenuItem ();
         this.menu.addMenuItem (sm);
 
-    },
-
-    _add_source: function (idx) {
-        let si = new SourceMenuItem (sources[idx]);
-        si.ID = idx;
-        this.smenu.menu.addMenuItem (si);
-        si.connect ('edit', Lang.bind (this, function (o) {
-            if (this.edit_item && this.edit_item.edit_mode && this.edit_item.ID != o.ID) this.edit_item.toggle ();
-            this.edit_item = o;
-        }));
-        si.connect ('update', Lang.bind (this, function (o) {
-            sources[o.ID] = {path: o.entry.text, recursive: o.state};
-            this.settings.set_string (SOURCES_KEY, JSON.stringify (sources));
-        }));
-        si.connect ('toggled', Lang.bind (this, function (o) {
-            sources[o.ID] = {path: sources[o.ID].path, recursive: o.state};
-            this.settings.set_string (SOURCES_KEY, JSON.stringify (sources));
-            debug ('toggled recursive');
-        }));
-        si.connect ('delete', Lang.bind (this, function (o) {
-            let id = o.ID;
-            sources.splice (o.ID, 1);
-            this.settings.set_string (SOURCES_KEY, JSON.stringify (sources));
-            o.destroy ();
-            let items = this.smenu.menu.box.get_children ().map (function(actor) {return actor._delegate;});
-            id++;
-            for (let key = id; key < items.length; key++){
-                let item = items[key];
-                item.ID -= 1;
-            }
-        }));
     },
 
     _enable: function (state) {
@@ -239,6 +234,8 @@ const ObminIndicator = new Lang.Class({
     remove_events: function () {
         GLib.Source.remove (status_event);
         status_event = 0;
+        GLib.Source.remove (update_event);
+        update_event = 0;
     }
 });
 
@@ -276,146 +273,6 @@ const PrefsMenuItem = new Lang.Class({
             this.emit ('activate');
         }));
         this.actor.add (new St.Label ({text: ' '}), { expand: true });
-        }
-    }
-});
-
-const NewMenuItem = new Lang.Class ({
-    Name: 'NewMenuItem',
-    Extends: PopupMenu.PopupMenuItem,
-
-    _init: function (text, text_entry, hint_text, recursive, params) {
-        this.parent (text, params);
-        this.edit_mode = false;
-        this.entry = new St.Entry ({ text:text_entry, hint_text:hint_text, style_class: 'obmin-entry', track_hover: true, can_focus: true, x_expand: true });
-        this.actor.add_child (this.entry);
-        this.entry.set_primary_icon (new St.Icon({ style_class: 'obmin-entry-icon', icon_name: 'emblem-ok-symbolic', icon_size: 14 }));
-        this.entry.connect ('primary-icon-clicked', Lang.bind(this, function () {
-            this.on_click ();
-        }));
-        this.entry.connect ('secondary-icon-clicked', Lang.bind(this, function () {
-            this.on_click ();
-        }));
-        this.entry.clutter_text.connect('key-press-event', Lang.bind (this, function (o, e) {
-            let symbol = e.get_key_symbol();
-            if (symbol == Clutter.Escape) {
-                this.toggle ();
-                return Clutter.EVENT_STOP;
-            } else if (symbol == Clutter.Return || symbol == Clutter.KP_Enter) {
-                this.on_click ();
-                this.toggle ();
-                return Clutter.EVENT_STOP;
-            } else if ((e.get_state() & Clutter.ModifierType.CONTROL_MASK) > 0) {
-                if (e.get_key_code() == 55) this._paste ();
-                else if (e.get_key_code() == 54) this._copy ();
-            }
-            return Clutter.EVENT_PROPAGATE;
-        }));
-        this.entry.clutter_text.connect('key-focus-in', Lang.bind (this, function () {
-            Clutter.grab_keyboard (this.entry.clutter_text);
-        }));
-        this.entry.visible = false;
-        this.context = new St.Label({text: _("Recursive"), y_expand: true, y_align: Clutter.ActorAlign.CENTER});
-        this.actor.add_child (this.context);
-        this.context.visible = false;
-        let container = new St.BoxLayout();
-        this.check_box = new St.Button({ style_class: 'check-box',
-                                     child: container,
-                                     button_mask: St.ButtonMask.ONE,
-                                     toggle_mode: true,
-                                     can_focus: true,
-                                     x_fill: true,
-                                     y_fill: true });
-        this.state = this.check_box.checked = recursive;
-        this._box = new St.Bin();
-        container.add_actor(this._box);
-        this.actor.add_child (this.check_box);
-        this.check_box.visible = false;
-        this.check_box.connect ('notify::hover', Lang.bind(this, function () {
-            if (this.check_box.hover) this.context.visible = true;
-            else this.context.visible = false;
-        }));
-        this.check_box.connect ('clicked', Lang.bind (this, function (item) {
-            this.state = this.check_box.checked;
-            this.emit ('toggled');
-        }));
-    },
-
-    activate: function (event) {
-        if (!this.entry.visible) {
-            this.edit_mode = true;
-            this.toggle ();
-        } else if (!this.edit_mode) this.toggle ();
-    },
-
-    toggle: function () {
-        this.label.visible = !this.label.visible;
-        this.entry.visible = !this.entry.visible;
-        this.check_box.visible = !this.check_box.visible;
-        if (this.entry.visible) Clutter.grab_keyboard (this.entry.clutter_text);
-        else Clutter.ungrab_keyboard ();
-    },
-
-    _paste: function() {
-        Clipboard.get_text (St.ClipboardType.CLIPBOARD, Lang.bind(this, function (o, text) {
-            if (!text) return;
-            this.entry.clutter_text.delete_selection();
-            let pos = this.entry.clutter_text.get_cursor_position();
-            this.entry.clutter_text.insert_text(text, pos);
-        }));
-    },
-
-    _copy: function () {
-        let selection = this.entry.clutter_text.get_selection ();
-        Clipboard.set_text (St.ClipboardType.CLIPBOARD, selection);
-    },
-
-    on_click: function () {
-        this.edit_mode = false;
-        this.emit ('save');
-    }
-});
-
-const SourceMenuItem = new Lang.Class ({
-    Name: 'SourceMenuItem',
-    Extends: NewMenuItem,
-
-    _init: function (src, params) {
-        this.parent (src.path, src.path, "", src.recursive, params);
-        this.path = src.path;
-        this.label.x_expand = true;
-        this.edit_button = new St.Button ({ child: new St.Icon ({ icon_name: 'open-menu-symbolic', icon_size: 14 }), style_class: 'edit-button'});
-        this.actor.add_child (this.edit_button);
-        this.edit_button.connect ('clicked', Lang.bind (this, function () {
-            this.toggle ();
-            Clutter.grab_keyboard (this.entry.clutter_text);
-            global.stage.set_key_focus (this.entry.clutter_text);
-            if (this.entry.text == '') this.entry.text = this.path;
-            this.emit ('edit');
-        }));
-        this.delete_button = new St.Button ({ child: new St.Icon ({ icon_name: 'edit-delete-symbolic', icon_size: 14 }), style_class: 'delete-button'});
-        this.actor.add_child (this.delete_button);
-        this.delete_button.connect ('clicked', Lang.bind (this, function () {
-            this.emit ('delete');
-        }));
-    },
-
-    activate: function (event) {
-        if (this.entry.text == '') this.entry.text = this.path;
-        if (this.entry.visible) this.toggle ();
-    },
-
-    toggle: function () {
-        this.parent ();
-        this.edit_button.visible = !this.edit_button.visible;
-        this.delete_button.visible = !this.delete_button.visible;
-        this.edit_mode = this.entry.visible;
-    },
-
-    on_click: function () {
-        if (this.entry.text != '') {
-            this.label.text = this.entry.text;
-            this.emit ('update');
         }
     }
 });

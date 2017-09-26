@@ -38,6 +38,8 @@ const Convenience = imports.convenience;
 
 const DEBUG_KEY = 'debug';
 const STARTUP_KEY = 'startup-settings';
+const STATS_MONITOR_KEY = 'stats-monitor';
+const STATS_DATA_KEY = 'stats';
 const SUPPORT_KEY = 'support';
 const PORT_KEY = 'port';
 const STATUS_KEY = 'status';
@@ -47,8 +49,11 @@ let support = 0;
 let port = 8088;
 let DEBUG = 1;
 let status = 5;
-let status_event = 0;
+let stats_monitor = true;
+let stats = {};
 
+let status_event = 0;
+let update_event = 0;
 let settings = null;
 let server = false;
 
@@ -61,6 +66,7 @@ const ObminIndicator = new Lang.Class ({
         support = settings.get_int (SUPPORT_KEY);
         port = settings.get_int (PORT_KEY);
         status = settings.get_int (STATUS_KEY);
+        stats_monitor = settings.get_boolean (STATS_MONITOR_KEY);
 
         this.application = new Gtk.Application ();
         this.application.connect ('activate', Lang.bind (this, this._onActivate));
@@ -81,9 +87,22 @@ const ObminIndicator = new Lang.Class ({
         if (startup && !server) this._enable (true);
         this.build_menu ();
         if (server) this.indicator.set_icon ("obmin-on");
+        if (server) {
+            this.indicator.set_icon ("obmin-on");
+            stats = JSON.parse (settings.get_string (STATS_DATA_KEY));
+            this.update_stats ();
+        }
         if (status > 0) status_event = GLib.timeout_add_seconds (0, status, Lang.bind (this, function () {
             this.check_status ();
             return true;
+        }));
+        if (stats_monitor)
+            settings.connect ("changed::" + STATS_DATA_KEY, Lang.bind (this, function() {
+            stats = JSON.parse (settings.get_string (STATS_DATA_KEY));
+            if (this.menu.visible) {
+                if (update_event) GLib.Source.remove (update_event);
+                update_event = GLib.timeout_add (0, 250, Lang.bind (this, this.update_stats ));
+            } else this.update_icon ();
         }));
     },
 
@@ -94,9 +113,29 @@ const ObminIndicator = new Lang.Class ({
             this.lock = true;
             this.server_switch.set_active (server);
             this.lock = false;
-            if (server) this.indicator.set_icon ("obmin-on");
+            if (server) this.update_icon ();
             else this.indicator.set_icon ("obmin-off");
         }
+    },
+
+    update_icon: function () {
+        if ((stats.access - stats.ready) > 0) {
+            if (this.indicator.icon != "obmin-run") this.indicator.set_icon ("obmin-run");
+        } else if (this.indicator.icon != "obmin-on") this.indicator.set_icon ("obmin-on");
+    },
+
+    update_stats: function () {
+        if (update_event) {
+            GLib.Source.remove (update_event);
+            update_event = 0;
+        }
+        if (stats.access >= 0) {
+            this.connections.update ((stats.access - stats.ready).toString());
+            this.requests.update (stats.access.toString());
+            this.uploads.update (GLib.format_size (stats.upload));
+        }
+        this.update_icon ();
+        return false;
     },
 
     build_menu: function () {
@@ -104,25 +143,41 @@ const ObminIndicator = new Lang.Class ({
         this.menu = new Gtk.Menu ();
         this.indicator = AI.Indicator.new ("Obmin", "obmin-indicator", AI.IndicatorCategory.APPLICATION_STATUS);
         this.indicator.set_icon_theme_path (APPDIR + "/data/icons");
-        this.server_switch = Gtk.CheckMenuItem.new_with_label (" "+_("Obmin Server"));
+        this.server_switch = Gtk.CheckMenuItem.new_with_label (" ");
+        this.server_switch.get_child().set_markup ("<b> Obmin "+_("Server")+"</b>");
         this.server_switch.tooltip_text = _("Activate Obmin Server");
         this.server_switch.active = server;
         this.server_switch.connect ('toggled', Lang.bind (this, function () {
             if (!this.lock) this._enable (this.server_switch.active);
         }));
         this.menu.append (this.server_switch);
+        this.menu.append (new Gtk.SeparatorMenuItem ());
 
         this.info_local = new LocalItem ();
         this.menu.append (this.info_local);
         this.info_public = new PublicItem ();
         this.menu.append (this.info_public);
 
+        this.separator = Gtk.MenuItem.new_with_label (_("Usage Statistics"));
+        this.separator.sensitive = false;
+        this.menu.append (this.separator);
+        this.menu.append (new Gtk.SeparatorMenuItem ());
+        this.connections = new InfoMenuItem (_("Active"), "0");
+        this.connections.tooltip_text = _("Active connections");
+        this.menu.append (this.connections);
+        this.requests = new InfoMenuItem (_("Total Requests"), "0");
+        this.requests.tooltip_text = _("Total Number Of Requests To Obmin Server");
+        this.menu.append (this.requests);
+        this.uploads = new InfoMenuItem (_("Transferred"), "0 bytes");
+        this.uploads.tooltip_text = _("Total Amount Of The Transferred Data From Obmin Server");
+        this.menu.append (this.uploads);
+
         if (support == 0) {
         this.menu.append (new Gtk.SeparatorMenuItem ());
         item = Gtk.ImageMenuItem.new_with_label (_("Donate..."));
         item.image = Gtk.Image.new_from_file (APPDIR + "/data/icons/pp.svg");
         item.always_show_image = true;
-        item.tooltip_text = _("Make a donation to the project.");
+        item.tooltip_text = _("Make a donation to the project");
         item.connect ('activate', Lang.bind (this, function () {
             let app = Gio.AppInfo.get_default_for_uri_scheme ("https");
             app.launch_uris (["https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=WVAS5RXRMYVC4"], null);
@@ -132,7 +187,7 @@ const ObminIndicator = new Lang.Class ({
 
         this.menu.append (new Gtk.SeparatorMenuItem ());
         item = Gtk.MenuItem.new_with_label (_("Preferences..."));
-        item.tooltip_text = _("Open Obmin Settings.");
+        item.tooltip_text = _("Open Obmin Settings");
         item.connect ('activate', Lang.bind (this, function () {
             GLib.spawn_command_line_async (APPDIR + '/obmin-preferences');
         }));
@@ -155,6 +210,7 @@ const ObminIndicator = new Lang.Class ({
             port = settings.get_int (PORT_KEY);
             this.info_local.update ();
             this.info_public.update ();
+            this.update_stats ();
         }));
     },
 
@@ -195,8 +251,9 @@ const LocalItem = new Lang.Class ({
     Extends: Gtk.MenuItem,
 
     _init: function () {
-        this.prefix = _("Local IP") + ": ";
+        this.prefix = "<b>" + _("Local IP") + "</b> ";
         this.parent ({label:this.prefix + this.ip});
+        this.tooltip_text = _("Local Network IP Address");
     },
 
     get ip () {
@@ -206,7 +263,8 @@ const LocalItem = new Lang.Class ({
     },
 
     update: function () {
-        this.set_label (this.prefix + this.ip);
+        //this.set_label (this.prefix + this.ip);
+        this.get_child().set_markup (this.prefix + this.ip);
     }
 });
 
@@ -215,8 +273,9 @@ const PublicItem = new Lang.Class ({
     Extends: Gtk.MenuItem,
 
     _init: function () {
-        this.prefix = _("Public IP") + ": ";
+        this.prefix = "<b>" + _("Public IP") + "</b> ";
         this.parent ({label:this.prefix + this.ip});
+        this.tooltip_text = _("External Network IP Address");
     },
 
     get ip () {
@@ -237,7 +296,21 @@ const PublicItem = new Lang.Class ({
         let ip = this.ip;
         if (ip) this.visible = true;
         else this.visible = false;
-        this.set_label (this.prefix + ip);
+        this.get_child().set_markup (this.prefix + ip);
+    }
+});
+
+const InfoMenuItem = new Lang.Class ({
+    Name: 'InfoMenuItem',
+    Extends: Gtk.MenuItem,
+
+    _init: function (desc, val) {
+        this.prefix = "<b>" + desc + "</b>  ";
+        this.parent ({label:desc + " " + val});
+    },
+
+    update: function (text) {
+        this.get_child().set_markup (this.prefix + text);
     }
 });
 

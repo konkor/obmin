@@ -111,5 +111,17 @@
       <description>(0 - disable, 5 seconds default)</description>
     </key>
 
+    <key type="b" name="stats-monitor">
+      <default>true</default>
+      <summary>Update server stats</summary>
+      <description>(enable - default/disable)</description>
+    </key>
+
+    <key type="s" name="stats">
+        <default>''</default>
+        <summary>Data</summary>
+        <description>Server stats data</description>
+    </key>
+
   </schema>
 </schemalist>

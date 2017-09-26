@@ -46,6 +46,8 @@ const MOUNTS_KEY = 'mounts-settings';
 const HIDDENS_KEY = 'hidden-settings';
 const BACKUPS_KEY = 'backup-settings';
 const SOURCES_KEY = 'content-sources';
+const STATS_MONITOR_KEY = 'stats-monitor';
+const STATS_DATA_KEY = 'stats';
 const SUPPORT_KEY = 'support';
 const THEME_KEY = 'theme';
 const MODE_KEY = 'server-mode';
@@ -76,7 +78,7 @@ let h_menu = "<div id=\"navmenu\" class=\"nmenu hide\">" +
     "<a href=\"?list=urls\" class=\"nmenu-item\" onclick=\"toggle()\" title=\"Generate URLs File List\">Filelist URLs...</a>" +
     "<a href=\"?list=pls\" class=\"nmenu-item\" onclick=\"toggle()\" title=\"Generate PLS Playlist\">Playlist PLS ...</a>" +
     "<a href=\"?list=m3u\" class=\"nmenu-item\" onclick=\"toggle()\" title=\"Generate M3U Playlist\">Playlist M3U...</a>" +
-    "<a href=\"https://konkor.github.io\" class=\"nmenu-item right\" onclick=\"toggle()\" title=\"About Obmin\">About ...</a>" +
+    "<a href=\"https://github.com/konkor/obmin/wiki\" class=\"nmenu-item right\" onclick=\"toggle()\" title=\"About Obmin\">About ...</a>" +
     "</div>";
 const h_menu1 = "<a href=\"https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=WVAS5RXRMYVC4\" class=\"nmenu-item right\" onclick=\"toggle()\" title=\"Make donation to the project\">Donate ...</a>";
 const h_js = "<script>function toggle(){var x=document.getElementById(\"navmenu\");if(x.className.indexOf(\"show\")==-1){x.className += \" show\";}else{x.className=x.className.replace(\" show\",\"\");}}</script>";
@@ -87,6 +89,7 @@ let check_hidden = false;
 let check_backup = false;
 let theme = APPDIR + "/data/themes/default/";
 let support = 0;
+let stats_monitor = true;
 let mode = 0;
 let port = 8088;
 var DEBUG = 1;
@@ -100,14 +103,12 @@ var counter = {};
 const ObminServer = new Lang.Class({
     Name: 'ObminServer',
     Extends: Soup.Server,
-    Signals: {
-        'counters': {},
-    },
 
     _init: function () {
         this.parent ();
         if (!counter.access)
             counter = {access:0, ready:0, upload:0};
+        settings.set_string (STATS_DATA_KEY, JSON.stringify (counter));
         if (support < 2) h_menu = h_menu.replace ("</div>", h_menu1 + "</div>");
         this.add_handler (null, Lang.bind (this, this._default_handler));
         try {
@@ -134,18 +135,18 @@ const ObminServer = new Lang.Class({
         });
         if (msg.method == "POST") {
             counter.ready++;
-            this.emit ('counters');
+            this.update_stats ();
             return;
         }
         if (msg.request_body.length > 0) debug (msg.request_body);
         debug ("Default handler start (" + counter.access + ")");
-        Mainloop.timeout_add (100, Lang.bind (this, function () {
+        Mainloop.timeout_add (50, Lang.bind (this, function () {
             if (path == '/') this._root_handler (server, msg);
             else this._send_content (self, msg, path, num, query);
             return false;
         }));
         self.pause_message (msg);
-        this.emit ('counters');
+        this.update_stats ();
     },
 
     _send_content: function (server, msg, path, num, query) {
@@ -180,6 +181,7 @@ const ObminServer = new Lang.Class({
                     msg.connect ("finished", (o)=> {
                         debug ("st finished" + st);
                         counter.ready++;
+                        this.update_stats ();
                         st = null;
                         System.gc();
                     });
@@ -211,7 +213,13 @@ const ObminServer = new Lang.Class({
         }
         counter.ready++;
         counter.upload += msg.response_body.length;
+        this.update_stats ();
         return true;
+    },
+
+    update_stats: function () {
+        if (!stats_monitor) return;
+        settings.set_string (STATS_DATA_KEY, JSON.stringify (counter));
     },
 
     get_file: function (path) {
@@ -292,14 +300,14 @@ const ObminServer = new Lang.Class({
                 list += GLib.uri_escape_string (ref + f.name, ac, true) + "\n";
             else if (ext == "pls") {
                 if (this.is_media (f.name)) {
-                    list += "File" + idx + "=" + GLib.uri_escape_string (ref + f.name, ac, true) + "\n";
+                    list += "File" + idx + "=" + GLib.uri_escape_string (ref + f.name, ac, false) + "\n";
                     //list += "Title" + idx + "=" + f.name + "\n";
                     idx++;
                 }
             } else if (ext == "m3u") {
                 if (this.is_media (f.name)) {
                     list += "#EXTINF:," + f.name + "\n";
-                    list += GLib.uri_escape_string (ref + f.name, ac, true) + "\n";
+                    list += GLib.uri_escape_string (ref + f.name, ac, false) + "\n";
                 }
             }
         });
@@ -308,7 +316,7 @@ const ObminServer = new Lang.Class({
             list = "[playlist]\nNumberOfEntries=" + (idx -1) + "\n" + list;
         } else if (ext == "m3u") msg.response_headers.set_content_type ("audio/x-mpegurl", null);
         msg.response_headers.append ("Server", "Obmin");
-        msg.response_headers.append ("Content-Disposition", "filename=\"" + dir.get_basename () + "." + ext + "\"");
+        msg.response_headers.append ("Content-Disposition", "attachment; filename=\"" + dir.get_basename () + "." + ext + "\";");
         msg.set_response ("text/plain", Soup.MemoryUse.COPY, list);
         msg.set_status (200);
     },
@@ -371,6 +379,7 @@ const ObminServer = new Lang.Class({
         msg.set_status (200);
         self.unpause_message (msg);
         counter.ready++;
+        this.update_stats ();
     },
 
     list_dir: function (loc, list) {
@@ -451,7 +460,7 @@ const ContentStream = new Lang.Class({
                 Mainloop.source_remove (this.read_event);
                 this.read_event = 0;
             }
-            try{if (this.stream) this.stream.close (null);
+            try{if (this.stream) this.stream.close_async (100, null, null);
             }catch (err) {
             error ("Error close stream " + err);
             }
@@ -465,10 +474,10 @@ const ContentStream = new Lang.Class({
             }catch (err) {
             error ("Error complete " + err);
             }
-            try{this.msg.response_body.free();
+            /*try{this.msg.response_body.free();
             }catch (err) {
             error ("Error free body " + err);
-            }
+            }*/
             try{System.gc ();
             }catch (err) {
             error ("Error gc " + err);
@@ -557,7 +566,7 @@ const ContentStream = new Lang.Class({
                 debug ("Stream " + this.num + " done");
                 this.b = [];
                 this.msg.response_body.complete ();
-                this.stream.close (null);
+                this.stream.close_async (100, null, null);
                 counter.upload += this.b.get_size ();
                 return;
             }
@@ -566,7 +575,7 @@ const ContentStream = new Lang.Class({
                 this.done = true;
                 this.msg.response_body.complete ();
                 this.server.unpause_message (this.msg);
-                this.stream.close (null);
+                this.stream.close_async (100, null, null);
             } else {
                 this.offset += this.b.get_size ();
                 //this.msg.response_headers.set_content_range (this.offset - this.b.get_size(),this.offset-1,this.size);
@@ -683,12 +692,15 @@ function load_settings () {
     support = settings.get_int (SUPPORT_KEY);
     if (config.theme) theme = APPDIR + "/data/themes/" + config.theme + "/";
     else theme = APPDIR + "/data/themes/" + settings.get_string (THEME_KEY) + "/";
-    if (config.sources) check_sources (config.sources);
+    if (config.sources)
+        check_sources (config.sources);
     else {
         srcs = settings.get_string (SOURCES_KEY);
         if (srcs.length > 0) check_sources (JSON.parse (srcs));
         else sources.push ({path: GLib.get_home_dir (), recursive: true});
     }
+    if (config.stats_monitor) stats_monitor = config.stats_monitor;
+    else stats_monitor = settings.get_boolean (STATS_MONITOR_KEY);
     return true;
 }
 

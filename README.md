@@ -81,9 +81,9 @@ or for `devel` branch to example
 ./install_obmin.sh devel
 ```
 3. Restart Gnome to reload extensions by:
- * user's `Log-out/Log-in` (_X11/Wayland_)
- * Alt-F2 `r` command (_X11 only_)
- * or just reboot PC (_X11/Wayland_)
+ * user's **Log-out/Log-in** (_X11/Wayland_)
+ * <kbd>Alt</kbd>+<kbd>F2</kbd> and enter <kbd>r</kbd> command (_X11 only_)
+ * or just **reboot** PC (_X11/Wayland_)
 4. Turn on the extension
  * [local extensions page](https://extensions.gnome.org/local/)
  * or `gnome-shell-extension-prefs` tool

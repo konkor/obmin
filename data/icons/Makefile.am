@@ -1,6 +1,7 @@
 #the application icon
 iconsdir=$(datadir)/gnome-shell/extensions/obmin@konkor/data/icons
 icons_DATA= \
+    obmin-run.png \
     obmin-off.png \
     obmin-on.png \
     pp.svg \
@@ -9,6 +10,7 @@ icons_DATA= \
 #the application icon
 icondir=$(datadir)/icons
 nobase_icon_DATA = hicolor/scalable/apps/obmin.svg \
+    hicolor/32x32/status/obmin-run.png \
     hicolor/32x32/status/obmin-off.png \
     hicolor/32x32/status/obmin-on.png \
     hicolor/32x32/apps/obmin.png \
