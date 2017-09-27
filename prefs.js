@@ -59,7 +59,7 @@ let monitor = true;
 let settings = null;
 let sources = [];
 
-const ObminWidget = new Lang.Class({
+var ObminWidget = new Lang.Class({
     Name: 'ObminWidget',
 
     _init: function (params) {

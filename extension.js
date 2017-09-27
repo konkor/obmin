@@ -103,7 +103,6 @@ const ObminIndicator = new Lang.Class({
 
         stats_monitor = this.settings.get_boolean (STATS_MONITOR_KEY);
         if (server) {
-            this.icon_on ();
             stats = JSON.parse (this.settings.get_string (STATS_DATA_KEY));
             this.update_stats ();
         }
@@ -116,13 +115,10 @@ const ObminIndicator = new Lang.Class({
         if (stats_monitor)
             this.settings.connect ("changed::" + STATS_DATA_KEY, Lang.bind (this, function() {
             stats = JSON.parse (this.settings.get_string (STATS_DATA_KEY));
-            if ((stats.access - stats.ready) > 0) this.icon_run ();
-            else this.icon_on ();
             if (this.menu.isOpen) {
-                if (update_event)
-                    GLib.Source.remove (update_event);
+                if (update_event) GLib.Source.remove (update_event);
                 update_event = GLib.timeout_add (0, 250, Lang.bind (this, this.update_stats ));
-            }
+            } else this.update_icon ();
         }));
     },
 
@@ -131,7 +127,7 @@ const ObminIndicator = new Lang.Class({
         if (run != server) {
             server = run;
             this.server_switch.setToggleState (server);
-            if (server) this.icon_on ();
+            if (server) this.update_icon ();
             else this.icon_off ();
         }
     },
@@ -141,7 +137,7 @@ const ObminIndicator = new Lang.Class({
             GLib.Source.remove (update_event);
             update_event = 0;
         }
-        if (stats.access >= 0) {
+        if (stats.access && (stats.access >= 0)) {
             if ((stats.access - stats.ready) > 0)
                 this.connections.set_text ((stats.access - stats.ready).toString());
             else this.connections.set_text ('');
@@ -152,7 +148,14 @@ const ObminIndicator = new Lang.Class({
             this.separator.actor.visible =
                 (stats.access - stats.ready) > 0 || stats.access > 0 || stats.upload > 0;
         }
+        if (server) this.update_icon ();
+        else this.icon_off ();
         return false;
+    },
+
+    update_icon: function () {
+        if ((stats.access - stats.ready) > 0) this.icon_run ();
+        else this.icon_on ();
     },
 
     on_menu_state_changed: function (source, state) {
@@ -232,9 +235,9 @@ const ObminIndicator = new Lang.Class({
     },
 
     remove_events: function () {
-        GLib.Source.remove (status_event);
+        if (status_event) GLib.Source.remove (status_event);
         status_event = 0;
-        GLib.Source.remove (update_event);
+        if (update_event) GLib.Source.remove (update_event);
         update_event = 0;
     }
 });

@@ -168,6 +168,25 @@ const ObminServer = new Lang.Class({
                 } else this.get_dir (self, msg, file, r, path);
                 self.unpause_message (msg);
             } else {
+                if (!finfo.get_attribute_boolean (Gio.FILE_ATTRIBUTE_ACCESS_CAN_READ)) {
+                    //TODO
+                    debug ("not found (permission denie): " + finfo.get_name ());
+                    if (finfo.get_name () == "style.css") {
+                        msg.set_status (200);
+                        msg.response_headers.append ("Server", "Obmin");
+                        msg.set_response ("text/css", Soup.MemoryUse.COPY, GLib.file_get_contents (theme + "style.css")[1]);
+                        self.unpause_message (msg);
+                    } else if (finfo.get_name () == "home.png") {
+                        msg.set_status (200);
+                        msg.response_headers.append ("Server", "Obmin");
+                        msg.set_response ("image/png", Soup.MemoryUse.COPY, GLib.file_get_contents (theme + "home.png")[1]);
+                        self.unpause_message (msg);
+                    } else this.not_found (server, msg);
+                    counter.ready++;
+                    counter.upload += msg.response_body.length;
+                    this.update_stats ();
+                    return true;
+                }
                 if (finfo.get_size () < 65536) {
                     msg.set_status (200);
                     msg.response_headers.append ("Server", "Obmin");
@@ -206,15 +225,19 @@ const ObminServer = new Lang.Class({
         } else if (path.endsWith ('index.html') && (mode == 1)) {
             return false;
         } else {
-            msg.set_response ("text/html", Soup.MemoryUse.COPY, "<html><head><title>404</title></head><body><h1>404</h1></body></html>");
-            msg.set_status (404);
-            msg.response_headers.append ("Server", "Obmin");
-            self.unpause_message (msg);
+            this.not_found (server, msg);
         }
         counter.ready++;
         counter.upload += msg.response_body.length;
         this.update_stats ();
         return true;
+    },
+
+    not_found: function (server, msg) {
+        msg.set_response ("text/html", Soup.MemoryUse.COPY, "<html><head><title>404</title></head><body><h1>404</h1></body></html>");
+        msg.set_status (404);
+        msg.response_headers.append ("Server", "Obmin");
+        server.unpause_message (msg);
     },
 
     update_stats: function () {
@@ -513,12 +536,10 @@ const ContentStream = new Lang.Class({
         }
         debug ("Start steamimg");
         this.file.read_async (GLib.PRIORITY_DEFAULT, null, Lang.bind (this, this.opened));
-        //System.gc();
     },
 
     wrote_chunk: function (sender, msg) {
         this.wrotes++;
-        //debug ("Request(" + this.num + ") wrote_chunk: " + this.wrotes + "/" + this.reads);
     },
 
     opened: function (sender, result) {
@@ -578,14 +599,7 @@ const ContentStream = new Lang.Class({
                 this.stream.close_async (100, null, null);
             } else {
                 this.offset += this.b.get_size ();
-                //this.msg.response_headers.set_content_range (this.offset - this.b.get_size(),this.offset-1,this.size);
                 this.msg.response_body.append_buffer (new Soup.Buffer (this.b.get_data()));
-                /*debug ("Request(" + this.num + ")\n" + this.msg.method + " HTTP/1." + this.msg.get_http_version ());
-                this.msg.request_headers.foreach ( (n, v) => {debug (n + ": " + v);});*/
-                //if (this.msg.request_body.length > 0) debug (this.msg.request_body);
-                /*debug ("Response(" + this.num + ")");
-                this.msg.response_headers.foreach ( (n, v) => {debug (n + ": " + v);});*/
-                //debug ("Stream " + this.num + " " + this.offset + ":" + this.size);
                 this.server.unpause_message (this.msg);
                 counter.upload += this.b.get_size ();
                 if (this.offset < this.range)
