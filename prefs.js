@@ -30,6 +30,7 @@ const MOUNTS_KEY = 'mounts-settings';
 const HIDDENS_KEY = 'hidden-settings';
 const BACKUPS_KEY = 'backup-settings';
 const SOURCES_KEY = 'content-sources';
+const MONITOR_KEY = 'stats-monitor';
 const SUPPORT_KEY = 'support';
 const THEME_KEY = 'theme';
 const MODE_KEY = 'server-mode';
@@ -53,6 +54,7 @@ let theme = '';
 let mode = 0;
 let port = 8088;
 let DEBUG = 1;
+let monitor = true;
 
 let settings = null;
 let sources = [];
@@ -72,6 +74,7 @@ const ObminWidget = new Lang.Class({
         mounts = settings.get_boolean (MOUNTS_KEY);
         hiddens = settings.get_boolean (HIDDENS_KEY);
         backups = settings.get_boolean (BACKUPS_KEY);
+        monitor = settings.get_boolean (MONITOR_KEY);
         theme = settings.get_string (THEME_KEY);
         if (theme.length < 1) theme = "default";
         let srcs =  settings.get_string (SOURCES_KEY);
@@ -225,7 +228,7 @@ const LocationItem = new Lang.Class({
         this.parent ({orientation:Gtk.Orientation.HORIZONTAL, margin:2, spacing:8});
         this.id = id;
         this.margin_right = 4;
-        this.source = src;//{path: GLib.get_home_dir (), recursive: true};
+        this.source = src;
         this.ltype = new Gtk.ComboBoxText ();
         [_("FOLDER"),_("FILE")].forEach (s => {
             this.ltype.append_text (s);
@@ -439,6 +442,16 @@ const PageNotify = new Lang.Class({
             settings.set_int (DEBUG_KEY, DEBUG);
         }));
         hbox.pack_end (this.level, false, false, 0);
+
+        this.cb_activity = Gtk.CheckButton.new_with_label (_("Activity Monitor"));
+        this.cb_activity.tooltip_text = _("Monitor usage statistic and active connections");
+        this.cb_activity.margin = 6;
+        this.box.add (this.cb_activity);
+        this.cb_activity.active = monitor;
+        this.cb_activity.connect ('toggled', Lang.bind (this, ()=>{
+            monitor = this.cb_activity.active;
+            settings.set_boolean (MONITOR_KEY, monitor);
+        }));
 
         this.show_all ();
     }

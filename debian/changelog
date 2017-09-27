@@ -1,7 +1,12 @@
 obmin (8.0-1) UNRELEASED; urgency=medium
 
-  * Development version
+  * Add activity monitor
   * Add brazilian portuguese locale, pt_BR
+  * Update docs, icons, improved playlists
+  * Update German locale, de_DE
+  * Move the gnome extension's sources to the preferences window
+  * Improved stability and performance
+  * Minor Fixes
 
  -- Kostiantyn K <kapa76@gmail.com>  Sat, 16 Sep 2017 11:45:00 +0300
 

@@ -700,7 +700,12 @@ function load_settings () {
         else sources.push ({path: GLib.get_home_dir (), recursive: true});
     }
     if (config.stats_monitor) stats_monitor = config.stats_monitor;
-    else stats_monitor = settings.get_boolean (STATS_MONITOR_KEY);
+    else {
+        stats_monitor = settings.get_boolean (STATS_MONITOR_KEY);
+        settings.connect ("changed::" + STATS_MONITOR_KEY, Lang.bind (this, function() {
+            stats_monitor = settings.get_boolean (STATS_MONITOR_KEY);
+        }));
+    }
     return true;
 }
 
