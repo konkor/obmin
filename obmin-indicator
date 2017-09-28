@@ -315,7 +315,7 @@ const InfoMenuItem = new Lang.Class ({
 
     _init: function (desc, val) {
         this.prefix = "<b>" + desc + "</b>  ";
-        this.parent ({label:desc + " " + val});
+        this.parent ({label:desc});
     },
 
     update: function (text) {

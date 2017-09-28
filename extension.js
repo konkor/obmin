@@ -193,6 +193,7 @@ const ObminIndicator = new Lang.Class({
         this.menu.addMenuItem (this.info_public);
         this.separator = new InfoMenuItem (_("Usage Statistics"), " ", false, 'obmin-ip-item', 'obmin-ip-label');
         this.menu.addMenuItem (this.separator);
+        this.separator.actor.visible = false;
         this.connections = new InfoMenuItem (_("Active"), "", true, 'obmin-active', 'obmin-active');
         this.menu.addMenuItem (this.connections);
         this.requests = new InfoMenuItem (_("Total Requests"), "", true, 'obmin-ip-item', 'obmin-ip-label');

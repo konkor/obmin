@@ -16,8 +16,14 @@ nobase_icon_DATA = hicolor/scalable/apps/obmin.svg \
     hicolor/32x32/apps/obmin.png \
     $(NULL)
 
+#the application icon
+pixmapsdir=$(datadir)/pixmaps
+pixmaps_DATA= \
+    hicolor/scalable/apps/obmin.svg
+
 EXTRA_DIST = \
         $(icons_DATA) \
+        $(pixmaps_DATA) \
         $(nobase_icon_DATA)
 
 gtk_update_icon_cache = gtk-update-icon-cache -f -t $(datadir)/icons/hicolor
