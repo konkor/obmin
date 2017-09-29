@@ -7,178 +7,174 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2017-09-14 10:43-0300\n"
-"PO-Revision-Date: 2017-09-14 11:15-0300\n"
+"POT-Creation-Date: 2017-09-29 13:51-0300\n"
+"PO-Revision-Date: 2017-09-29 13:58-0300\n"
 "Last-Translator: Fábio Nogueira <fnogueira@gnome.org>\n"
 "Language-Team: \n"
 "Language: pt_BR\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.3\n"
+"X-Generator: Poedit 2.0.4\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: extension.js:124
+#: extension.js:185
 msgid "Obmin Server "
 msgstr "Servidor Obmin "
 
-#: extension.js:135 prefs.js:85
-msgid "Locations"
-msgstr "Locais"
+#: extension.js:194
+msgid "Usage Statistics"
+msgstr "Estatísticas de uso"
 
-#: extension.js:137
-msgid "New Location..."
-msgstr "Novo local..."
+#: extension.js:197
+msgid "Active"
+msgstr "Ativo"
 
-#: extension.js:137
-msgid "Path"
-msgstr "Caminho"
+#: extension.js:199
+msgid "Total Requests"
+msgstr "Total de requisições"
 
-#: extension.js:142
-msgid "File source location\n"
-msgstr "Local do arquivo fonte\n"
+#: extension.js:201
+msgid "Transferred"
+msgstr "Transferidos"
 
-#: extension.js:142
-msgid ""
-"\n"
-"Doesn't exist..."
-msgstr ""
-"\n"
-"Não existe..."
-
-#: extension.js:150
-msgid "File source is already exist."
-msgstr "O arquivo fonte já existe."
-
-#: extension.js:298
-msgid "Recursive"
-msgstr "Recursivo"
-
-#: extension.js:429
+#: extension.js:310
 msgid "Local IP"
 msgstr "IP local"
 
-#: extension.js:434
+#: extension.js:315
 msgid "Local IP address copied to clipboard."
 msgstr "Endereço do IP local copiado para área de transferência."
 
-#: extension.js:454
+#: extension.js:335
 msgid "Public IP"
 msgstr "IP público"
 
-#: extension.js:459
+#: extension.js:340
 msgid "Public IP address copied to clipboard."
 msgstr "Endereço do IP público copiado para área de transferência."
 
-#: prefs.js:90
+#: prefs.js:88
+msgid "Locations"
+msgstr "Locais"
+
+#: prefs.js:93
 msgid "General"
 msgstr "Geral"
 
-#: prefs.js:95
+#: prefs.js:98
 msgid "Behavior"
 msgstr "Comportamento"
 
-#: prefs.js:100
+#: prefs.js:103
 msgid "Display"
 msgstr "Exibição"
 
-#: prefs.js:105
+#: prefs.js:108
 msgid "Notifications"
 msgstr "Notificações"
 
-#: prefs.js:110
+#: prefs.js:113
 msgid "Supporting"
 msgstr "Suporte"
 
-#: prefs.js:129
+#: prefs.js:132
 msgid "Shared Locations Editor"
 msgstr "Editor de locais compartilhados"
 
-#: prefs.js:132
+#: prefs.js:135
 msgid "Add a location to share"
 msgstr "Adiciona um local para compartilhar"
 
-#: prefs.js:230
+#: prefs.js:233
 msgid "FOLDER"
 msgstr "PASTA"
 
-#: prefs.js:230
+#: prefs.js:233
 msgid "FILE"
 msgstr "ARQUIVO"
 
-#: prefs.js:248
+#: prefs.js:251
 msgid "Remove this location from the sharing"
 msgstr "Remove o compartilhamento deste local"
 
-#: prefs.js:266
+#: prefs.js:269
 msgid "Select folder"
 msgstr "Selecionar pasta"
 
-#: prefs.js:287
+#: prefs.js:290
 msgid "Select file"
 msgstr "Selecionar arquivo"
 
-#: prefs.js:310
+#: prefs.js:313
 msgid "<b>System</b>"
 msgstr "<b>Sistema</b>"
 
-#: prefs.js:311
+#: prefs.js:314
 msgid "Start server on the loading"
 msgstr "Iniciar o servidor ao iniciar"
 
-#: prefs.js:320
+#: prefs.js:323
 msgid "<b>Network</b>"
 msgstr "<b>Rede</b>"
 
-#: prefs.js:323
+#: prefs.js:326
 msgid "Listening Port"
 msgstr "Porta de escuta"
 
-#: prefs.js:332
+#: prefs.js:335
 msgid "<b>Content</b>"
 msgstr "<b>Conteúdo</b>"
 
-#: prefs.js:335
+#: prefs.js:338
 msgid "Theme"
 msgstr "Tema"
 
-#: prefs.js:378
+#: prefs.js:381
 msgid "Show mount points"
 msgstr "Exibir pontos de montagem"
 
-#: prefs.js:386
+#: prefs.js:389
 msgid "Show symbolic links"
 msgstr "Exibir links simbólicos"
 
-#: prefs.js:394
+#: prefs.js:397
 msgid "Show hidden content"
 msgstr "Exibir conteúdo oculto"
 
-#: prefs.js:402
+#: prefs.js:405
 msgid "Show backups"
 msgstr "Mostrar backups"
 
-#: prefs.js:430
+#: prefs.js:433
 msgid "Debugging level"
 msgstr "Nível de depuração"
 
-#: prefs.js:433
+#: prefs.js:436
 msgid "ERROR"
 msgstr "ERRO"
 
-#: prefs.js:433
+#: prefs.js:436
 msgid "INFO"
 msgstr "INFO"
 
-#: prefs.js:433
+#: prefs.js:436
 msgid "DEBUG"
 msgstr "DEPURAÇÃO"
 
-#: prefs.js:457
+#: prefs.js:446
+msgid "Activity Monitor"
+msgstr "Monitor de atividades"
+
+#: prefs.js:447
+msgid "Monitor usage statistic and active connections"
+msgstr "Monitor de estatísticas de uso e conexões ativas"
+
+#: prefs.js:470
 msgid "Make Donation to the project"
 msgstr "Fazer uma doação ao projeto"
 
-#: prefs.js:459
+#: prefs.js:472
 msgid ""
 "Behind the development for the Linux Desktop are ordinary people who spend a "
 "lot of time and their own resources to make the Linux Desktop better."
@@ -187,31 +183,31 @@ msgstr ""
 "passam muito tempo e usando seus próprios recursos para fazer um ambiente de "
 "trabalho Linux melhor."
 
-#: prefs.js:466 prefs.js:474
+#: prefs.js:479 prefs.js:487
 msgid "Make Donation"
 msgstr "Fazer uma doação"
 
-#: prefs.js:480
+#: prefs.js:493
 msgid "Find more about contributions..."
 msgstr "Encontrar mais sobre as contribuições..."
 
-#: prefs.js:485
+#: prefs.js:498
 msgid "Level of the donation notifications"
 msgstr "Nível das notificações das doações"
 
-#: prefs.js:488
+#: prefs.js:501
 msgid "INTERFACE"
 msgstr "INTERFACE"
 
-#: prefs.js:488
+#: prefs.js:501
 msgid "SERVER"
 msgstr "SERVIDOR"
 
-#: prefs.js:488
+#: prefs.js:501
 msgid "NONE"
 msgstr "NENHUM"
 
-#: prefs.js:497
+#: prefs.js:510
 msgid ""
 "Feel free to set up a disired supporting level of the notifications if some "
 "forms anoyong you or you are already a project's contributor."
@@ -220,34 +216,56 @@ msgstr ""
 "notificações se algumas delas irrita você ou se você já é um colaborador do "
 "projeto."
 
-#: prefs.js:515
+#: prefs.js:528
 msgid "File Server"
 msgstr "Servidor de arquivos"
 
-#: prefs.js:518
+#: prefs.js:531
 msgid "Show the folder's list on requests."
 msgstr "Exibe a lista de pastas nos pedidos."
 
-#: prefs.js:523
+#: prefs.js:536
 msgid "WEB/File Server"
 msgstr "Servidor de arquivos/WEB"
 
-#: prefs.js:526
+#: prefs.js:539
 msgid "Look for 'index.html' first if it is not exist show the folder's list."
 msgstr ""
 "Procura pelo 'index.html' primeiro, senão existir, exibe a lista da pastas."
 
-#: prefs.js:531
+#: prefs.js:544
 msgid "WEB Server"
 msgstr "Servidor WEB"
 
-#: prefs.js:534
+#: prefs.js:547
 msgid ""
 "Look for 'index.html' and direct links only if it is not exist show error "
 "'404.html'."
 msgstr ""
 "Procura somente pelo 'index.html' e links diretos, senão existir exibe o "
 "erro '404.html'."
+
+#~ msgid "New Location..."
+#~ msgstr "Novo local..."
+
+#~ msgid "Path"
+#~ msgstr "Caminho"
+
+#~ msgid "File source location\n"
+#~ msgstr "Local do arquivo fonte\n"
+
+#~ msgid ""
+#~ "\n"
+#~ "Doesn't exist..."
+#~ msgstr ""
+#~ "\n"
+#~ "Não existe..."
+
+#~ msgid "File source is already exist."
+#~ msgstr "O arquivo fonte já existe."
+
+#~ msgid "Recursive"
+#~ msgstr "Recursivo"
 
 #~ msgid "Load on startup"
 #~ msgstr "Carregar ao iniciar"
