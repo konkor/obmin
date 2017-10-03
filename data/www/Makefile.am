@@ -1,3 +1,5 @@
+SUBDIRS = themes
+
 wwwdir=$(datadir)/gnome-shell/extensions/obmin@konkor/data/www
 www_DATA= \
     favicon.ico

@@ -205,6 +205,9 @@ const ObminIndicator = new Lang.Class({
         let sm = new PrefsMenuItem ();
         this.menu.addMenuItem (sm);
 
+        this.connections.connect ('activate', ()=>{GLib.spawn_command_line_async (EXTENSIONDIR + '/obmin-center');});
+        this.requests.connect ('activate', ()=>{GLib.spawn_command_line_async (EXTENSIONDIR + '/obmin-center');});
+        this.uploads.connect ('activate', ()=>{GLib.spawn_command_line_async (EXTENSIONDIR + '/obmin-center');});
     },
 
     _enable: function (state) {

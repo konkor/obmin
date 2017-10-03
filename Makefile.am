@@ -19,9 +19,9 @@ js_DATA = \
 	stylesheet.css \
 	config_sample.json
 
-js_SCRIPTS = obmin-server obmin-preferences obmin-indicator
+js_SCRIPTS = obmin-server obmin-preferences obmin-indicator obmin-center
 
-bin_SCRIPTS = obmin-server obmin-preferences obmin-indicator
+bin_SCRIPTS = obmin-server obmin-preferences obmin-indicator obmin-center
 
 dist_js_DATA = $(js_SCRIPTS)
 

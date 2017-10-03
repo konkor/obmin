@@ -1,0 +1,75 @@
+@define-color base_color #323843;
+@define-color bg_color #ffcc0c;
+
+.sb {
+  color: #bfbfbf;
+  background-color: @base_color;
+  font-size: 1.2em;
+}
+.sb-button {
+  border-radius: 0;
+  border-style:none;
+  box-shadow:none;
+  outline-width:0;
+  border-image:none;
+  font-size: 1.2em;
+  padding:0.5em;
+  margin:0;
+  border:0;
+  color: #afafaf;
+  text-shadow:none;
+  background-image: none;
+}
+.sb-button:checked, .sb-button:hover {
+  color: @base_color;
+  background-color: @bg_color;
+}
+.sb-button:checked {
+  font-weight: bold;
+}
+.hb-space {
+  background-color: @base_color;
+}
+.stats {
+  color: @base_color;
+  background-color: @bg_color;
+}
+.logs {
+  color: #323843;
+  background-color: #bfffbf;
+}
+.rlabel {
+  font-size: 2em;
+}
+.hb {
+  color: @base_color;
+  background-color: @bg_color;
+  background-image: none;
+  font-size: 1.7em;
+  font-weight: bold;
+  padding:0;
+  margin:0;
+  border-width: 0;
+  border-radius: 0;
+  border-style:none;
+  box-shadow:none;
+  outline-width:0;
+  border-image:none;
+  padding:0.5em;
+  margin:0;
+  border:0;
+  text-shadow:none;
+}
+.hb:hover, .hb:focus, .hb:active {
+  background-color: shade (@bg_color, 0.5);
+}
+.titlebar {
+  padding:0;
+  margin:0;
+}
+.obmin-title {
+  font-size: 1.8em;
+  font-weight: bold;
+  padding:0;
+  margin:0;
+}

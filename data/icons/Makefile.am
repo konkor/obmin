@@ -4,6 +4,7 @@ icons_DATA= \
     obmin-run.png \
     obmin-off.png \
     obmin-on.png \
+    obmin-dash.svg \
     pp.svg \
     pp.png
 

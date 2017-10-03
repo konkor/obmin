@@ -26,6 +26,7 @@ man/Makefile
 data/Makefile
 data/icons/Makefile
 data/www/Makefile
+data/www/themes/Makefile
 data/themes/Makefile
 schemas/Makefile
 po/Makefile.in

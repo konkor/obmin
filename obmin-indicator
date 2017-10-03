@@ -100,6 +100,7 @@ const ObminIndicator = new Lang.Class ({
             if (update_event) GLib.Source.remove (update_event);
             update_event = GLib.timeout_add (0, 50, Lang.bind (this, this.update_stats ));
         }));
+        GLib.spawn_command_line_async (APPDIR + '/obmin-center');
     },
 
     check_status: function () {
@@ -118,13 +119,13 @@ const ObminIndicator = new Lang.Class ({
             this.lock = true;
             this.server_switch.set_active (server);
             this.lock = false;
-            if (server) this.update_icon ();
-            else this.indicator.set_icon ("obmin-off");
+            this.update_icon ();
         }
     },
 
     update_icon: function () {
-        if ((stats.access - stats.ready) > 0) {
+        if (!server) this.indicator.set_icon ("obmin-off");
+        else if ((stats.access - stats.ready) > 0) {
             if (this.indicator.icon != "obmin-run") this.indicator.set_icon ("obmin-run");
         } else if (this.indicator.icon != "obmin-on") this.indicator.set_icon ("obmin-on");
     },
@@ -165,9 +166,12 @@ const ObminIndicator = new Lang.Class ({
         this.appmenu.append (this.info_public);
 
         this.appmenu.append (new Gtk.SeparatorMenuItem ());
-        this.separator = Gtk.MenuItem.new_with_label (_("Usage Statistics"));
-        this.separator.sensitive = false;
-        this.appmenu.append (this.separator);
+        this.stats = Gtk.MenuItem.new_with_label (" ");
+        this.stats.get_child().set_markup ("<b>"+_("Usage Statistics")+"</b>");
+        this.stats.connect ('activate', Lang.bind (this, function () {
+            GLib.spawn_command_line_async (APPDIR + '/obmin-center');
+        }));
+        this.appmenu.append (this.stats);
 
         this.connections = new InfoMenuItem (_("Active"), "0");
         this.connections.tooltip_text = _("Active connections");
@@ -178,6 +182,15 @@ const ObminIndicator = new Lang.Class ({
         this.uploads = new InfoMenuItem (_("Transferred"), "0 bytes");
         this.uploads.tooltip_text = _("Total Amount Of The Transferred Data From Obmin Server");
         this.appmenu.append (this.uploads);
+        this.connections.connect ('activate', Lang.bind (this, function () {
+            GLib.spawn_command_line_async (APPDIR + '/obmin-center');
+        }));
+        this.requests.connect ('activate', Lang.bind (this, function () {
+            GLib.spawn_command_line_async (APPDIR + '/obmin-center');
+        }));
+        this.uploads.connect ('activate', Lang.bind (this, function () {
+            GLib.spawn_command_line_async (APPDIR + '/obmin-center');
+        }));
 
         if (support == 0) {
         this.appmenu.append (new Gtk.SeparatorMenuItem ());

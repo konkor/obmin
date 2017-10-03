@@ -1,0 +1,699 @@
+#!/usr/bin/gjs
+/*
+ * Obmin - Simple File Sharing Server For GNOME Desktop
+ *
+ * Copyright (C) 2017 Kostiantyn Korienkov <kapa76@gmail.com>
+ *
+ * This file is part of Obmin File Server.
+ *
+ * Obmin is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Filefinder is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+const Gtk = imports.gi.Gtk;
+const Gdk = imports.gi.Gdk;
+const Gio = imports.gi.Gio;
+const GLib = imports.gi.GLib;
+const GObject = imports.gi.GObject;
+const Cairo = imports.cairo;
+const System = imports.system;
+const Lang = imports.lang;
+
+const Gettext = imports.gettext.domain('gnome-shell-extensions-obmin');
+const _ = Gettext.gettext;
+
+const APPDIR = get_appdir ();
+imports.searchPath.unshift(APPDIR);
+const Convenience = imports.convenience;
+const Prefs = imports.prefs;
+
+const DEBUG_KEY = 'debug';
+const STARTUP_KEY = 'startup-settings';
+const STATS_MONITOR_KEY = 'stats-monitor';
+const THEME_GUI_KEY = 'theme-gui';
+const STATS_DATA_KEY = 'stats';
+const SUPPORT_KEY = 'support';
+const PORT_KEY = 'port';
+const STATUS_KEY = 'status';
+
+let startup = false;
+let support = 0;
+let port = 8088;
+let DEBUGGING = 1;
+let status = 5;
+let stats_monitor = true;
+let stats = {};
+let theme_gui = APPDIR + "/data/themes/default/obmin.css";
+
+let status_event = 0;
+let update_event = 0;
+let settings = null;
+let server = false;
+let cssp = null;
+
+const ObminCenter = new Lang.Class ({
+    Name: 'ObminCenter',
+
+    _init: function () {
+        this.application = new Gtk.Application ();
+        Convenience.initTranslations ();
+
+        settings = Convenience.getSettings ();
+        DEBUGGING = settings.get_int (DEBUG_KEY);
+        port = settings.get_int (PORT_KEY);
+        startup = settings.get_boolean (STARTUP_KEY);
+        support = settings.get_int (SUPPORT_KEY);
+        status = settings.get_int (STATUS_KEY);
+        stats_monitor = settings.get_boolean (STATS_MONITOR_KEY);
+        stats = JSON.parse (settings.get_string (STATS_DATA_KEY));
+        if (!stats.access) stats = {access:0, ready:0, upload:0};
+        theme_gui = APPDIR + "/data/themes/" + settings.get_string (THEME_GUI_KEY) + "/obmin.css";
+
+        server = this.server_enabled;
+
+        this.application.connect ('activate', Lang.bind (this, this._onActivate));
+        this.application.connect ('startup', Lang.bind (this, this._onStartup));
+        settings.connect ("changed::" + THEME_GUI_KEY, Lang.bind (this, function() {
+            theme_gui = APPDIR + "/data/themes/" + settings.get_string (THEME_GUI_KEY) + "/obmin.css";
+            if (cssp) {
+                this.space.visible = false;
+                Gtk.StyleContext.remove_provider_for_screen (this._window.get_screen(), cssp);
+            }
+            cssp = get_css_provider ();
+            if (cssp) { Gtk.StyleContext.add_provider_for_screen (
+                this._window.get_screen(), cssp, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
+                this.space.visible = true;
+            }
+        }));
+    },
+
+    _onActivate: function (){
+        this._window.show_all ();
+    },
+
+    _onStartup: function () {
+        this._build ();
+        if (server) {
+            stats = JSON.parse (settings.get_string (STATS_DATA_KEY));
+            this.update_stats ();
+        }
+        this.check_status ();
+        if (status > 0) status_event = GLib.timeout_add_seconds (0, status, Lang.bind (this, function () {
+            this.check_status ();
+            return true;
+        }));
+
+    },
+
+    check_status: function () {
+        let run = false;
+        let res = GLib.spawn_command_line_sync ("ps -A");
+        let o;
+        if (res[0]) o = res[1].toString().split("\n");
+        for (let i = 0; i < o.length; i++) {
+            if (o[i].indexOf ("obmin-server") > -1) {
+                run = true;
+		        break;
+            }
+        }
+        if (run != server) {
+            server = run;
+            this.lock = true;
+            this.sidebar.run_button.set_active (server);
+            this.lock = false;
+        }
+    },
+
+    _build: function () {
+        this._window = new Gtk.Window ();
+        this.space = null;
+        this._window.title = "OBMIN Control Center";
+        this._window.set_position (Gtk.WindowPosition.CENTER);
+        this._window.set_icon_name ('obmin');
+        this._window.set_default_size (1024, 640);
+        cssp = get_css_provider ();
+        this.hb = new Gtk.HeaderBar ();
+        this.hb.set_show_close_button (false);
+        this.hb.title = "OBMIN SERVER";
+        this.hb.get_style_context ().add_class ("hb");
+        this._window.set_titlebar (this.hb);
+        this.space = new HeaderSpace ();
+        this.space.marging = 0;
+        this.hb.pack_start (this.space);
+        this.space.visible = false;
+        this.hb.title = "";
+        if (cssp) {
+            Gtk.StyleContext.add_provider_for_screen (
+                this._window.get_screen(), cssp, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
+        }
+        /*this.run_button  = new Gtk.ToggleButton ();
+        this.run_button.image = Gtk.Image.new_from_icon_name ("system-shutdown-symbolic", Gtk.IconSize.DND);
+        this.run_button.xalign = 0;
+        this.run_button.tooltip_text = _("Enable/Disable Obmin Server");
+        this.run_button.get_style_context ().add_class ("sb-button");
+        this.hb.pack_end (this.run_button);
+        this.hb.pack_end (new Gtk.Label ({label: "OBMIN SERVER"}));*/
+        //Prefs.init ();
+        //this.w = new Prefs.ObminWidget ();
+        //this._window.add (this.w.notebook);
+        this.application.add_window (this._window);
+        this.box = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:0});
+        this._window.add (this.box);
+        this.sidebar = new Sidebar ();
+        this.sidebar.get_style_context ().add_class ("sb");
+        this.box.add (this.sidebar);
+
+        this.stack = new Gtk.Stack ();
+        this.box.pack_start (this.stack, true, true, 0);
+        this.statview = new Statistic ();
+        this.stack.add_named (this.statview, "stats");
+        this.logsview = new Logs ();
+        this.stack.add_named (this.logsview, "logs");
+
+        this.sidebar.connect ('stack_update', Lang.bind (this, (o, id)=>{
+            this.stack.visible_child_name = id;
+        }));
+        this.sidebar.connect ('size_allocate', Lang.bind(this, (o)=>{
+            if (this.space) this.space.width = o.get_allocated_width ();
+        }));
+    }
+});
+
+const Sidebar = new Lang.Class({
+    Name: 'Sidebar',
+    Extends: Gtk.Box,
+    Signals: {
+        'stack_update': {
+        flags: GObject.SignalFlags.RUN_LAST | GObject.SignalFlags.DETAILED,
+        param_types: [GObject.TYPE_STRING]},
+    },
+
+    _init: function () {
+        this.parent ({orientation:Gtk.Orientation.VERTICAL, margin:0});
+        let box = null;
+
+        box = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:32, spacing:24});
+        box.margin_top = 8;
+        this.pack_start (box, false, false, 0);
+
+        let label = new Gtk.Label ({label: "<b><big>OBMIN</big></b>", use_markup:true, xalign:0.75});
+        label.get_style_context ().add_class ("obmin-title");
+        box.pack_start (label, true, true, 0);
+        this.run_button  = new Gtk.ToggleButton ();
+        this.run_button.image = Gtk.Image.new_from_icon_name ("system-shutdown-symbolic", Gtk.IconSize.DND);
+        this.run_button.xalign = 0;
+        this.run_button.tooltip_text = _("Start/Stop OBMIN Server");
+        this.run_button.get_style_context ().add_class ("sb-button");
+        box.pack_start (this.run_button, false, false, 0);
+
+        this.local_item = new LocalItem ();
+        this.add (this.local_item);
+        this.public_item = new PublicItem ();
+        this.add (this.public_item);
+
+        let image = Gtk.Image.new_from_file (APPDIR + "/data/icons/obmin-dash.svg");
+        this.pack_start (image, false, false, 12);
+
+        this.toggle_lock = false;
+        this.stats_button = new SidebarButton (_("Statistic"), _("Server Usage Statistic"), "stats");
+        this.stats_button.button.active = true;
+        this.current = this.stats_button.button;
+        this.pack_start (this.stats_button, false, false, 0);
+        this.log_button = new SidebarButton (_("Log"), _("Server Logs Viewer"), "logs");
+        this.pack_start (this.log_button, false, false, 0);
+
+        box = new Gtk.Box ({orientation: Gtk.Orientation.VERTICAL});
+        this.pack_start (box, true, true, 0);
+
+        this.exit_button = new SidebarButton (_("Exit"), _("Close Control Center"));
+        this.exit_button.margin_bottom = 16;
+        this.pack_end (this.exit_button, false, false, 0);
+        this.prefs_button = new SidebarButton (_("Settings"), _("Open Preferences"));
+        this.pack_end (this.prefs_button, false, false, 0);
+
+        this.exit_button.button.connect ('clicked', Lang.bind (this, ()=>{
+            app.application.quit ();
+        }));
+        this.stats_button.button.connect ('toggled', Lang.bind (this, this.on_toggle));
+        this.log_button.button.connect ('toggled', Lang.bind (this, this.on_toggle));
+        this.prefs_button.button.connect ('toggled', Lang.bind (this, this.on_prefs));
+        this.show_all ();
+    },
+
+    on_toggle: function (o) {
+        if (this.toggle_lock) return;
+        if ((o == this.current) && !o.active) {
+            o.active = true;
+            return;
+        }
+        if (o == this.current) return;
+        this.toggle_lock = true;
+        this.current.active = false;
+        this.current = o;
+        this.emit ('stack_update', o.id);
+        this.toggle_lock = false;
+    },
+
+    on_prefs: function (o) {
+        if (o.active) o.active = false;
+        else return;
+        GLib.spawn_command_line_async (APPDIR + '/obmin-preferences');
+    }
+
+});
+
+const SidebarButton = new Lang.Class({
+    Name: 'SidebarButton',
+    Extends: Gtk.Box,
+
+    _init: function (text, tooltip, id) {
+        this.parent ({orientation:Gtk.Orientation.HORIZONTAL, margin:4, spacing:8});
+        this.margin_left = 64;
+        this.margin_right = 0;
+
+        this.button = Gtk.ToggleButton.new_with_label (text);
+        this.button.id = id;
+        this.button.get_style_context ().add_class ("sb-button");
+        this.button.tooltip_text = tooltip;
+        this.pack_end (this.button, true, true, 0);
+
+        this.show_all ();
+    }
+});
+
+const InfoItem = new Lang.Class ({
+    Name: 'InfoItem',
+    Extends: Gtk.Box,
+
+    _init: function (text, tooltip, info) {
+        this.parent ({orientation:Gtk.Orientation.HORIZONTAL, margin:8, spacing:48});
+        this.margin_left = 32;
+        this.margin_right = 32;
+        this.tooltip_text = tooltip;
+        this.prefix = "<b>" + text + "</b> ";
+        this.label =  new Gtk.Label ({label:this.prefix, use_markup:true, xalign:0});
+        this.info =  new Gtk.Label ({label:"<i>" + info + "</i>", use_markup:true});
+        this.pack_start (this.label, true, true, 0);
+        this.pack_end (this.info, false, false, 0);
+    },
+
+    update: function (info) {
+        this.info.set_markup ("<i>" + info + "</i>");
+    }
+});
+
+const LocalItem = new Lang.Class ({
+    Name: 'LocalItem',
+    Extends: InfoItem,
+
+    _init: function () {
+        this.parent (_("Local IP"), _("Local Network IP Address"), this.ip);
+    },
+
+    get ip () {
+        let l = get_info_string ("hostname -I").split (" ");
+        if (l[0]) if (l[0].length > 6) return l[0] + ":" + port;
+        return "127.0.0.1:" + port;
+    },
+
+    update: function () {
+        this.update (this.ip);
+    }
+});
+
+const PublicItem = new Lang.Class ({
+    Name: 'PublicItem',
+    Extends: InfoItem,
+
+    _init: function () {
+        this.parent (_("Public IP"), _("External Network IP Address"), this.ip);
+    },
+
+    get ip () {
+        let l = "";
+        this.curl = GLib.find_program_in_path ('wget');
+        if (this.curl) {
+            l = get_info_string ("wget -qO- http://ipecho.net/plain");
+        } else {
+            this.curl = GLib.find_program_in_path ('curl');
+            if (this.curl) {
+                l = get_info_string ("curl http://ipecho.net/plain");
+            }
+        }
+        return l;
+    },
+
+    update: function () {
+        let ip = this.ip;
+        this.update (ip);
+        if (ip) this.visible = true;
+        else this.visible = false;
+    }
+});
+
+let ticks = 0;
+const Statistic = new Lang.Class({
+    Name: 'Statistic',
+    Extends: Gtk.Box,
+
+    _init: function () {
+        this.parent ({orientation:Gtk.Orientation.VERTICAL, margin:0, spacing:8});
+        this.c0 = stats.access;
+        this.get_style_context ().add_class ("stats");
+
+        let box = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:8, spacing:24});
+        this.pack_start (box, false, false, 0);
+        this.connections = new InfoRound ("ACTIVITY", _("Active connections"), (stats.access - stats.ready).toString());
+        box.pack_start (this.connections, true, true, 0);
+        this.requests = new InfoRound ("CONNECTIONS", _("Total Requests"), stats.access.toString());
+        box.pack_start (this.requests, true, true, 0);
+        this.uploads = new InfoRound ("TRANSFERS", _("Transferred Data"), GLib.format_size (stats.upload));
+        box.pack_start (this.uploads, true, true, 0);
+
+        this.monitor = new StatMonitor ();
+        this.monitor.margin = 24;
+        this.pack_start (this.monitor, true, true, 0);
+
+        settings.connect ("changed::" + STATS_DATA_KEY, Lang.bind (this, function() {
+            stats = JSON.parse (settings.get_string (STATS_DATA_KEY));
+            if (update_event) GLib.Source.remove (update_event);
+            update_event = GLib.timeout_add (0, 50, Lang.bind (this, this.update_stats ));
+        }));
+        //this.t = [0,1,0,1,1,1,2,0,0,0,0,3,0,1,0,1,1,1,2,0,0,0,0,4];
+        //this.i = 0;
+        GLib.timeout_add_seconds (0, 1, Lang.bind (this, function () {
+            //this.monitor.add (Math.round (Math.random (100)*100));
+            //this.monitor.add (this.t[this.i++]);
+            //if (this.i == this.t.length) this.i = 0;
+            if ((stats.access - this.c0) < 0) this.monitor.add (stat.access);
+            else this.monitor.add (stats.access - this.c0);
+            this.c0 = stats.access;
+            return true;
+        }));
+
+        this.show_all ();
+    },
+
+    update_stats: function () {
+        if (update_event) {
+            GLib.Source.remove (update_event);
+            update_event = 0;
+        }
+        if (stats.access && (stats.access >= 0)) {
+            this.connections.update ((stats.access - stats.ready).toString());
+            this.requests.update (stats.access.toString());
+            this.uploads.update (GLib.format_size (stats.upload));
+        }
+        return false;
+    }
+});
+
+const InfoRound = new Lang.Class ({
+    Name: 'InfoRound',
+    Extends: Gtk.Box,
+
+    _init: function (text, tooltip, info) {
+        this.parent ({orientation:Gtk.Orientation.VERTICAL, margin:8, spacing:8});
+        this.get_style_context ().add_class ("rlabel");
+        this.margin_top = 0;
+        this.margin_right = 8;
+        this.tooltip_text = tooltip;
+        this.prefix = "<b>" + text + "</b> ";
+        this.label =  new Gtk.Label ({label:this.prefix, use_markup:true, xalign:0.5});
+        this.info =  new RoundLabel (info);
+        this.add (this.label);
+        this.pack_start (this.info, true, true, 0);
+    },
+
+    update: function (info) {
+        this.info.label = info;
+    }
+});
+
+const RoundLabel = new Lang.Class({
+    Name: 'RoundLabel',
+    Extends: Gtk.DrawingArea,
+
+    _init: function (text) {
+        this.parent ();
+        this._label = text;
+        this.set_size_request (160, 160);
+        this.connect ('draw', Lang.bind(this, this.on_drawn));
+    },
+
+    on_drawn: function (area, context) {
+        let cr = context;
+        let style = this.get_style_context ();
+        let [width, height] = [this.get_allocated_width (), this.get_allocated_height ()];
+        let ms = Math.min (width, height);
+        let margin = 8;
+        let text = ' ';
+        if (this.label) text = this.label;
+        let size = (ms-margin*2)/text.length*1.0;
+        if (text.length > 1) size*=1.2;
+        else size*=.65;
+        let color = style.get_color (0);
+        //cr.setSourceRGBA (0.323, 0.383, 0.434, 0.9);
+        cr.arc (width/2, height/2, (ms-margin*2)/2, 0, 2*Math.PI);
+        Gdk.cairo_set_source_rgba (cr, color);
+        cr.fill ();
+        cr.setSourceRGB (1, 1, 1);
+        cr.selectFontFace ("sans", Cairo.FontSlant.NORMAL, Cairo.FontWeight.BOLD);
+        cr.setFontSize (size);
+        cr.moveTo (width/2 - 1.3*size/2*(text.length/2+0), height/2 + 0.75*size/2);
+        cr.showText (text);
+        cr.$dispose ();
+        return true;
+    },
+    
+    get label () {return this._label;},
+    set label (val) {this._label = val; this.queue_draw ();}
+});
+
+const StatMonitor = new Lang.Class({
+    Name: 'StatMonitor',
+    Extends: Gtk.DrawingArea,
+
+    _init: function (text) {
+        this.parent ();
+        this.timeout = 1000;
+        this.scale = 120;
+        this.buffer = null;
+        this.v = [];
+        this.v.push (0);this.v.push (0);
+        this.max = 0;
+        this.min = 0;
+        this.full = false;
+        this.set_size_request (240, 60);
+        this.connect ('draw', Lang.bind (this, this.on_drawn));
+        this.connect ('size_allocate', Lang.bind(this, (o)=>{
+            this.buffer = null;
+            System.gc();
+            this.buffer = new Cairo.ImageSurface (Cairo.Format.ARGB32, this.get_allocated_width (), this.get_allocated_height ());
+            this.full = true;
+        }));
+        GLib.timeout_add (0, this.timeout, Lang.bind (this, ()=>{
+            if (this.val>-1) {
+                this.v.unshift (this.val);
+                if (this.v.length > this.scale) this.v.splice (this.scale, 1);
+                if (this.minmax ()) this.full = true;
+                this.val = -1;
+            }
+            this.redraw ();
+            return true;
+        }));
+    },
+
+    minmax: function () {
+        let f = false;
+        this.min = 1000000;
+        this.max = 0;
+        for (let i = 0; i < this.v.length; i++) {
+            if (this.v[i] > this.max) {
+                this.max = this.v[i];
+                f = true;
+            }
+            if ((this.v[i] < this.min) && (this.v[i] >= 0)) {
+                this.min = this.v[i];
+                f = true;
+            }
+        }
+        if (this.min == 1000000) this.min = this.max;
+        return f;
+    },
+
+    on_drawn: function (area, context) {
+        if (!this.buffer) return true;
+        context.setSourceSurface (this.buffer, 0, 0);
+        context.paint ();
+        context.$dispose ();
+        return true;
+    },
+
+    redraw: function () {
+        let full = this.full;
+        let v0 = this.v[1], v1 = this.v[0];
+        let [width, height] = [this.get_allocated_width (), this.get_allocated_height ()];
+        let ws = Math.round (width / this.scale);
+        let hs = height - 80;
+        if (this.max > 0) hs = Math.round (hs / this.max, 1);
+        let buf = new Cairo.ImageSurface (Cairo.Format.ARGB32, width+ws+3, height);
+        let cr = new Cairo.Context (buf);
+        let style = this.get_style_context ();
+        let color = style.get_color (0);
+        Gdk.cairo_set_source_rgba (cr, color);        
+        
+        if (full) {
+            cr.selectFontFace ("sans", Cairo.FontSlant.NORMAL, Cairo.FontWeight.BOLD);
+			cr.setFontSize (18);
+			cr.moveTo (20, 20);
+			cr.showText (_("Requests per second (maximum - ") + this.max + ")");
+        }
+        
+        Gdk.cairo_set_source_rgba (cr, color);
+        cr.setLineWidth (8.0);
+        cr.setLineCap (Cairo.LineCap.ROUND);
+        cr.setLineJoin (Cairo.LineJoin.ROUND);
+        
+        if (!full) {
+            cr.moveTo (width - 3, height - 43 - hs * v1);
+            cr.lineTo (width - ws - 3, height - 43 - hs * v0);
+        } else {
+            cr.moveTo (width - 3, height - 43 - hs * this.v[0]);
+            let n = this.scale;
+            if (n > this.v.length) n = this.v.length;
+            for (let i = 1; i < n; i++) {
+                cr.lineTo (width - ws * i - 3, height - 43 - hs * this.v[i]);
+            }
+        }
+        cr.stroke ();
+        
+        if (!full) {
+            cr.rectangle (0, 32, width, height-70);
+            cr.clip ();
+            cr.newPath ();
+            cr.setSourceSurface (this.buffer,-ws,0);
+            cr.paintWithAlpha (0.99);
+        }
+        
+        cr.$dispose ();
+        this.buffer = buf;
+        this.queue_draw ();
+        this.full = false;
+        System.gc();
+    },
+
+    add: function (val) {
+        this.val = val;
+    }
+});
+
+const HeaderSpace = new Lang.Class({
+    Name: 'HeaderSpace',
+    Extends: Gtk.DrawingArea,
+
+    _init: function (text) {
+        this.parent ();
+        this.get_style_context ().add_class ("hb-space");
+        this.set_size_request (321, 32);
+        this.connect ('draw', Lang.bind(this, this.on_drawn));
+    },
+
+    on_drawn: function (area, context) {
+        let cr = context;
+        let style = this.get_style_context ();
+        let [width, height] = [this.get_allocated_width (), this.get_allocated_height ()];
+        let color = style.get_background_color (0);
+        cr.rectangle (0, 0, width, height);
+        Gdk.cairo_set_source_rgba (cr, color);
+        cr.fill ();
+        cr.$dispose ();
+        return true;
+    },
+    
+    set width (val) {
+        if (val != this.get_allocated_width ()) {
+            this.set_size_request (val, 32);
+            this.queue_draw ();
+        }
+    }
+});
+
+const Logs = new Lang.Class({
+    Name: 'Logs',
+    Extends: Gtk.Box,
+
+    _init: function () {
+        this.parent ({orientation:Gtk.Orientation.VERTICAL, margin:0, spacing:8});
+        this.get_style_context ().add_class ("logs");
+
+        
+
+        this.show_all ();
+    }
+});
+
+let cmd_out, info_out;
+function get_info_string (cmd) {
+    cmd_out = GLib.spawn_command_line_sync (cmd);
+    if (cmd_out[0]) info_out = cmd_out[1].toString().split("\n")[0];
+    if (info_out) return info_out;
+    return "";
+}
+
+function get_css_provider () {
+    let cssp = new Gtk.CssProvider ();
+    let css_file = Gio.File.new_for_path (theme_gui);
+    try {
+        cssp.load_from_file (css_file);
+    } catch (e) {
+        print (e.message, theme_gui);
+        cssp = null;
+    }
+    return cssp;
+}
+
+function getCurrentFile () {
+    let stack = (new Error()).stack;
+    let stackLine = stack.split('\n')[1];
+    if (!stackLine)
+        throw new Error ('Could not find current file');
+    let match = new RegExp ('@(.+):\\d+').exec(stackLine);
+    if (!match)
+        throw new Error ('Could not find current file');
+    let path = match[1];
+    let file = Gio.File.new_for_path (path);
+    return [file.get_path(), file.get_parent().get_path(), file.get_basename()];
+}
+
+function get_appdir () {
+    let s = getCurrentFile ()[1];
+    if (GLib.file_test (s + "/prefs.js", GLib.FileTest.EXISTS)) return s;
+    s = GLib.get_home_dir () + "/.local/share/gnome-shell/extensions/obmin@konkor";
+    if (GLib.file_test (s + "/prefs.js", GLib.FileTest.EXISTS)) return s;
+    s = "/usr/share/gnome-shell/extensions/obmin@konkor";
+    if (GLib.file_test (s + "/prefs.js", GLib.FileTest.EXISTS)) return s;
+    throw "Obmin installation not found...";
+    return s;
+}
+
+function debug (msg) {
+    if (DEBUGGING > 1) print ("[obmin][dash] " + msg);
+}
+
+function error (msg) {
+    print ("[obmin][dash] (EE) " + msg);
+}
+
+let app = new ObminCenter ();
+app.application.run (ARGV);

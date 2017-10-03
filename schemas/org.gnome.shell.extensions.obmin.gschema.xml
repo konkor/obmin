@@ -123,5 +123,11 @@
         <description>Server stats data</description>
     </key>
 
+    <key type="s" name="theme-gui">
+        <default>'default'</default>
+        <summary>GUI theme</summary>
+        <description>Theme name</description>
+    </key>
+
   </schema>
 </schemalist>

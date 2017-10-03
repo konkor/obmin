@@ -32,6 +32,7 @@ const BACKUPS_KEY = 'backup-settings';
 const SOURCES_KEY = 'content-sources';
 const MONITOR_KEY = 'stats-monitor';
 const SUPPORT_KEY = 'support';
+const THEME_GUI_KEY = 'theme-gui';
 const THEME_KEY = 'theme';
 const MODE_KEY = 'server-mode';
 const PORT_KEY = 'port';
@@ -51,6 +52,7 @@ let hiddens = false;
 let backups = false;
 let support = 0;
 let theme = '';
+let theme_gui = 'default';
 let mode = 0;
 let port = 8088;
 let DEBUG = 1;
@@ -80,6 +82,7 @@ var ObminWidget = new Lang.Class({
         let srcs =  settings.get_string (SOURCES_KEY);
         if (srcs.length > 0) sources = JSON.parse (srcs);
         //Gtk.Settings.get_default().set_property ("gtk-application-prefer-dark-theme", true);
+        theme_gui = settings.get_string (THEME_GUI_KEY);
 
         this.notebook = new Gtk.Notebook ({expand:true});
 
@@ -306,6 +309,7 @@ const PageGeneral = new Lang.Class({
 
     _init: function () {
         this.parent ();
+        let id = 0, i = 0;
         this.box = new Gtk.Box ({orientation:Gtk.Orientation.VERTICAL, margin:6});
         this.box.border_width = 6;
         this.add (this.box);
@@ -319,9 +323,27 @@ const PageGeneral = new Lang.Class({
             startup = this.cb_startup.active;
             settings.set_boolean (STARTUP_KEY, startup);
         }));
+        let hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
+        this.box.pack_start (hbox, false, false, 0);
+        hbox.add (new Gtk.Label ({label: _("GUI Theme")}));
+        this.theme_gui = new Gtk.ComboBoxText ();
+        this.theme_gui.append_text (_("system default"));
+        id = 0, i = 1;
+        this.themes ("/data/themes", "/obmin.css").forEach (s => {
+            this.theme_gui.append_text (s);
+            if (s == theme_gui) id = i;
+            i++;
+        });
+        this.theme_gui.active = id;
+        this.theme_gui.connect ('changed', Lang.bind (this, ()=>{
+            debug (EXTENSIONDIR + "/data/themes/" + this.theme_gui.get_active_text());
+            if (this.theme_gui.active == 0) settings.set_string (THEME_GUI_KEY, '');
+            else settings.set_string (THEME_GUI_KEY, this.theme_gui.get_active_text());
+        }));
+        hbox.pack_end (this.theme_gui, false, false, 0);
 
         this.box.add (new Gtk.Label ({label: _("<b>Network</b>"), use_markup:true, xalign:0, margin_top:16}));
-        let hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
+        hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
         this.box.pack_start (hbox, false, false, 0);
         hbox.add (new Gtk.Label ({label: _("Listening Port")}));
         this.port = Gtk.SpinButton.new_with_range (1, 65535, 1);
@@ -337,15 +359,15 @@ const PageGeneral = new Lang.Class({
         this.box.pack_start (hbox, false, false, 0);
         hbox.add (new Gtk.Label ({label: _("Theme")}));
         this.theme = new Gtk.ComboBoxText ();
-        let id = 0, i = 0;
-        this.themes.forEach (s => {
+        id = 0, i = 0;
+        this.themes ("/data/www/themes", "/style.css").forEach (s => {
             this.theme.append_text (s);
             if (s == theme) id = i;
             i++;
         });
         this.theme.active = id;
         this.theme.connect ('changed', Lang.bind (this, ()=>{
-            debug (EXTENSIONDIR + "/data/themes/" + this.theme.get_active_text());
+            debug (EXTENSIONDIR + "/data/www/themes/" + this.theme.get_active_text());
             settings.set_string (THEME_KEY, this.theme.get_active_text());
         }));
         hbox.pack_end (this.theme, false, false, 0);
@@ -353,14 +375,14 @@ const PageGeneral = new Lang.Class({
         this.show_all ();
     },
 
-    get themes () {
+    themes: function (folder, style) {
         let list = [], finfo;
-        let dir = Gio.File.new_for_path (EXTENSIONDIR + "/data/themes");
+        let dir = Gio.File.new_for_path (EXTENSIONDIR + folder);
         if (!dir.query_exists (null)) return list;
         var e = dir.enumerate_children ("*", Gio.FileQueryInfoFlags.NONE, null);
         while ((finfo = e.next_file (null)) != null) {
             if (finfo.get_file_type () != Gio.FileType.DIRECTORY) continue;
-            if (!Gio.File.new_for_path(dir.get_path() + "/" + finfo.get_name() + "/style.css").query_exists (null))
+            if (!Gio.File.new_for_path(dir.get_path() + "/" + finfo.get_name() + style).query_exists (null))
                 continue;
             list.push (finfo.get_name ());
         }

@@ -1,0 +1,19 @@
+/* Obmin style */
+body {background: #f0f0f0;font-family:roboto,sans;font-size: 1.0em; margin: 0px;}
+a,a:visited,a:focus {text-decoration:none;color:#f0f0f0}
+a:hover,a:active {text-decoration:none;color: #acb5a5;}
+.home {height:32px;}
+.path {background: #0faa2b;color: #f0f0f0; margin: 0px auto 0px auto; padding: 8px;font-weight: bold;font-size: 1.6em;box-shadow: inset 0px 2px 4px rgba(0,0,0,0.6);}
+.contents {width: 97%; margin: 0px auto 0px auto;}
+.content {background: #eefdf2;color:#343a3a;padding: 4px; margin: 2px auto 2px auto;border: 0px solid;border-bottom-width: 2px;border-color: #a4aaaa;}
+.content:hover, .content:focus, .content:active {background-color: #0faa2b;color: #f0f0f0;}
+.selected {color:#edede2;text-shadow: 2px 2px rgba(0,0,0,0.6);}
+.file {font-weight: bold;}
+.fileinfo {font-style: italic;margin: auto;height: 1em;}
+.date {width: 80%;float: left;height: 1em;}
+.size {margin-left: 60%;text-align: end;height: 1em;}
+.hide {display:none!important} .show {display:block!important}
+.nmenu {background:rgba(63,63,63,0.93);min-width:100%;width:100%;text-align:right;padding:8px 0px}
+.nmenu-button {padding:8px 16px;width:auto;border:none;outline:none;display:block;float:right}
+.nmenu-item {display:block;padding:12px 0px}
+.nmenu a,.nmenu a:visited,.nmenu a:focus{color:#ccc}.nmenu a:hover,.nmenu a:active{color:#f0f0f0;background: #0faa2b}

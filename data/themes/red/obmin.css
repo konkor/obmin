@@ -1,0 +1,6 @@
+@import "../default/obmin.css";
+
+@define-color base_color #afafac;
+@define-color bg_color #da0034;
+
+.sb {color:#fff}

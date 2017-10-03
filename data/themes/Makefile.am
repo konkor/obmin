@@ -1,27 +1,28 @@
 #themes
-classicdir=$(datadir)/gnome-shell/extensions/obmin@konkor/data/themes/classic
-classic_DATA= \
-    classic/home.png \
-    classic/style.css
+bluedir=$(datadir)/gnome-shell/extensions/obmin@konkor/data/themes/blue
+blue_DATA= \
+    blue/obmin.css
 
-defdir=$(datadir)/gnome-shell/extensions/obmin@konkor/data/themes/default
-def_DATA= \
-    default/home.png \
-    default/style.css
+defsdir=$(datadir)/gnome-shell/extensions/obmin@konkor/data/themes/default
+defs_DATA= \
+    default/obmin.css
 
-darkdir=$(datadir)/gnome-shell/extensions/obmin@konkor/data/themes/dark
-dark_DATA= \
-    dark/home.png \
-    dark/style.css
+graydir=$(datadir)/gnome-shell/extensions/obmin@konkor/data/themes/gray
+gray_DATA= \
+    gray/obmin.css
 
-lightdir=$(datadir)/gnome-shell/extensions/obmin@konkor/data/themes/light
-light_DATA= \
-    light/home.png \
-    light/style.css
+mintdir=$(datadir)/gnome-shell/extensions/obmin@konkor/data/themes/mint
+mint_DATA= \
+    mint/obmin.css
+
+dark_orangedir=$(datadir)/gnome-shell/extensions/obmin@konkor/data/themes/dark-orange
+dark_orange_DATA= \
+    dark-orange/obmin.css
 
 EXTRA_DIST = \
-        $(classic_DATA) \
-        $(dark_DATA) \
-        $(light_DATA) \
-        $(def_DATA)
+        $(blue_DATA) \
+        $(gray_DATA) \
+        $(mint_DATA) \
+        $(dark_orange_DATA) \
+        $(defs_DATA)
 
