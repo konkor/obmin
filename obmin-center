@@ -657,7 +657,7 @@ function get_css_provider () {
     try {
         cssp.load_from_file (css_file);
     } catch (e) {
-        print (e.message, theme_gui);
+        //print (e.message, theme_gui);
         cssp = null;
     }
     return cssp;

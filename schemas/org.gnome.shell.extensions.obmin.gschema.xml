@@ -118,7 +118,7 @@
     </key>
 
     <key type="s" name="stats">
-        <default>''</default>
+        <default>'{}'</default>
         <summary>Data</summary>
         <description>Server stats data</description>
     </key>

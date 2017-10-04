@@ -87,7 +87,7 @@ let mounts = true;
 let follow_links = true;
 let check_hidden = false;
 let check_backup = false;
-let theme = APPDIR + "/data/themes/default/";
+let theme = APPDIR + "/data/themes/www/default/";
 let support = 0;
 let stats_monitor = true;
 let mode = 0;
@@ -704,8 +704,8 @@ function load_settings () {
     if (config.debug) DEBUG = config.debug;
     else DEBUG = settings.get_int (DEBUG_KEY);
     support = settings.get_int (SUPPORT_KEY);
-    if (config.theme) theme = APPDIR + "/data/themes/" + config.theme + "/";
-    else theme = APPDIR + "/data/themes/" + settings.get_string (THEME_KEY) + "/";
+    if (config.theme) theme = APPDIR + "/data/www/themes/" + config.theme + "/";
+    else theme = APPDIR + "/data/www/themes/" + settings.get_string (THEME_KEY) + "/";
     if (config.sources)
         check_sources (config.sources);
     else {
