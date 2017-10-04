@@ -50,7 +50,7 @@ let port = 8088;
 let DEBUG = 1;
 let status = 5;
 let stats_monitor = true;
-let stats = {};
+let stats = {access:0, ready:0, upload:0};
 
 let status_event = 0;
 let update_event = 0;

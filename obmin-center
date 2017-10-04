@@ -52,7 +52,7 @@ let port = 8088;
 let DEBUGGING = 1;
 let status = 5;
 let stats_monitor = true;
-let stats = {};
+let stats = {access:0, ready:0, upload:0};
 let theme_gui = APPDIR + "/data/themes/default/obmin.css";
 
 let status_event = 0;
@@ -75,8 +75,8 @@ const ObminCenter = new Lang.Class ({
         support = settings.get_int (SUPPORT_KEY);
         status = settings.get_int (STATUS_KEY);
         stats_monitor = settings.get_boolean (STATS_MONITOR_KEY);
-        stats = JSON.parse (settings.get_string (STATS_DATA_KEY));
-        if (!stats.access) stats = {access:0, ready:0, upload:0};
+        let s = settings.get_string (STATS_DATA_KEY);
+        if (s) stats = JSON.parse (s);
         theme_gui = APPDIR + "/data/themes/" + settings.get_string (THEME_GUI_KEY) + "/obmin.css";
 
         server = this.server_enabled;
@@ -108,11 +108,12 @@ const ObminCenter = new Lang.Class ({
             this.update_stats ();
         }
         this.check_status ();
-        if (status > 0) status_event = GLib.timeout_add_seconds (0, status, Lang.bind (this, function () {
+        if (status > 0)
+            status_event = GLib.timeout_add_seconds (0, status,
+            Lang.bind (this, function () {
             this.check_status ();
             return true;
         }));
-
     },
 
     check_status: function () {
@@ -186,6 +187,24 @@ const ObminCenter = new Lang.Class ({
         this.sidebar.connect ('size_allocate', Lang.bind(this, (o)=>{
             if (this.space) this.space.width = o.get_allocated_width ();
         }));
+        this.sidebar.run_button.connect ('toggled', Lang.bind (this, this.on_run));
+    },
+
+    on_run: function (o) {
+        if (!this.lock) this._enable (o.active);
+    },
+
+    _enable: function (state) {
+        server = state;
+        if (state) {
+            if (GLib.spawn_command_line_async (APPDIR + "/obmin-server")) {
+            } else {
+                server = false;
+                //this.server_switch.setToggleState (false);
+            }
+        } else {
+            GLib.spawn_command_line_async ("killall obmin-server");
+        }
     }
 });
 
@@ -209,11 +228,7 @@ const Sidebar = new Lang.Class({
         let label = new Gtk.Label ({label: "<b><big>OBMIN</big></b>", use_markup:true, xalign:0.75});
         label.get_style_context ().add_class ("obmin-title");
         box.pack_start (label, true, true, 0);
-        this.run_button  = new Gtk.ToggleButton ();
-        this.run_button.image = Gtk.Image.new_from_icon_name ("system-shutdown-symbolic", Gtk.IconSize.DND);
-        this.run_button.xalign = 0;
-        this.run_button.tooltip_text = _("Start/Stop OBMIN Server");
-        this.run_button.get_style_context ().add_class ("sb-button");
+        this.run_button  = new RunButton ();
         box.pack_start (this.run_button, false, false, 0);
 
         this.local_item = new LocalItem ();
@@ -225,11 +240,11 @@ const Sidebar = new Lang.Class({
         this.pack_start (image, false, false, 12);
 
         this.toggle_lock = false;
-        this.stats_button = new SidebarButton (_("Statistic"), _("Server Usage Statistic"), "stats");
+        this.stats_button = new SidebarButton (_("Statistic"), _("Show Usage Statistic"), "stats");
         this.stats_button.button.active = true;
         this.current = this.stats_button.button;
         this.pack_start (this.stats_button, false, false, 0);
-        this.log_button = new SidebarButton (_("Log"), _("Server Logs Viewer"), "logs");
+        this.log_button = new SidebarButton (_("Log"), _("Show Logs Viewer"), "logs");
         this.pack_start (this.log_button, false, false, 0);
 
         box = new Gtk.Box ({orientation: Gtk.Orientation.VERTICAL});
@@ -247,6 +262,7 @@ const Sidebar = new Lang.Class({
         this.stats_button.button.connect ('toggled', Lang.bind (this, this.on_toggle));
         this.log_button.button.connect ('toggled', Lang.bind (this, this.on_toggle));
         this.prefs_button.button.connect ('toggled', Lang.bind (this, this.on_prefs));
+
         this.show_all ();
     },
 
@@ -269,7 +285,29 @@ const Sidebar = new Lang.Class({
         else return;
         GLib.spawn_command_line_async (APPDIR + '/obmin-preferences');
     }
+});
 
+const RunButton = new Lang.Class({
+    Name: 'RunButton',
+    Extends: Gtk.ToggleButton,
+
+    _init: function (text, tooltip, id) {
+        this.parent ();
+        this.ttext = _("Start Server");
+        this.tooltip_text = this.ttext;
+        this.image = Gtk.Image.new_from_icon_name ("system-shutdown-symbolic", Gtk.IconSize.DND);
+        this.xalign = 0;
+        this.get_style_context ().add_class ("sb-button");
+
+        this.connect ('toggled', Lang.bind (this, this.on_toggle));
+
+        this.show_all ();
+    },
+
+    on_toggle: function () {
+        if (this.active) this.tooltip_text = _("Stop Server");
+        else this.tooltip_text = this.ttext;
+    }
 });
 
 const SidebarButton = new Lang.Class({
@@ -296,7 +334,7 @@ const InfoItem = new Lang.Class ({
     Extends: Gtk.Box,
 
     _init: function (text, tooltip, info) {
-        this.parent ({orientation:Gtk.Orientation.HORIZONTAL, margin:8, spacing:48});
+        this.parent ({orientation:Gtk.Orientation.HORIZONTAL, margin:8, spacing:32});
         this.margin_left = 32;
         this.margin_right = 32;
         this.tooltip_text = tooltip;
@@ -371,7 +409,7 @@ const Statistic = new Lang.Class({
         this.c0 = stats.access;
         this.get_style_context ().add_class ("stats");
 
-        let box = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:8, spacing:24});
+        let box = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:16, spacing:16});
         this.pack_start (box, false, false, 0);
         this.connections = new InfoRound ("ACTIVITY", _("Active connections"), (stats.access - stats.ready).toString());
         box.pack_start (this.connections, true, true, 0);
@@ -395,7 +433,7 @@ const Statistic = new Lang.Class({
             //this.monitor.add (Math.round (Math.random (100)*100));
             //this.monitor.add (this.t[this.i++]);
             //if (this.i == this.t.length) this.i = 0;
-            if ((stats.access - this.c0) < 0) this.monitor.add (stat.access);
+            if ((stats.access - this.c0) < 0) this.monitor.add (stats.access);
             else this.monitor.add (stats.access - this.c0);
             this.c0 = stats.access;
             return true;
@@ -458,16 +496,16 @@ const RoundLabel = new Lang.Class({
         let ms = Math.min (width, height);
         let margin = 8;
         let text = ' ';
+        let color = new Gdk.RGBA ({red:1, green:1, blue:1, alpha:1.0});
+        let bg_color = style.get_color (0);
         if (this.label) text = this.label;
         let size = (ms-margin*2)/text.length*1.0;
         if (text.length > 1) size*=1.2;
         else size*=.65;
-        let color = style.get_color (0);
-        //cr.setSourceRGBA (0.323, 0.383, 0.434, 0.9);
         cr.arc (width/2, height/2, (ms-margin*2)/2, 0, 2*Math.PI);
-        Gdk.cairo_set_source_rgba (cr, color);
+        Gdk.cairo_set_source_rgba (cr, bg_color);
         cr.fill ();
-        cr.setSourceRGB (1, 1, 1);
+        Gdk.cairo_set_source_rgba (cr, color);
         cr.selectFontFace ("sans", Cairo.FontSlant.NORMAL, Cairo.FontWeight.BOLD);
         cr.setFontSize (size);
         cr.moveTo (width/2 - 1.3*size/2*(text.length/2+0), height/2 + 0.75*size/2);

@@ -12,7 +12,7 @@
   box-shadow:none;
   outline-width:0;
   border-image:none;
-  font-size: 1.2em;
+  font-size: 1em;
   padding:0.5em;
   margin:0;
   border:0;
@@ -39,7 +39,7 @@
   background-color: #bfffbf;
 }
 .rlabel {
-  font-size: 2em;
+  font-size: 1.8em;
 }
 .hb {
   color: @base_color;
