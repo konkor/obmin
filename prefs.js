@@ -305,26 +305,24 @@ const LocationItem = new Lang.Class({
 
 const PageGeneral = new Lang.Class({
     Name: 'PageGeneral',
-    Extends: Gtk.ScrolledWindow,
+    Extends: Gtk.Box,
 
     _init: function () {
-        this.parent ();
+        this.parent ({orientation:Gtk.Orientation.VERTICAL, margin:6});
         let id = 0, i = 0;
-        this.box = new Gtk.Box ({orientation:Gtk.Orientation.VERTICAL, margin:6});
-        this.box.border_width = 6;
-        this.add (this.box);
+        this.border_width = 6;
 
-        this.box.add (new Gtk.Label ({label: _("<b>System</b>"), use_markup:true, xalign:0, margin_top:8}));
+        this.add (new Gtk.Label ({label: _("<b>System</b>"), use_markup:true, xalign:0, margin_top:8}));
         this.cb_startup = Gtk.CheckButton.new_with_label (_("Start server on the loading"));
         this.cb_startup.margin = 6;
-        this.box.add (this.cb_startup);
+        this.add (this.cb_startup);
         this.cb_startup.active = startup;
         this.cb_startup.connect ('toggled', Lang.bind (this, ()=>{
             startup = this.cb_startup.active;
             settings.set_boolean (STARTUP_KEY, startup);
         }));
         let hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
-        this.box.pack_start (hbox, false, false, 0);
+        this.pack_start (hbox, false, false, 0);
         hbox.add (new Gtk.Label ({label: _("GUI Theme")}));
         this.theme_gui = new Gtk.ComboBoxText ();
         this.theme_gui.append_text (_("system default"));
@@ -342,9 +340,9 @@ const PageGeneral = new Lang.Class({
         }));
         hbox.pack_end (this.theme_gui, false, false, 0);
 
-        this.box.add (new Gtk.Label ({label: _("<b>Network</b>"), use_markup:true, xalign:0, margin_top:16}));
+        this.add (new Gtk.Label ({label: _("<b>Network</b>"), use_markup:true, xalign:0, margin_top:16}));
         hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
-        this.box.pack_start (hbox, false, false, 0);
+        this.pack_start (hbox, false, false, 0);
         hbox.add (new Gtk.Label ({label: _("Listening Port")}));
         this.port = Gtk.SpinButton.new_with_range (1, 65535, 1);
         this.port.value = port;
@@ -354,9 +352,9 @@ const PageGeneral = new Lang.Class({
         }));
         hbox.pack_end (this.port, false, false, 0);
 
-        this.box.add (new Gtk.Label ({label: _("<b>Content</b>"), use_markup:true, xalign:0, margin_top:12}));
+        this.add (new Gtk.Label ({label: _("<b>Content</b>"), use_markup:true, xalign:0, margin_top:12}));
         hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
-        this.box.pack_start (hbox, false, false, 0);
+        this.pack_start (hbox, false, false, 0);
         hbox.add (new Gtk.Label ({label: _("Theme")}));
         this.theme = new Gtk.ComboBoxText ();
         id = 0, i = 0;
@@ -481,21 +479,19 @@ const PageNotify = new Lang.Class({
 
 const PageSupport = new Lang.Class({
     Name: 'PageSupport',
-    Extends: Gtk.ScrolledWindow,
+    Extends: Gtk.Box,
 
     _init: function () {
-        this.parent ();
-        this.box = new Gtk.Box ({orientation:Gtk.Orientation.VERTICAL, margin:6});
-        this.box.border_width = 6;
-        this.add (this.box);
+        this.parent ({orientation:Gtk.Orientation.VERTICAL, margin:6});
+        this.border_width = 6;
 
         let label = new Gtk.Label ({label: "<b>"+_("Make Donation to the project")+"</b>", use_markup:true, xalign:0, margin:8});
-        this.box.add (label);
+        this.add (label);
         label = new Gtk.Label ({label: "<i>"+_("Behind the development for the Linux Desktop are ordinary people who spend a lot of time and their own resources to make the Linux Desktop better.")+"</i>", use_markup:true, xalign:0, margin:8});
         label.wrap = true;
-        this.box.pack_start (label, false, false, 0);
+        this.pack_start (label, false, false, 0);
         let hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6, spacing:24});
-        this.box.pack_start (hbox, false, false, 0);
+        this.pack_start (hbox, false, false, 0);
         this.pp = new Gtk.Button ();
         this.pp.image = Gtk.Image.new_from_file (EXTENSIONDIR + "/data/icons/pp.png");
         this.pp.tooltip_text = _("Make Donation") + " (EUR)";
@@ -513,10 +509,10 @@ const PageSupport = new Lang.Class({
             app.launch_uris (["https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=HGAFMMMQ9MQJ2"], null);
         }));
         label = new Gtk.Label ({label: "<a href=\"https://github.com/konkor/obmin#contributions\" title=\"&lt;i&gt;Project&lt;/i&gt; website\">" + _("Find more about contributions...")+"</a>", use_markup:true, xalign:0, margin:8});
-        this.box.add (label);
+        this.add (label);
 
         hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
-        this.box.pack_start (hbox, false, false, 0);
+        this.pack_start (hbox, false, false, 0);
         label = new Gtk.Label ({label: _("Level of the donation notifications")});
         hbox.add (label);
         this.level = new Gtk.ComboBoxText ();
@@ -531,7 +527,7 @@ const PageSupport = new Lang.Class({
         hbox.pack_end (this.level, false, false, 0);
         label = new Gtk.Label ({label: "<i>"+_("Feel free to set up a disired supporting level of the notifications if some forms anoyong you or you are already a project's contributor.")+"</i>", use_markup:true, xalign:0, margin:8});
         label.wrap = true;
-        this.box.pack_start (label, false, false, 0);
+        this.pack_start (label, false, false, 0);
 
         this.show_all ();
     }
