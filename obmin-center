@@ -57,6 +57,7 @@ let theme_gui = APPDIR + "/data/themes/default/obmin.css";
 
 let status_event = 0;
 let update_event = 0;
+let infobar_event = 0;
 let settings = null;
 let server = false;
 let cssp = null;
@@ -99,6 +100,12 @@ const ObminCenter = new Lang.Class ({
 
     _onActivate: function (){
         this._window.show_all ();
+        //this.show_info ("Started...");
+        settings.connect ("changed::" + STATS_DATA_KEY, Lang.bind (this, function() {
+            stats = JSON.parse (settings.get_string (STATS_DATA_KEY));
+            if (update_event) GLib.Source.remove (update_event);
+            update_event = GLib.timeout_add (0, 50, Lang.bind (this, this.update_stats ));
+        }));
     },
 
     _onStartup: function () {
@@ -174,24 +181,47 @@ const ObminCenter = new Lang.Class ({
         this.sidebar.get_style_context ().add_class ("sb");
         this.box.add (this.sidebar);
 
+        let vbox = new Gtk.Box ({orientation:Gtk.Orientation.VERTICAL, margin:0});
+        this.box.pack_start (vbox, true, true, 0);
+        this.infobar = null;
+        this.infobox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:0});
+        vbox.add (this.infobox);
+
         this.stack = new Gtk.Stack ();
-        this.box.pack_start (this.stack, true, true, 0);
+        vbox.pack_start (this.stack, true, true, 0);
         this.statview = new Statistic ();
         this.stack.add_named (this.statview, "stats");
         this.logsview = new Logs ();
         this.stack.add_named (this.logsview, "logs");
 
-        this.sidebar.connect ('stack_update', Lang.bind (this, (o, id)=>{
-            this.stack.visible_child_name = id;
-        }));
+        this.sidebar.connect ('stack_update', Lang.bind (this, this.on_stack));
         this.sidebar.connect ('size_allocate', Lang.bind(this, (o)=>{
             if (this.space) this.space.width = o.get_allocated_width ();
         }));
         this.sidebar.run_button.connect ('toggled', Lang.bind (this, this.on_run));
     },
 
+    update_stats: function () {
+        if (update_event) {
+            GLib.Source.remove (update_event);
+            update_event = 0;
+        }
+        this.statview.update_stats ();
+        if (this.stack.visible_child_name == 'logs') {
+            if ((stats.access - this.logsview.loged) > 0)
+                this.show_refresh (stats.access - this.logsview.loged);
+        }
+        return false;
+    },
+
     on_run: function (o) {
         if (!this.lock) this._enable (o.active);
+    },
+
+    on_stack: function (o, id) {
+        this.stack.visible_child_name = id;
+        if (id == 'logs') this.logsview.refresh ();
+        else this.hide_refresh ();
     },
 
     _enable: function (state) {
@@ -205,6 +235,91 @@ const ObminCenter = new Lang.Class ({
         } else {
             GLib.spawn_command_line_async ("killall obmin-server");
         }
+    },
+
+    show_message: function (text, bar_type, timeout) {
+        if (infobar_event) {
+            GLib.Source.remove (infobar_event);
+            infobar_event = 0;
+        }
+        if (this.infobar) this.infobar.destroy ();
+        this.infobar = new Gtk.InfoBar ();
+        if (bar_type == Gtk.MessageType.QUESTION) {
+			this.infobar.add_button ("gtk-yes", Gtk.ResponseType.YES);
+			this.infobar.add_button ("gtk-cancel", Gtk.ResponseType.CANCEL);
+		} else {
+			this.infobar.add_button ("gtk-close", Gtk.ResponseType.YES);
+			this.infobar.set_default_response (Gtk.ResponseType.OK);
+		}
+		this.infobar.set_message_type (bar_type);
+		var content = this.infobar.get_content_area ();
+		content.add (new Gtk.Label ({label: text, use_markup:true, xalign:0.75}));
+
+		this.infobox.add (this.infobar);
+		this.infobar.show_all ();
+		this.infobar.connect ('response', Lang.bind (this, (o,e) => {
+		    //print (e, Gtk.ResponseType.YES, Gtk.ResponseType.OK);
+			this.infobar.destroy ();
+			infobar_event = 0;
+		}));
+		if (timeout) infobar_event = GLib.timeout_add_seconds (0, timeout, Lang.bind (this, function () {
+		    if (this.infobar) this.infobar.destroy ();
+		    infobar_event = 0;
+		    return false;
+		}));
+    },
+
+    show_info: function (text) {
+        this.show_message (text, Gtk.MessageType.INFO, 10);
+    },
+
+    show_refresh: function (count) {
+        if (infobar_event) {
+            GLib.Source.remove (infobar_event);
+            infobar_event = 0;
+        }
+        if (this.infobar && (this.infobar != this.refresh)) {
+            if (this.infobar) this.infobar.destroy ();
+            this.refresh = new RefreshBar (count);
+            this.infobar = this.refresh;
+            this.infobox.add (this.infobar);
+            this.infobar.show_all ();
+            this.refresh.connect ('response', Lang.bind (this, () => {
+                this.refresh.destroy ();
+                this.refresh = null;
+                this.logsview.refresh ();
+            }));
+        } else {
+            this.refresh.update (count);
+        }
+    },
+
+    hide_refresh: function () {
+        if (this.infobar) this.infobar.destroy ();
+    }
+});
+
+const RefreshBar = new Lang.Class({
+    Name: 'RefreshBar',
+    Extends: Gtk.InfoBar,
+
+    _init: function (count) {
+        this.parent ();
+        this.text = _("new connection requests available...");
+        this.add_button (_("Refresh"), Gtk.ResponseType.YES);
+        this.set_default_response (Gtk.ResponseType.OK);
+        this.set_message_type (Gtk.MessageType.INFO);
+        var content = this.get_content_area ();
+        this.label = new Gtk.Label ({
+            label: count.toString () + " " + this.text,
+            use_markup: true, xalign: 0.75});
+        content.add (this.label);
+
+        this.show_all ();
+    },
+
+    update: function (count) {
+        this.label.set_text (count.toString () + " " + this.text);
     }
 });
 
@@ -422,11 +537,6 @@ const Statistic = new Lang.Class({
         this.monitor.margin = 24;
         this.pack_start (this.monitor, true, true, 0);
 
-        settings.connect ("changed::" + STATS_DATA_KEY, Lang.bind (this, function() {
-            stats = JSON.parse (settings.get_string (STATS_DATA_KEY));
-            if (update_event) GLib.Source.remove (update_event);
-            update_event = GLib.timeout_add (0, 50, Lang.bind (this, this.update_stats ));
-        }));
         //this.t = [0,1,0,1,1,1,2,0,0,0,0,3,0,1,0,1,1,1,2,0,0,0,0,4];
         //this.i = 0;
         GLib.timeout_add_seconds (0, 1, Lang.bind (this, function () {
@@ -443,16 +553,11 @@ const Statistic = new Lang.Class({
     },
 
     update_stats: function () {
-        if (update_event) {
-            GLib.Source.remove (update_event);
-            update_event = 0;
-        }
         if (stats.access && (stats.access >= 0)) {
             this.connections.update ((stats.access - stats.ready).toString());
             this.requests.update (stats.access.toString());
             this.uploads.update (GLib.format_size (stats.upload));
         }
-        return false;
     }
 });
 
@@ -669,24 +774,156 @@ const HeaderSpace = new Lang.Class({
 
 const Logs = new Lang.Class({
     Name: 'Logs',
-    Extends: Gtk.Box,
+    Extends: Gtk.ScrolledWindow,
 
     _init: function () {
-        this.parent ({orientation:Gtk.Orientation.VERTICAL, margin:0, spacing:8});
+        this.parent ();
+        this.box = new Gtk.Box ({orientation:Gtk.Orientation.VERTICAL, margin:0, spacing:8});
+        this.add (this.box);
         this.get_style_context ().add_class ("logs");
 
-        
+        this.store = new LogStore ();
+        this.loged = stats.access;
+        this.view = new Gtk.TreeView ();
+        this._build ();
 
         this.show_all ();
+    },
+
+    _build: function () {
+        this.view.headers_clickable = true;
+        this.view.get_selection ().mode = Gtk.SelectionMode.MULTIPLE;
+        let render = new Gtk.CellRendererText ();
+
+        let column = new Gtk.TreeViewColumn ({title: _("#")});
+        column.pack_start (render, false);
+        column.add_attribute (render, "text", 0);
+        column.fixed_width = 40;
+		column.resizable = true;
+		column.sizing = Gtk.TreeViewColumnSizing.FIXED;
+		column.sort_column_id = 0;
+        this.view.append_column (column);
+
+        let column = new Gtk.TreeViewColumn ({title: _("Time")});
+        column.pack_start (render, false);
+        column.add_attribute (render, "text", 1);
+        column.fixed_width = 140;
+		column.resizable = true;
+		column.sizing = Gtk.TreeViewColumnSizing.FIXED;
+		column.sort_column_id = 1;
+        this.view.append_column (column);
+
+        let column = new Gtk.TreeViewColumn ({title: _("Guest")});
+        column.pack_start (render, false);
+        column.add_attribute (render, "text", 2);
+        column.fixed_width = 110;
+		column.resizable = true;
+		column.sizing = Gtk.TreeViewColumnSizing.FIXED;
+		column.sort_column_id = 2;
+        this.view.append_column (column);
+
+        let column = new Gtk.TreeViewColumn ({title: _("Request")});
+        column.pack_start (render, true);
+        column.add_attribute (render, "text", 3);
+        column.fixed_width = 300;
+		column.resizable = true;
+		column.sizing = Gtk.TreeViewColumnSizing.FIXED;
+		column.sort_column_id = 3;
+        this.view.append_column (column);
+
+        let column = new Gtk.TreeViewColumn ({title: _("Type")});
+        column.pack_start (render, false);
+        column.add_attribute (render, "text", 4);
+        column.fixed_width = 40;
+		column.resizable = true;
+		column.sizing = Gtk.TreeViewColumnSizing.FIXED;
+		column.sort_column_id = 4;
+        this.view.append_column (column);
+
+        let column = new Gtk.TreeViewColumn ({title:''});
+        column.sizing = Gtk.TreeViewColumnSizing.AUTOSIZE;
+        column.pack_start (render, false);
+        column.add_attribute (render, "text", 5);
+        this.view.append_column (column);
+
+        this.view.set_model (this.store);
+
+        this.box.add (this.view);
+    },
+
+    refresh: function () {
+        this.store.reload ();
+        this.loged = stats.access;
+    }
+});
+
+const LogStore = new Lang.Class({
+    Name: 'LogStore',
+    Extends: Gtk.ListStore,
+
+    _init: function () {
+        this.parent ();
+        this.set_column_types ([GObject.TYPE_INT,
+            GObject.TYPE_STRING, GObject.TYPE_STRING,
+            GObject.TYPE_STRING, GObject.TYPE_STRING, GObject.TYPE_STRING]);
+    },
+
+    reload: function () {
+        let list = this.parse_logs ();
+        this.clear ();
+        list.forEach ( r => {this.set (this.append (), [0,1,2,3,4], r);});
+    },
+
+    parse_logs: function () {
+        let list = [];
+        let output = get_info_list ("journalctl");
+        if (!output) output = get_info_list ("pkexec journalctl");
+        //TODO WARN NO PERMISSIONS
+        if (output) output.forEach (o => {
+            let s = o.toString ();
+            let i = s.indexOf ("[obmin][info] Request (");
+            if (i > -1) {
+                let n = 0, g = '', p = '', m = '';
+                let d = s.substring (0, 15);
+                i = s.indexOf ("[obmin][info] Request (");
+                if (i == -1) return;
+                s = s.substring (i + 23);
+                i = s.indexOf (")");
+                if ((i > -1) && (parseInt(s.substring (0, i)) >= 0))
+                    n = parseInt(s.substring (0, i));
+                if (s.length < i + 7) return;
+                s = s.substring (i + 7);
+                i = s.indexOf (" ");
+                if (i == -1) return;
+                g = s.substring (0, i);
+                s = s.substring (i + 1);
+                i = s.indexOf (" ");
+                if (i == -1) return;
+                m = s.substring (0, i);
+                s = s.substring (i + 1);
+                i = s.indexOf (" HTTP");
+                if (i == -1) return;
+                p = s.substring (0, i);
+                list.push ([n,d,g,p,m]);
+            }
+        });
+        return list;
     }
 });
 
 let cmd_out, info_out;
 function get_info_string (cmd) {
     cmd_out = GLib.spawn_command_line_sync (cmd);
-    if (cmd_out[0]) info_out = cmd_out[1].toString().split("\n")[0];
+    if (cmd_out[1]) info_out = cmd_out[1].toString().split("\n")[0];
     if (info_out) return info_out;
     return "";
+}
+
+function get_info_list (cmd) {
+    cmd_out = GLib.spawn_command_line_sync (cmd);
+    print (cmd_out[0],cmd_out[2],cmd_out[3]);
+    if (cmd_out[1]) return cmd_out[1].toString().split("\n");
+    return null;
 }
 
 function get_css_provider () {

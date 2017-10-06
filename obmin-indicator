@@ -75,6 +75,7 @@ const ObminIndicator = new Lang.Class ({
 
     _onActivate: function (){
         this._window.hide ();
+        GLib.spawn_command_line_async (APPDIR + '/obmin-center');
     },
 
     _onStartup: function () {
@@ -100,7 +101,6 @@ const ObminIndicator = new Lang.Class ({
             if (update_event) GLib.Source.remove (update_event);
             update_event = GLib.timeout_add (0, 50, Lang.bind (this, this.update_stats ));
         }));
-        GLib.spawn_command_line_async (APPDIR + '/obmin-center');
     },
 
     check_status: function () {

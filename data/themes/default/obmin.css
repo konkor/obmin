@@ -30,13 +30,9 @@
 .hb-space {
   background-color: @base_color;
 }
-.stats {
+.stats, .logs {
   color: @base_color;
   background-color: @bg_color;
-}
-.logs {
-  color: #323843;
-  background-color: #bfffbf;
 }
 .rlabel {
   font-size: 1.8em;

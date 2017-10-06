@@ -113,7 +113,7 @@ const ObminServer = new Lang.Class({
         this.add_handler (null, Lang.bind (this, this._default_handler));
         try {
             this.listen_all (port, 0);
-            info ("Obmin server started at 127.0.0.1:" + port);
+            info ("Server started at ::1:" + port);
         } catch (err) {
             throw err;
         }
@@ -647,11 +647,11 @@ function sorting (a, b) {
 }
 
 function info (msg) {
-    if (DEBUG > 0) print ("[obmin] " + msg);
+    if (DEBUG > 0) print ("[obmin][info] " + msg);
 }
 
 function debug (msg) {
-    if (DEBUG > 1) print ("[obmin] " + msg);
+    if (DEBUG > 1) print ("[obmin][debug] " + msg);
 }
 
 function error (msg) {
