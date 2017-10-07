@@ -62,11 +62,15 @@ let settings = null;
 let server = false;
 let cssp = null;
 
+let window = null;
+
 const ObminCenter = new Lang.Class ({
     Name: 'ObminCenter',
 
     _init: function () {
-        this.application = new Gtk.Application ();
+        this.application = new Gtk.Application ({application_id: "org.konkor.obmin.center",
+                flags: Gio.ApplicationFlags.HANDLES_OPEN});
+        GLib.set_application_name("OBMIN");
         Convenience.initTranslations ();
 
         settings = Convenience.getSettings ();
@@ -88,24 +92,25 @@ const ObminCenter = new Lang.Class ({
             theme_gui = APPDIR + "/data/themes/" + settings.get_string (THEME_GUI_KEY) + "/obmin.css";
             if (cssp) {
                 this.space.visible = false;
-                Gtk.StyleContext.remove_provider_for_screen (this._window.get_screen(), cssp);
+                Gtk.StyleContext.remove_provider_for_screen (window.get_screen(), cssp);
             }
             cssp = get_css_provider ();
             if (cssp) { Gtk.StyleContext.add_provider_for_screen (
-                this._window.get_screen(), cssp, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
+                window.get_screen(), cssp, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
                 this.space.visible = true;
             }
         }));
     },
 
-    _onActivate: function (){
-        this._window.show_all ();
+    _onActivate: function () {
+        window.show_all ();
         //this.show_info ("Started...");
         settings.connect ("changed::" + STATS_DATA_KEY, Lang.bind (this, function() {
             stats = JSON.parse (settings.get_string (STATS_DATA_KEY));
             if (update_event) GLib.Source.remove (update_event);
             update_event = GLib.timeout_add (0, 50, Lang.bind (this, this.update_stats ));
         }));
+        window.present ();
     },
 
     _onStartup: function () {
@@ -131,7 +136,7 @@ const ObminCenter = new Lang.Class ({
         for (let i = 0; i < o.length; i++) {
             if (o[i].indexOf ("obmin-server") > -1) {
                 run = true;
-		        break;
+                break;
             }
         }
         if (run != server) {
@@ -143,18 +148,18 @@ const ObminCenter = new Lang.Class ({
     },
 
     _build: function () {
-        this._window = new Gtk.Window ();
+        window = new Gtk.Window ();
         this.space = null;
-        this._window.title = "OBMIN Control Center";
-        this._window.set_position (Gtk.WindowPosition.CENTER);
-        this._window.set_icon_name ('obmin');
-        this._window.set_default_size (1024, 640);
+        window.title = "OBMIN Control Center";
+        window.set_position (Gtk.WindowPosition.CENTER);
+        window.set_icon_name ('obmin');
+        window.set_default_size (1024, 640);
         cssp = get_css_provider ();
         this.hb = new Gtk.HeaderBar ();
         this.hb.set_show_close_button (false);
         this.hb.title = "OBMIN SERVER";
         this.hb.get_style_context ().add_class ("hb");
-        this._window.set_titlebar (this.hb);
+        window.set_titlebar (this.hb);
         this.space = new HeaderSpace ();
         this.space.marging = 0;
         this.hb.pack_start (this.space);
@@ -162,7 +167,7 @@ const ObminCenter = new Lang.Class ({
         this.hb.title = "";
         if (cssp) {
             Gtk.StyleContext.add_provider_for_screen (
-                this._window.get_screen(), cssp, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
+                window.get_screen(), cssp, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
         }
         /*this.run_button  = new Gtk.ToggleButton ();
         this.run_button.image = Gtk.Image.new_from_icon_name ("system-shutdown-symbolic", Gtk.IconSize.DND);
@@ -173,10 +178,10 @@ const ObminCenter = new Lang.Class ({
         this.hb.pack_end (new Gtk.Label ({label: "OBMIN SERVER"}));*/
         //Prefs.init ();
         //this.w = new Prefs.ObminWidget ();
-        //this._window.add (this.w.notebook);
-        this.application.add_window (this._window);
+        //window.add (this.w.notebook);
+        this.application.add_window (window);
         this.box = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:0});
-        this._window.add (this.box);
+        window.add (this.box);
         this.sidebar = new Sidebar ();
         this.sidebar.get_style_context ().add_class ("sb");
         this.box.add (this.sidebar);
@@ -245,28 +250,28 @@ const ObminCenter = new Lang.Class ({
         if (this.infobar) this.infobar.destroy ();
         this.infobar = new Gtk.InfoBar ();
         if (bar_type == Gtk.MessageType.QUESTION) {
-			this.infobar.add_button ("gtk-yes", Gtk.ResponseType.YES);
-			this.infobar.add_button ("gtk-cancel", Gtk.ResponseType.CANCEL);
-		} else {
-			this.infobar.add_button ("gtk-close", Gtk.ResponseType.YES);
-			this.infobar.set_default_response (Gtk.ResponseType.OK);
-		}
-		this.infobar.set_message_type (bar_type);
-		var content = this.infobar.get_content_area ();
-		content.add (new Gtk.Label ({label: text, use_markup:true, xalign:0.75}));
+            this.infobar.add_button ("gtk-yes", Gtk.ResponseType.YES);
+            this.infobar.add_button ("gtk-cancel", Gtk.ResponseType.CANCEL);
+        } else {
+            this.infobar.add_button ("gtk-close", Gtk.ResponseType.YES);
+            this.infobar.set_default_response (Gtk.ResponseType.OK);
+        }
+        this.infobar.set_message_type (bar_type);
+        var content = this.infobar.get_content_area ();
+        content.add (new Gtk.Label ({label: text, use_markup:true, xalign:0.75}));
 
-		this.infobox.add (this.infobar);
-		this.infobar.show_all ();
-		this.infobar.connect ('response', Lang.bind (this, (o,e) => {
-		    //print (e, Gtk.ResponseType.YES, Gtk.ResponseType.OK);
-			this.infobar.destroy ();
-			infobar_event = 0;
-		}));
-		if (timeout) infobar_event = GLib.timeout_add_seconds (0, timeout, Lang.bind (this, function () {
-		    if (this.infobar) this.infobar.destroy ();
-		    infobar_event = 0;
-		    return false;
-		}));
+        this.infobox.add (this.infobar);
+        this.infobar.show_all ();
+        this.infobar.connect ('response', Lang.bind (this, (o,e) => {
+            //print (e, Gtk.ResponseType.YES, Gtk.ResponseType.OK);
+            this.infobar.destroy ();
+            infobar_event = 0;
+        }));
+        if (timeout) infobar_event = GLib.timeout_add_seconds (0, timeout, Lang.bind (this, function () {
+            if (this.infobar) this.infobar.destroy ();
+            infobar_event = 0;
+            return false;
+        }));
     },
 
     show_info: function (text) {
@@ -618,7 +623,7 @@ const RoundLabel = new Lang.Class({
         cr.$dispose ();
         return true;
     },
-    
+
     get label () {return this._label;},
     set label (val) {this._label = val; this.queue_draw ();}
 });
@@ -694,20 +699,20 @@ const StatMonitor = new Lang.Class({
         let cr = new Cairo.Context (buf);
         let style = this.get_style_context ();
         let color = style.get_color (0);
-        Gdk.cairo_set_source_rgba (cr, color);        
-        
+        Gdk.cairo_set_source_rgba (cr, color);
+
         if (full) {
             cr.selectFontFace ("sans", Cairo.FontSlant.NORMAL, Cairo.FontWeight.BOLD);
-			cr.setFontSize (18);
-			cr.moveTo (20, 20);
-			cr.showText (_("Requests per second (maximum - ") + this.max + ")");
+            cr.setFontSize (18);
+            cr.moveTo (20, 20);
+            cr.showText (_("Requests per second (maximum - ") + this.max + ")");
         }
-        
+
         Gdk.cairo_set_source_rgba (cr, color);
         cr.setLineWidth (8.0);
         cr.setLineCap (Cairo.LineCap.ROUND);
         cr.setLineJoin (Cairo.LineJoin.ROUND);
-        
+
         if (!full) {
             cr.moveTo (width - 3, height - 43 - hs * v1);
             cr.lineTo (width - ws - 3, height - 43 - hs * v0);
@@ -720,7 +725,7 @@ const StatMonitor = new Lang.Class({
             }
         }
         cr.stroke ();
-        
+
         if (!full) {
             cr.rectangle (0, 32, width, height-70);
             cr.clip ();
@@ -728,7 +733,7 @@ const StatMonitor = new Lang.Class({
             cr.setSourceSurface (this.buffer,-ws,0);
             cr.paintWithAlpha (0.99);
         }
-        
+
         cr.$dispose ();
         this.buffer = buf;
         this.queue_draw ();
@@ -763,7 +768,7 @@ const HeaderSpace = new Lang.Class({
         cr.$dispose ();
         return true;
     },
-    
+
     set width (val) {
         if (val != this.get_allocated_width ()) {
             this.set_size_request (val, 32);
@@ -799,45 +804,45 @@ const Logs = new Lang.Class({
         column.pack_start (render, false);
         column.add_attribute (render, "text", 0);
         column.fixed_width = 40;
-		column.resizable = true;
-		column.sizing = Gtk.TreeViewColumnSizing.FIXED;
-		column.sort_column_id = 0;
+        column.resizable = true;
+        column.sizing = Gtk.TreeViewColumnSizing.FIXED;
+        column.sort_column_id = 0;
         this.view.append_column (column);
 
         let column = new Gtk.TreeViewColumn ({title: _("Time")});
         column.pack_start (render, false);
         column.add_attribute (render, "text", 1);
         column.fixed_width = 140;
-		column.resizable = true;
-		column.sizing = Gtk.TreeViewColumnSizing.FIXED;
-		column.sort_column_id = 1;
+        column.resizable = true;
+        column.sizing = Gtk.TreeViewColumnSizing.FIXED;
+        column.sort_column_id = 1;
         this.view.append_column (column);
 
         let column = new Gtk.TreeViewColumn ({title: _("Guest")});
         column.pack_start (render, false);
         column.add_attribute (render, "text", 2);
         column.fixed_width = 110;
-		column.resizable = true;
-		column.sizing = Gtk.TreeViewColumnSizing.FIXED;
-		column.sort_column_id = 2;
+        column.resizable = true;
+        column.sizing = Gtk.TreeViewColumnSizing.FIXED;
+        column.sort_column_id = 2;
         this.view.append_column (column);
 
         let column = new Gtk.TreeViewColumn ({title: _("Request")});
         column.pack_start (render, true);
         column.add_attribute (render, "text", 3);
         column.fixed_width = 300;
-		column.resizable = true;
-		column.sizing = Gtk.TreeViewColumnSizing.FIXED;
-		column.sort_column_id = 3;
+        column.resizable = true;
+        column.sizing = Gtk.TreeViewColumnSizing.FIXED;
+        column.sort_column_id = 3;
         this.view.append_column (column);
 
         let column = new Gtk.TreeViewColumn ({title: _("Type")});
         column.pack_start (render, false);
         column.add_attribute (render, "text", 4);
         column.fixed_width = 40;
-		column.resizable = true;
-		column.sizing = Gtk.TreeViewColumnSizing.FIXED;
-		column.sort_column_id = 4;
+        column.resizable = true;
+        column.sizing = Gtk.TreeViewColumnSizing.FIXED;
+        column.sort_column_id = 4;
         this.view.append_column (column);
 
         let column = new Gtk.TreeViewColumn ({title:''});
