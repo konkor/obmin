@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION="8.0"
+VERSION="9.0"
 
 rm -rf debs
 mkdir debs

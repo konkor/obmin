@@ -135,8 +135,8 @@ const PageLocation = new Lang.Class({
         this.hbox.add (new Gtk.Label ({label:"<b>" + _("Shared Locations Editor") + "</b>", use_markup:true, xalign:0}));
         this.btn  = Gtk.Button.new_from_icon_name ("list-add-symbolic", Gtk.IconSize.BUTTON);
         this.btn.get_style_context ().add_class (Gtk.STYLE_CLASS_SUGGESTED_ACTION);
-		this.btn.tooltip_text = _("Add a location to share");
-		this.hbox.pack_end (this.btn, false, false, 0);
+        this.btn.tooltip_text = _("Add a location to share");
+        this.hbox.pack_end (this.btn, false, false, 0);
 
         this.editor = new LocationEditor ();
         this.editor.expand = true;
@@ -147,7 +147,7 @@ const PageLocation = new Lang.Class({
         this.box.pack_start (this.scroll, false, true, 0);
         this.scroll.add (this.editor);
 
-		this.btn.connect ('clicked', Lang.bind (this, ()=>{
+        this.btn.connect ('clicked', Lang.bind (this, ()=>{
             this.editor.add_new ();
         }));
 
@@ -162,16 +162,16 @@ const LocationEditor = new Lang.Class({
     _init: function () {
         this.parent ();
         this.homogeneous = false;
-		this.get_style_context ().add_class ("search-bar");
-		this.margin = 0;
-		this.selection_mode = Gtk.SelectionMode.NONE;
-		this.max_children_per_line = 1;
-		this.valign = Gtk.Align.START;
-		this.set_sort_func (this.sort_boxes);
-		this.rows = [];
-		sources.forEach (s => {
-		    this.add_row (new LocationItem (this.rows.length, s));
-		});
+        this.get_style_context ().add_class ("search-bar");
+        this.margin = 0;
+        this.selection_mode = Gtk.SelectionMode.NONE;
+        this.max_children_per_line = 1;
+        this.valign = Gtk.Align.START;
+        this.set_sort_func (this.sort_boxes);
+        this.rows = [];
+        sources.forEach (s => {
+            this.add_row (new LocationItem (this.rows.length, s));
+        });
     },
 
     add_new: function () {
@@ -212,9 +212,9 @@ const LocationEditor = new Lang.Class({
         var row1 = a.get_child ();
         var row2 = b.get_child ();
         if (row1 == null) return 1;
-		if (row2 == null) return -1;
-		if (row1.ltype.active == row2.ltype.active) return 0;
-		if (row1.ltype.active < row2.ltype.active) return -1;
+        if (row2 == null) return -1;
+        if (row1.ltype.active == row2.ltype.active) return 0;
+        if (row1.ltype.active < row2.ltype.active) return -1;
         return 1;
     }
 });
@@ -243,20 +243,20 @@ const LocationItem = new Lang.Class({
             this.ltype.active = 1;
         this.ltype.connect ('changed', Lang.bind (this, ()=>{
             this.create_type_widgets ();
-			this.emit ('changed');
+            this.emit ('changed');
         }));
         this.add (this.ltype);
         this.hbox = null;
         this.create_type_widgets ();
         this.btn  = Gtk.Button.new_from_icon_name ("window-close-symbolic",
-														Gtk.IconSize.BUTTON);
-		this.btn.get_style_context ().add_class (Gtk.STYLE_CLASS_ACCELERATOR);
-		this.btn.tooltip_text = _("Remove this location from the sharing");
-		this.pack_end (this.btn, false, false, 0);
-		this.btn.connect ('clicked', Lang.bind (this, ()=>{
+                                                        Gtk.IconSize.BUTTON);
+        this.btn.get_style_context ().add_class (Gtk.STYLE_CLASS_ACCELERATOR);
+        this.btn.tooltip_text = _("Remove this location from the sharing");
+        this.pack_end (this.btn, false, false, 0);
+        this.btn.connect ('clicked', Lang.bind (this, ()=>{
             this.emit ('closed');
         }));
-		this.show_all ();
+        this.show_all ();
     },
 
     create_type_widgets: function () {
@@ -544,42 +544,42 @@ const PageBehavior = new Lang.Class({
         this.add (this.box);
 
         this.file_server = Gtk.RadioButton.new_with_label_from_widget (null, _("File Server"));
-		this.box.pack_start (this.file_server, false, false, 0);
-		let label = new Gtk.Label ({
-		    label: "<i>"+_("Show the folder's list on requests.")+"</i>",
-		    use_markup:true, xalign:0, margin_left:24, margin_bottom:12});
+        this.box.pack_start (this.file_server, false, false, 0);
+        let label = new Gtk.Label ({
+            label: "<i>"+_("Show the folder's list on requests.")+"</i>",
+            use_markup:true, xalign:0, margin_left:24, margin_bottom:12});
         label.wrap = true;
         this.box.add (label);
 
         this.mix_server = Gtk.RadioButton.new_with_label_from_widget (this.file_server, _("WEB/File Server"));
-		this.box.pack_start (this.mix_server, false, false, 0);
-		label = new Gtk.Label ({
-		    label: "<i>"+_("Look for \'index.html\' first if it is not exist show the folder's list.")+"</i>",
-		    use_markup:true, xalign:0, margin_left:24, margin_bottom:12});
-		label.wrap = true;
+        this.box.pack_start (this.mix_server, false, false, 0);
+        label = new Gtk.Label ({
+            label: "<i>"+_("Look for \'index.html\' first if it is not exist show the folder's list.")+"</i>",
+            use_markup:true, xalign:0, margin_left:24, margin_bottom:12});
+        label.wrap = true;
         this.box.add (label);
 
         this.web_server = Gtk.RadioButton.new_with_label_from_widget (this.file_server, _("WEB Server"));
-		this.box.pack_start (this.web_server, false, false, 0);
-		label = new Gtk.Label ({
-		    label: "<i>"+_("Look for \'index.html\' and direct links only if it is not exist show error \'404.html\'.")+"</i>",
-		    use_markup:true, xalign:0, margin_left:24, margin_bottom:12});
-		label.wrap = true;
+        this.box.pack_start (this.web_server, false, false, 0);
+        label = new Gtk.Label ({
+            label: "<i>"+_("Look for \'index.html\' and direct links only if it is not exist show error \'404.html\'.")+"</i>",
+            use_markup:true, xalign:0, margin_left:24, margin_bottom:12});
+        label.wrap = true;
         this.box.add (label);
 
 
         if (mode == 1) this.mix_server.active = true;
         else if (mode == 2) this.web_server.active = true;
 
-		this.file_server.connect ('toggled', Lang.bind (this, ()=>{
-		    if (this.file_server.active) settings.set_int (MODE_KEY, 0);
-		}));
-		this.mix_server.connect ('toggled', Lang.bind (this, ()=>{
-		    if (this.mix_server.active) settings.set_int (MODE_KEY, 1);
-		}));
+        this.file_server.connect ('toggled', Lang.bind (this, ()=>{
+            if (this.file_server.active) settings.set_int (MODE_KEY, 0);
+        }));
+        this.mix_server.connect ('toggled', Lang.bind (this, ()=>{
+            if (this.mix_server.active) settings.set_int (MODE_KEY, 1);
+        }));
         this.web_server.connect ('toggled', Lang.bind (this, ()=>{
-		    if (this.web_server.active) settings.set_int (MODE_KEY, 2);
-		}));
+            if (this.web_server.active) settings.set_int (MODE_KEY, 2);
+        }));
 
         this.show_all ();
     }

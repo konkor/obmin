@@ -111,7 +111,7 @@ const ObminIndicator = new Lang.Class ({
         for (let i = 0; i < o.length; i++) {
             if (o[i].indexOf ("obmin-server") > -1) {
                 run = true;
-		        break;
+                break;
             }
         }
         if (run != server) {
@@ -212,7 +212,7 @@ const ObminIndicator = new Lang.Class ({
             GLib.spawn_command_line_async (APPDIR + '/obmin-preferences');
         }));
         this.appmenu.append (item);
-        
+
         this.appmenu.append (new Gtk.SeparatorMenuItem ());
         item = Gtk.MenuItem.new_with_label (_("Exit"));
         item.connect ('activate', Lang.bind (this, function () {

@@ -57,6 +57,12 @@
         <description>Recent locations</description>
     </key>
 
+    <key type="b" name="contest">
+      <default>true</default>
+      <summary>Popularity Contest</summary>
+      <description>(enable - default/disable)</description>
+    </key>
+
     <key type="s" name="excluded-files">
         <default>''</default>
         <summary>Excluded locations</summary>
@@ -127,6 +133,12 @@
         <default>'default'</default>
         <summary>GUI theme</summary>
         <description>Theme name</description>
+    </key>
+
+    <key type="s" name="user-id">
+        <default>''</default>
+        <summary>UUID</summary>
+        <description>Unique User ID</description>
     </key>
 
   </schema>

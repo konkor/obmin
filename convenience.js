@@ -20,7 +20,7 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const VERSION = 7;
+const VERSION = 9;
 const Gettext = imports.gettext;
 const Gio = imports.gi.Gio;
 

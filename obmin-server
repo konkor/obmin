@@ -46,6 +46,8 @@ const MOUNTS_KEY = 'mounts-settings';
 const HIDDENS_KEY = 'hidden-settings';
 const BACKUPS_KEY = 'backup-settings';
 const SOURCES_KEY = 'content-sources';
+const UUID_KEY = 'user-id';
+const CONTEST_KEY = 'contest';
 const STATS_MONITOR_KEY = 'stats-monitor';
 const STATS_DATA_KEY = 'stats';
 const SUPPORT_KEY = 'support';
@@ -90,6 +92,8 @@ let check_backup = false;
 let theme = APPDIR + "/data/themes/www/default/";
 let support = 0;
 let stats_monitor = true;
+let uuid = '';
+let contest = true;
 let mode = 0;
 let port = 8088;
 var DEBUG = 1;
@@ -639,6 +643,71 @@ function get_appdir () {
     return s;
 }
 
+function popularity () {
+    let headers = [
+        "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+        "Upgrade-Insecure-Requests: 1",
+        "Accept-Encoding: compress, gzip"
+    ];
+    let pcc = "wget --restrict-file-names=nocontrol --header=\"User-Agent: Mozilla/5.0 (X11; Linux " + linux_kernel () + ") Gecko/20100101 Firefox/52.0\"";
+    let l = GLib.get_language_names()[0];
+    if (l) {
+        if (l.length > 4) l = l.substring (0, 5).replace ('_','-') + ',' + l.substring (0, 2) + ";q=0.5";
+        else if (l.length > 1) l = l.substring (0, 2);
+        else l = "en";
+    } else l = "en";
+    headers.forEach (s => {pcc += " --header=\"" + s + "\"";});
+    pcc += " --header=\"Accept-Language: " + l + "\"";
+    pcc += " -qO- \"www.google-analytics.com/collect?v=1&tid=UA-107697776-2&cid=" + uuid +"&t=pageview&dp=%2Fobmin%2Fcontest.html\"";
+    GLib.spawn_command_line_sync (pcc);
+}
+
+let cmd_out, info_out;
+
+function linux_kernel () {
+    let distro = "Linux ";
+    let f = Gio.File.new_for_path ('/etc/os-release');
+    if (f.query_exists (null)) {
+        let dis = new Gio.DataInputStream ({ base_stream: f.read (null) });
+        let line, model = "", s, i = 0;
+        try {
+        [line, ] = dis.read_line (null);
+        while (line != null) {
+            s = new String (line);
+            if (s.indexOf ("PRETTY_NAME=") > -1) {
+                model = s;
+                i++;
+            }
+            if (i > 0) break;
+            [line, ] = dis.read_line (null);
+        }
+        dis.close (null);
+        if (model) {
+            if (model.length > 11) model = model.substring (12).trim ();
+            model = model.replace (/\"/g, "");
+            model = model.replace (distro, "");
+            i = model.indexOf ('(');
+            if ((i > -1) && (model.length > (i+1))) {
+                model = model.slice(0,i) + model[i+1].toUpperCase() + model.slice(i+2);
+                model = model.replace (")", "");
+            }
+            distro = model;
+        }} catch (e) {error (e.message);}
+    }
+    cmd_out = GLib.spawn_command_line_sync ("uname -r");
+    if (cmd_out[1]) info_out = cmd_out[1].toString().split("\n")[0];
+    if (info_out) distro += " " + info_out;
+    return distro;
+}
+
+function get_info_string (cmd) {
+    cmd_out = GLib.spawn_command_line_sync (cmd);
+    print (cmd_out[0],cmd_out[1],cmd_out[2],cmd_out[3]);
+    if (cmd_out[1]) info_out = cmd_out[1].toString().split("\n")[0];
+    if (info_out) return info_out;
+    return "";
+}
+
 function sorting (a, b) {
     if (a.type != b.type) return b.type - a.type;
     if (a.name.toLowerCase() < b.name.toLowerCase()) return -1;
@@ -704,6 +773,13 @@ function load_settings () {
     if (config.debug) DEBUG = config.debug;
     else DEBUG = settings.get_int (DEBUG_KEY);
     support = settings.get_int (SUPPORT_KEY);
+    uuid = settings.get_string (UUID_KEY);
+    if (!uuid) {
+        uuid = Gio.dbus_generate_guid ();
+        settings.set_string (UUID_KEY, uuid);
+    }
+    contest = settings.get_boolean (CONTEST_KEY);
+    if (contest) popularity ();
     if (config.theme) theme = APPDIR + "/data/www/themes/" + config.theme + "/";
     else theme = APPDIR + "/data/www/themes/" + settings.get_string (THEME_KEY) + "/";
     if (config.sources)
