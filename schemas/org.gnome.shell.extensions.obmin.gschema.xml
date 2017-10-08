@@ -124,7 +124,7 @@
     </key>
 
     <key type="s" name="stats">
-        <default>'{}'</default>
+        <default>'{"access":0,"ready":0,"upload":0}'</default>
         <summary>Data</summary>
         <description>Server stats data</description>
     </key>

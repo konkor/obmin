@@ -81,7 +81,7 @@ const ObminCenter = new Lang.Class ({
         status = settings.get_int (STATUS_KEY);
         stats_monitor = settings.get_boolean (STATS_MONITOR_KEY);
         let s = settings.get_string (STATS_DATA_KEY);
-        if (s) stats = JSON.parse (s);
+        if (s && (s !="{}")) stats = JSON.parse (s);
         theme_gui = APPDIR + "/data/themes/" + settings.get_string (THEME_GUI_KEY) + "/obmin.css";
 
         server = this.server_enabled;
@@ -642,6 +642,7 @@ const StatMonitor = new Lang.Class({
         this.v.push (0);this.v.push (0);
         this.max = 0;
         this.min = 0;
+        this.val = -1;
         this.full = false;
         this.set_size_request (240, 60);
         this.connect ('draw', Lang.bind (this, this.on_drawn));
@@ -810,7 +811,7 @@ const Logs = new Lang.Class({
         column.sort_column_id = 0;
         this.view.append_column (column);
 
-        let column = new Gtk.TreeViewColumn ({title: _("Time")});
+        column = new Gtk.TreeViewColumn ({title: _("Time")});
         column.pack_start (render, false);
         column.add_attribute (render, "text", 1);
         column.fixed_width = 140;
@@ -819,7 +820,7 @@ const Logs = new Lang.Class({
         column.sort_column_id = 1;
         this.view.append_column (column);
 
-        let column = new Gtk.TreeViewColumn ({title: _("Guest")});
+        column = new Gtk.TreeViewColumn ({title: _("Guest")});
         column.pack_start (render, false);
         column.add_attribute (render, "text", 2);
         column.fixed_width = 110;
@@ -828,7 +829,7 @@ const Logs = new Lang.Class({
         column.sort_column_id = 2;
         this.view.append_column (column);
 
-        let column = new Gtk.TreeViewColumn ({title: _("Request")});
+        column = new Gtk.TreeViewColumn ({title: _("Request")});
         column.pack_start (render, true);
         column.add_attribute (render, "text", 3);
         column.fixed_width = 300;
@@ -837,7 +838,7 @@ const Logs = new Lang.Class({
         column.sort_column_id = 3;
         this.view.append_column (column);
 
-        let column = new Gtk.TreeViewColumn ({title: _("Type")});
+        column = new Gtk.TreeViewColumn ({title: _("Type")});
         column.pack_start (render, false);
         column.add_attribute (render, "text", 4);
         column.fixed_width = 40;
@@ -846,7 +847,7 @@ const Logs = new Lang.Class({
         column.sort_column_id = 4;
         this.view.append_column (column);
 
-        let column = new Gtk.TreeViewColumn ({title:''});
+        column = new Gtk.TreeViewColumn ({title:''});
         column.sizing = Gtk.TreeViewColumnSizing.AUTOSIZE;
         column.pack_start (render, false);
         column.add_attribute (render, "text", 5);

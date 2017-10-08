@@ -118,6 +118,7 @@ const ObminIndicator = new Lang.Class ({
                 break;
             }
         }
+        debug ("status: " + run?"OK":"Stopped");
         if (run != server) {
             server = run;
             this.lock = true;
@@ -130,8 +131,8 @@ const ObminIndicator = new Lang.Class ({
     update_icon: function () {
         if (!server) this.indicator.set_icon ("obmin-off");
         else if ((stats.access - stats.ready) > 0) {
-            if (this.indicator.icon != "obmin-run") this.indicator.set_icon ("obmin-run");
-        } else if (this.indicator.icon != "obmin-on") this.indicator.set_icon ("obmin-on");
+            if (this.indicator.get_icon() != "obmin-run") this.indicator.set_icon ("obmin-run");
+        } else if (this.indicator.get_icon() != "obmin-on") this.indicator.set_icon ("obmin-on");
     },
 
     update_stats: function () {
