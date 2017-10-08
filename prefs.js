@@ -122,16 +122,14 @@ var ObminWidget = new Lang.Class({
 
 const PageLocation = new Lang.Class({
     Name: 'PageLocation',
-    Extends: Gtk.ScrolledWindow,
+    Extends: Gtk.Box,
 
     _init: function () {
-        this.parent ();
-        this.box = new Gtk.Box ({orientation:Gtk.Orientation.VERTICAL, margin:0, spacing:0});
-        this.box.border_width = 0;
-        this.add (this.box);
+        this.parent ({orientation:Gtk.Orientation.VERTICAL, margin:0, spacing:0});
+        this.border_width = 0;
 
         this.hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:8});
-        this.box.add (this.hbox);
+        this.add (this.hbox);
         this.hbox.add (new Gtk.Label ({label:"<b>" + _("Shared Locations Editor") + "</b>", use_markup:true, xalign:0}));
         this.btn  = Gtk.Button.new_from_icon_name ("list-add-symbolic", Gtk.IconSize.BUTTON);
         this.btn.get_style_context ().add_class (Gtk.STYLE_CLASS_SUGGESTED_ACTION);
@@ -144,7 +142,7 @@ const PageLocation = new Lang.Class({
         this.scroll.vscrollbar_policy = Gtk.PolicyType.AUTOMATIC;
         this.scroll.shadow_type = Gtk.ShadowType.NONE;
         this.scroll.get_style_context ().add_class ("search-bar");
-        this.box.pack_start (this.scroll, false, true, 0);
+        this.pack_start (this.scroll, false, true, 0);
         this.scroll.add (this.editor);
 
         this.btn.connect ('clicked', Lang.bind (this, ()=>{
@@ -390,16 +388,14 @@ const PageGeneral = new Lang.Class({
 
 const PageDisplay = new Lang.Class({
     Name: 'PageDisplay',
-    Extends: Gtk.ScrolledWindow,
+    Extends: Gtk.Box,
 
     _init: function () {
-        this.parent ();
-        this.box = new Gtk.Box ({orientation:Gtk.Orientation.VERTICAL, margin:6, spacing:8});
-        this.box.border_width = 6;
-        this.add (this.box);
+        this.parent ({orientation:Gtk.Orientation.VERTICAL, margin:6, spacing:8});
+        this.border_width = 6;
 
         this.mounts = Gtk.CheckButton.new_with_label (_("Show mount points"));
-        this.box.add (this.mounts);
+        this.add (this.mounts);
         this.mounts.active = mounts;
         this.mounts.connect ('toggled', Lang.bind (this, ()=>{
             mounts = this.mounts.active;
@@ -407,7 +403,7 @@ const PageDisplay = new Lang.Class({
         }));
 
         this.links = Gtk.CheckButton.new_with_label (_("Show symbolic links"));
-        this.box.add (this.links);
+        this.add (this.links);
         this.links.active = links;
         this.links.connect ('toggled', Lang.bind (this, ()=>{
             links = this.links.active;
@@ -415,7 +411,7 @@ const PageDisplay = new Lang.Class({
         }));
 
         this.hiddens = Gtk.CheckButton.new_with_label (_("Show hidden content"));
-        this.box.add (this.hiddens);
+        this.add (this.hiddens);
         this.hiddens.active = hiddens;
         this.hiddens.connect ('toggled', Lang.bind (this, ()=>{
             hiddens = this.hiddens.active;
@@ -423,7 +419,7 @@ const PageDisplay = new Lang.Class({
         }));
 
         this.backups = Gtk.CheckButton.new_with_label (_("Show backups"));
-        this.box.add (this.backups);
+        this.add (this.backups);
         this.backups.active = backups;
         this.backups.connect ('toggled', Lang.bind (this, ()=>{
             backups = this.backups.active;
@@ -431,8 +427,7 @@ const PageDisplay = new Lang.Class({
         }));
 
         let hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
-        this.box.pack_start (hbox, false, false, 0);
-
+        this.pack_start (hbox, false, false, 0);
 
         this.show_all ();
     }
@@ -440,16 +435,14 @@ const PageDisplay = new Lang.Class({
 
 const PageNotify = new Lang.Class({
     Name: 'PageNotify',
-    Extends: Gtk.ScrolledWindow,
+    Extends: Gtk.Box,
 
     _init: function () {
-        this.parent ();
-        this.box = new Gtk.Box ({orientation:Gtk.Orientation.VERTICAL, margin:6});
-        this.box.border_width = 6;
-        this.add (this.box);
+        this.parent ({orientation:Gtk.Orientation.VERTICAL, margin:6});
+        this.border_width = 6;
 
         let hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
-        this.box.pack_start (hbox, false, false, 0);
+        this.pack_start (hbox, false, false, 0);
         let label = new Gtk.Label ({label: _("Debugging level")});
         hbox.add (label);
         this.level = new Gtk.ComboBoxText ();
@@ -466,7 +459,7 @@ const PageNotify = new Lang.Class({
         this.cb_activity = Gtk.CheckButton.new_with_label (_("Activity Monitor"));
         this.cb_activity.tooltip_text = _("Monitor usage statistic and active connections");
         this.cb_activity.margin = 6;
-        this.box.add (this.cb_activity);
+        this.add (this.cb_activity);
         this.cb_activity.active = monitor;
         this.cb_activity.connect ('toggled', Lang.bind (this, ()=>{
             monitor = this.cb_activity.active;
@@ -535,38 +528,35 @@ const PageSupport = new Lang.Class({
 
 const PageBehavior = new Lang.Class({
     Name: 'PageBehavior',
-    Extends: Gtk.ScrolledWindow,
+    Extends: Gtk.Box,
 
     _init: function () {
-        this.parent ();
-        this.box = new Gtk.Box ({orientation:Gtk.Orientation.VERTICAL, margin:6});
-        this.box.border_width = 6;
-        this.add (this.box);
+        this.parent ({orientation:Gtk.Orientation.VERTICAL, margin:6});
+        this.border_width = 6;
 
         this.file_server = Gtk.RadioButton.new_with_label_from_widget (null, _("File Server"));
-        this.box.pack_start (this.file_server, false, false, 0);
+        this.pack_start (this.file_server, false, false, 0);
         let label = new Gtk.Label ({
             label: "<i>"+_("Show the folder's list on requests.")+"</i>",
             use_markup:true, xalign:0, margin_left:24, margin_bottom:12});
         label.wrap = true;
-        this.box.add (label);
+        this.add (label);
 
         this.mix_server = Gtk.RadioButton.new_with_label_from_widget (this.file_server, _("WEB/File Server"));
-        this.box.pack_start (this.mix_server, false, false, 0);
+        this.pack_start (this.mix_server, false, false, 0);
         label = new Gtk.Label ({
             label: "<i>"+_("Look for \'index.html\' first if it is not exist show the folder's list.")+"</i>",
             use_markup:true, xalign:0, margin_left:24, margin_bottom:12});
         label.wrap = true;
-        this.box.add (label);
+        this.add (label);
 
         this.web_server = Gtk.RadioButton.new_with_label_from_widget (this.file_server, _("WEB Server"));
-        this.box.pack_start (this.web_server, false, false, 0);
+        this.pack_start (this.web_server, false, false, 0);
         label = new Gtk.Label ({
             label: "<i>"+_("Look for \'index.html\' and direct links only if it is not exist show error \'404.html\'.")+"</i>",
             use_markup:true, xalign:0, margin_left:24, margin_bottom:12});
         label.wrap = true;
-        this.box.add (label);
-
+        this.add (label);
 
         if (mode == 1) this.mix_server.active = true;
         else if (mode == 2) this.web_server.active = true;
