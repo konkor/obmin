@@ -256,7 +256,7 @@ const PrefsMenuItem = new Lang.Class({
         this.preferences = new St.Button ({ child: new St.Icon ({ icon_name: 'preferences-system-symbolic' }), style_class: 'system-menu-action'});
         this.actor.add (this.preferences, { expand: true, x_fill: false });
         this.preferences.connect ('clicked', Lang.bind (this, function () {
-            GLib.spawn_command_line_async ('gnome-shell-extension-prefs ' + Me.uuid);
+            GLib.spawn_command_line_async (EXTENSIONDIR + '/obmin-center');
             this.emit ('activate');
         }));
         this.actor.add (new St.Label ({text: ' '}), { expand: true });

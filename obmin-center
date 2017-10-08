@@ -70,7 +70,7 @@ const ObminCenter = new Lang.Class ({
     _init: function () {
         this.application = new Gtk.Application ({application_id: "org.konkor.obmin.center",
                 flags: Gio.ApplicationFlags.HANDLES_OPEN});
-        GLib.set_application_name("OBMIN");
+        GLib.set_application_name("OBMIN Control Center");
         Convenience.initTranslations ();
 
         settings = Convenience.getSettings ();
@@ -283,7 +283,7 @@ const ObminCenter = new Lang.Class ({
             GLib.Source.remove (infobar_event);
             infobar_event = 0;
         }
-        if (this.infobar && (this.infobar != this.refresh)) {
+        if (!this.refresh || (this.infobar != this.refresh)) {
             if (this.infobar) this.infobar.destroy ();
             this.refresh = new RefreshBar (count);
             this.infobar = this.refresh;
@@ -882,7 +882,9 @@ const LogStore = new Lang.Class({
     parse_logs: function () {
         let list = [];
         let output = get_info_list ("journalctl");
-        if (!output) output = get_info_list ("pkexec journalctl");
+        if (!output || output.length < 20) {
+            output = get_info_list ("pkexec journalctl");
+        }
         //TODO WARN NO PERMISSIONS
         if (output) output.forEach (o => {
             let s = o.toString ();
@@ -926,7 +928,7 @@ function get_info_string (cmd) {
 
 function get_info_list (cmd) {
     cmd_out = GLib.spawn_command_line_sync (cmd);
-    print (cmd_out[0],cmd_out[2],cmd_out[3]);
+    //print (cmd_out[0],cmd_out[2],cmd_out[3]);
     if (cmd_out[1]) return cmd_out[1].toString().split("\n");
     return null;
 }

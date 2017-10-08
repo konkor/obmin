@@ -1,10 +1,10 @@
 [Desktop Entry]
 Name=Obmin
-Comment=HTTP/File Server solution for GNU/Linux systems
-Exec=obmin-indicator
+Comment=Lightweight HTTP File Server
+Exec=obmin-center
 Icon=obmin
 Terminal=false
 Type=Application
-Categories=Network;FileTransfer;GNOME;Application;
+Categories=Network;FileTransfer;Core;
 Keywords=obmin;internet;server;share;
 StartupNotify=true

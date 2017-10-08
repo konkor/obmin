@@ -56,6 +56,7 @@ let status_event = 0;
 let update_event = 0;
 let settings = null;
 let server = false;
+let desktop = '';
 
 const ObminIndicator = new Lang.Class ({
     Name: 'ObminIndicator',
@@ -67,10 +68,15 @@ const ObminIndicator = new Lang.Class ({
         port = settings.get_int (PORT_KEY);
         status = settings.get_int (STATUS_KEY);
         stats_monitor = settings.get_boolean (STATS_MONITOR_KEY);
+        desktop = GLib.getenv ("XDG_CURRENT_DESKTOP").toUpperCase ();
+        if (desktop == "PANTHEON") stats_monitor = false;
 
-        this.application = new Gtk.Application ();
+        this.application = new Gtk.Application ({
+            application_id: "org.konkor.obmin.indicator",
+            flags: Gio.ApplicationFlags.HANDLES_OPEN});
         this.application.connect ('activate', Lang.bind (this, this._onActivate));
         this.application.connect ('startup', Lang.bind (this, this._onStartup));
+        debug (desktop);
     },
 
     _onActivate: function (){
@@ -165,22 +171,21 @@ const ObminIndicator = new Lang.Class ({
         this.info_public = new PublicItem ();
         this.appmenu.append (this.info_public);
 
-        this.appmenu.append (new Gtk.SeparatorMenuItem ());
         this.stats = Gtk.MenuItem.new_with_label (" ");
         this.stats.get_child().set_markup ("<b>"+_("Usage Statistics")+"</b>");
-        this.stats.connect ('activate', Lang.bind (this, function () {
-            GLib.spawn_command_line_async (APPDIR + '/obmin-center');
-        }));
-        this.appmenu.append (this.stats);
+        this.appmenu.senitive = false;
 
         this.connections = new InfoMenuItem (_("Active"), "0");
         this.connections.tooltip_text = _("Active connections");
-        this.appmenu.append (this.connections);
         this.requests = new InfoMenuItem (_("Total Requests"), "0");
         this.requests.tooltip_text = _("Total Number Of Requests To Obmin Server");
-        this.appmenu.append (this.requests);
         this.uploads = new InfoMenuItem (_("Transferred"), "0 bytes");
         this.uploads.tooltip_text = _("Total Amount Of The Transferred Data From Obmin Server");
+        if (stats_monitor) {
+        this.appmenu.append (new Gtk.SeparatorMenuItem ());
+        this.appmenu.append (this.stats);
+        this.appmenu.append (this.connections);
+        this.appmenu.append (this.requests);
         this.appmenu.append (this.uploads);
         this.connections.connect ('activate', Lang.bind (this, function () {
             GLib.spawn_command_line_async (APPDIR + '/obmin-center');
@@ -191,6 +196,7 @@ const ObminIndicator = new Lang.Class ({
         this.uploads.connect ('activate', Lang.bind (this, function () {
             GLib.spawn_command_line_async (APPDIR + '/obmin-center');
         }));
+        }
 
         if (support == 0) {
         this.appmenu.append (new Gtk.SeparatorMenuItem ());
@@ -206,10 +212,10 @@ const ObminIndicator = new Lang.Class ({
         }
 
         this.appmenu.append (new Gtk.SeparatorMenuItem ());
-        item = Gtk.MenuItem.new_with_label (_("Preferences..."));
-        item.tooltip_text = _("Open Obmin Settings");
+        item = Gtk.MenuItem.new_with_label (_("Control Center..."));
+        item.tooltip_text = _("Open Obmin Control Center");
         item.connect ('activate', Lang.bind (this, function () {
-            GLib.spawn_command_line_async (APPDIR + '/obmin-preferences');
+            GLib.spawn_command_line_async (APPDIR + '/obmin-center');
         }));
         this.appmenu.append (item);
 

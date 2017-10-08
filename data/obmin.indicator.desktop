@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Obmin Indicator
+Comment=Lightweight HTTP File Server
+Exec=obmin-indicator
+Icon=obmin
+Terminal=false
+Type=Application
+Categories=Network;FileTransfer;Monitor;
+Keywords=obmin;internet;server;share;network;
+StartupNotify=true
+Name[en_US]=Obmin Indicator
