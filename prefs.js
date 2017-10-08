@@ -607,7 +607,7 @@ function debug (msg) {
 }
 
 function error (msg) {
-    print ("[obmin][prefs] (EE) " + msg);
+    printerr ("[obmin][prefs] (EE) " + msg);
 }
 
 function init() {

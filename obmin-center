@@ -176,8 +176,8 @@ const ObminCenter = new Lang.Class ({
         this.run_button.get_style_context ().add_class ("sb-button");
         this.hb.pack_end (this.run_button);
         this.hb.pack_end (new Gtk.Label ({label: "OBMIN SERVER"}));*/
-        //Prefs.init ();
-        //this.w = new Prefs.ObminWidget ();
+        Prefs.init ();
+        this.prefs = new Prefs.ObminWidget ();
         //window.add (this.w.notebook);
         this.application.add_window (window);
         this.box = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:0});
@@ -198,6 +198,7 @@ const ObminCenter = new Lang.Class ({
         this.stack.add_named (this.statview, "stats");
         this.logsview = new Logs ();
         this.stack.add_named (this.logsview, "logs");
+        this.stack.add_named (this.prefs.notebook, "prefs");
 
         this.sidebar.connect ('stack_update', Lang.bind (this, this.on_stack));
         this.sidebar.connect ('size_allocate', Lang.bind(this, (o)=>{
@@ -373,7 +374,7 @@ const Sidebar = new Lang.Class({
         this.exit_button = new SidebarButton (_("Exit"), _("Close Control Center"));
         this.exit_button.margin_bottom = 16;
         this.pack_end (this.exit_button, false, false, 0);
-        this.prefs_button = new SidebarButton (_("Settings"), _("Open Preferences"));
+        this.prefs_button = new SidebarButton (_("Settings"), _("Open Preferences"), "prefs");
         this.pack_end (this.prefs_button, false, false, 0);
 
         this.exit_button.button.connect ('clicked', Lang.bind (this, ()=>{
@@ -381,7 +382,7 @@ const Sidebar = new Lang.Class({
         }));
         this.stats_button.button.connect ('toggled', Lang.bind (this, this.on_toggle));
         this.log_button.button.connect ('toggled', Lang.bind (this, this.on_toggle));
-        this.prefs_button.button.connect ('toggled', Lang.bind (this, this.on_prefs));
+        this.prefs_button.button.connect ('toggled', Lang.bind (this, this.on_toggle));
 
         this.show_all ();
     },
@@ -753,7 +754,7 @@ const HeaderSpace = new Lang.Class({
     _init: function (text) {
         this.parent ();
         this.get_style_context ().add_class ("hb-space");
-        this.set_size_request (321, 32);
+        this.set_size_request (351, 32);
         this.connect ('draw', Lang.bind(this, this.on_drawn));
     },
 
@@ -785,7 +786,7 @@ const Logs = new Lang.Class({
         this.parent ();
         this.box = new Gtk.Box ({orientation:Gtk.Orientation.VERTICAL, margin:0, spacing:8});
         this.add (this.box);
-        this.get_style_context ().add_class ("logs");
+        //this.get_style_context ().add_class ("logs");
 
         this.store = new LogStore ();
         this.loged = stats.access;
@@ -970,11 +971,11 @@ function get_appdir () {
 }
 
 function debug (msg) {
-    if (DEBUGGING > 1) print ("[obmin][dash] " + msg);
+    if (DEBUGGING > 1) print ("[obmin][center] " + msg);
 }
 
 function error (msg) {
-    print ("[obmin][dash] (EE) " + msg);
+    printerr ("[obmin][dash] (EE) " + msg);
 }
 
 let app = new ObminCenter ();

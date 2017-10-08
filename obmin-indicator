@@ -88,15 +88,13 @@ const ObminIndicator = new Lang.Class ({
         this._window = new Gtk.Window ();
         this._window.title = "Obmin";
         this._window.set_icon_name ('obmin');
-        this._window.set_default_size (512, 320);
         this.application.add_window (this._window);
         server = this.server_enabled;
-        if (startup && !server) this._enable (true);
         this.build_menu ();
         if (server) {
             stats = JSON.parse (settings.get_string (STATS_DATA_KEY));
             this.update_stats ();
-        }
+        } else if (startup) this._enable (true);
         if (status > 0) status_event = GLib.timeout_add_seconds (0, status, Lang.bind (this, function () {
             this.check_status ();
             return true;
@@ -254,6 +252,11 @@ const ObminIndicator = new Lang.Class ({
             GLib.spawn_command_line_async ("killall obmin-server");
             this.indicator.set_icon ("obmin-off");
         }
+        if (this.server_switch.get_active() != server) {
+            this.lock = true;
+            this.server_switch.set_active (server);
+            this.lock = false;
+        }
     },
 
     get server_enabled () {
@@ -374,16 +377,12 @@ function get_info_string (cmd) {
     return "";
 }
 
-function info (msg) {
-    if (DEBUG > 0) print ("[obmin][indicator] " + msg);
-}
-
 function debug (msg) {
     if (DEBUG > 1) print ("[obmin][indicator] " + msg);
 }
 
 function error (msg) {
-    print ("[obmin][indicator] (EE) " + msg);
+    printerr ("[obmin][indicator] (EE) " + msg);
 }
 
 Convenience.initTranslations ();

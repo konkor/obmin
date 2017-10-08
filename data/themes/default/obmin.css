@@ -1,5 +1,6 @@
 @define-color base_color #323843;
 @define-color bg_color #ffcc0c;
+@define-color fg_color #cacaca;
 
 .sb {
   color: #bfbfbf;
@@ -34,6 +35,26 @@
   color: @base_color;
   background-color: @bg_color;
 }
+GtkTreeView {
+  color: @base_color;
+  background-color: #fcfcfc;
+  font-size: 1em; }
+GtkTreeView *:selected
+{
+  background-color: @base_color;
+  color: @fg_color;
+}
+column-header .button {
+  color: @fg_color;
+  box-shadow:none;
+  text-shadow:none;
+  background-color: @base_color; }
+  column-header .button:hover {
+    transition: none; }
+  column-header .button:active {
+    transition: none; }
+column-header .button GtkLabel {
+  color: @fg_color; }
 .rlabel {
   font-size: 1.8em;
 }
