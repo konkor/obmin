@@ -36,26 +36,6 @@
   color: @obmin_base_color;
   background-color: @obmin_bg_color;
 }
-.logs GtkTreeView, .logs treeview.view {
-  color: @obmin_base_color;
-  background-color: #fcfcfc;
-  font-size: 1em; }
-.logs GtkTreeView *:selected, .logs treeview.view *:selected
-{
-  background-color: @obmin_base_color;
-  color: @obmin_fg_color;
-}
-.logs column-header .button, .logs treeview.view header .button {
-  color: @obmin_fg_color;
-  box-shadow:none;
-  text-shadow:none;
-  background-color: @obmin_base_color; }
-  column-header .button:hover {
-    transition: none; }
-  column-header .button:active {
-    transition: none; }
-.logs column-header .button GtkLabel {
-  color: @obmin_fg_color; }
 .rlabel {
   font-size: 1.8em;
 }
