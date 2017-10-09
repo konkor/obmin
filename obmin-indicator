@@ -383,7 +383,7 @@ function debug (msg) {
 }
 
 function error (msg) {
-    printerr ("[obmin][indicator] (EE) " + msg);
+    log ("[obmin][indicator] (EE) " + msg);
 }
 
 Convenience.initTranslations ();

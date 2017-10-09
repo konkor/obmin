@@ -588,16 +588,12 @@ function getCurrentFile () {
     return [file.get_path(), file.get_parent().get_path(), file.get_basename()];
 }
 
-function info (msg) {
-    if (DEBUG > 0) print ("[obmin][prefs] " + msg);
-}
-
 function debug (msg) {
     if (DEBUG > 1) print ("[obmin][prefs] " + msg);
 }
 
 function error (msg) {
-    printerr ("[obmin][prefs] (EE) " + msg);
+    log ("[obmin][prefs] (EE) " + msg);
 }
 
 function init() {

@@ -718,7 +718,7 @@ function sorting (a, b) {
 const LOG_DOMAIN = 'obmin.server';
 
 function info (msg) {
-    print ("[obmin][info] " + msg);
+    log ("[obmin][info] " + msg);
 }
 
 function debug (msg) {
@@ -726,7 +726,7 @@ function debug (msg) {
 }
 
 function error (msg) {
-    printerr ("[obmin] (EE) " + msg);
+    log ("[obmin] (EE) " + msg);
 }
 
 let settings = Convenience.getSettings();

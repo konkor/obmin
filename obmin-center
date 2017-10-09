@@ -976,7 +976,7 @@ function debug (msg) {
 }
 
 function error (msg) {
-    printerr ("[obmin][dash] (EE) " + msg);
+    log ("[obmin][dash] (EE) " + msg);
 }
 
 let app = new ObminCenter ();

@@ -1,5 +1,5 @@
 @import "../default/obmin.css";
 
-@define-color base_color #323843;
-@define-color bg_color #0c99d5;
+@define-color obmin_base_color #323843;
+@define-color obmin_bg_color #0c99d5;
 
