@@ -31,7 +31,7 @@ function initTranslations (domain) {
     if (localeDir.query_exists (null))
         Gettext.bindtextdomain (domain, localeDir.get_path());
     else
-        Gettext.bindtextdomain (domain, '@datadir@/locale');
+        Gettext.bindtextdomain (domain, '/usr/share/locale');
 }
 
 function getSettings (schema) {
