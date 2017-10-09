@@ -787,7 +787,7 @@ const Logs = new Lang.Class({
         this.parent ();
         this.box = new Gtk.Box ({orientation:Gtk.Orientation.VERTICAL, margin:0, spacing:8});
         this.add (this.box);
-        //this.get_style_context ().add_class ("logs");
+        this.get_style_context ().add_class ("logs");
 
         this.store = new LogStore ();
         this.loged = stats.access;

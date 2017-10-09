@@ -18,8 +18,8 @@ Depends: ${shlibs:Depends},
          gir1.2-soup-2.4,
          gir1.2-appindicator3-0.1,
          psmisc,
-         curl,
+         wget,
          gjs
-Recommends: fonts-roboto, wget
+Recommends: fonts-roboto, curl
 Description: Lightweight HTTP File Server
  One-Click File Sharing Solution for your network.

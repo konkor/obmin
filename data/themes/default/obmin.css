@@ -35,16 +35,16 @@
   color: @base_color;
   background-color: @bg_color;
 }
-GtkTreeView {
+.logs GtkTreeView {
   color: @base_color;
   background-color: #fcfcfc;
   font-size: 1em; }
-GtkTreeView *:selected
+.logs GtkTreeView *:selected
 {
   background-color: @base_color;
   color: @fg_color;
 }
-column-header .button {
+.logs column-header .button {
   color: @fg_color;
   box-shadow:none;
   text-shadow:none;
@@ -53,7 +53,7 @@ column-header .button {
     transition: none; }
   column-header .button:active {
     transition: none; }
-column-header .button GtkLabel {
+.logs column-header .button GtkLabel {
   color: @fg_color; }
 .rlabel {
   font-size: 1.8em;
