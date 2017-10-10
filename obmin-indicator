@@ -69,7 +69,6 @@ const ObminIndicator = new Lang.Class ({
         status = settings.get_int (STATUS_KEY);
         stats_monitor = settings.get_boolean (STATS_MONITOR_KEY);
         desktop = GLib.getenv ("XDG_CURRENT_DESKTOP").toUpperCase ();
-        if (desktop == "PANTHEON") stats_monitor = false;
 
         this.application = new Gtk.Application ({
             application_id: "org.konkor.obmin.indicator",
@@ -180,7 +179,7 @@ const ObminIndicator = new Lang.Class ({
         this.requests.tooltip_text = _("Total Number Of Requests To Obmin Server");
         this.uploads = new InfoMenuItem (_("Transferred"), "0 bytes");
         this.uploads.tooltip_text = _("Total Amount Of The Transferred Data From Obmin Server");
-        if (stats_monitor) {
+        if (desktop != "PANTHEON") {
         this.appmenu.append (new Gtk.SeparatorMenuItem ());
         this.appmenu.append (this.stats);
         this.appmenu.append (this.connections);
