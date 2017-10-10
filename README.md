@@ -5,7 +5,7 @@ _The project is under development. So the project can have some issues and it's 
 
 ![screencast](https://user-images.githubusercontent.com/1944781/27997375-a73383c2-64ff-11e7-8a86-b9fddca45f42.png)
 
-**Obmin** has convenient user-friendly systray applets for many Desktop Environments like Gnome Shell, Unity, KDE, Mate, LXDE, XFCE, Cinnamon, Pantheon, Badgie DE through the **obmin-indicator** and [Gnome Obmin Extension](https://extensions.gnome.org/extension/1254/obmin/).
+**Obmin** has convenient user-friendly systray applets for many Desktop Environments like Gnome Shell, Unity, KDE, Mate, LXDE, XFCE, Cinnamon, Pantheon, Budgie DE through the **obmin-indicator** and [Gnome Obmin Extension](https://extensions.gnome.org/extension/1254/obmin/).
 
 ## Main Features
 * Easy installation.
