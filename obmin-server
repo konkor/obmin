@@ -39,7 +39,12 @@ const ATTRIBUTES = "standard," +
     Gio.FILE_ATTRIBUTE_UNIX_INODE + "," +
     Gio.FILE_ATTRIBUTE_UNIX_DEVICE + "," +
     Gio.FILE_ATTRIBUTE_UNIX_IS_MOUNTPOINT + "," +
+    Gio.FILE_ATTRIBUTE_ID_FILESYSTEM + "," +
+    Gio.FILE_ATTRIBUTE_GVFS_BACKEND + "," +
     Gio.FILE_ATTRIBUTE_ACCESS_CAN_READ;
+
+//const ATTRIBUTES = "standard::*,access::*,mountable::*,time::*,unix::*,owner::*,selinux::*,thumbnail::*,id::filesystem,trash::orig-path,trash::deletion-date,metadata::*";
+const vfss = ["afp", "google-drive", "sftp", "webdav", "ftp", "nfs", "cifs"];
 
 const LINKS_KEY = 'links-settings';
 const MOUNTS_KEY = 'mounts-settings';
@@ -74,7 +79,7 @@ const MEDIA = [
 "ts",   "webm", "spc",  "mka",  "opus", "amr"
 ];
 
-const html_head = "<head><meta charset=\"utf-8\"><title>Obmin - Simple File Sharing</title><meta name=\"viewport\" content=\"width=device-width\"><link href=\"style.css\" rel=\"stylesheet\" type=\"text/css\"></head>";
+const html_head = "<head><meta charset=\"utf-8\"><title>Obmin - Simple File Sharing</title><meta name=\"viewport\" content=\"width=device-width\"><link href=\"/style.css\" rel=\"stylesheet\" type=\"text/css\"></head>";
 const h_menu_btn = "<a class=\"nmenu-button\" href=\"javascript:void(0);\" onclick=\"toggle()\" title=\"Toggle Menu\">&#x2630;</a>";
 let h_menu = "<div id=\"navmenu\" class=\"nmenu hide\">" +
     "<a href=\"?list=urls\" class=\"nmenu-item\" onclick=\"toggle()\" title=\"Generate URLs File List\">Filelist URLs...</a>" +
@@ -159,7 +164,7 @@ const ObminServer = new Lang.Class({
         [file, r] = this.get_file (path);
         if (!file) [file, r] = this.get_file (GLib.uri_unescape_string (path, null));
         if (file) {
-            finfo = file.query_info ("*", 0, null);
+            finfo = file.query_info (ATTRIBUTES, 0, null);
             if (finfo.get_file_type () == 2) {
                 if (mode > 0)
                     if (this._send_content (self, msg, path + 'index.html', num, query) || (mode == 2)) {
@@ -172,31 +177,25 @@ const ObminServer = new Lang.Class({
                 } else this.get_dir (self, msg, file, r, path);
                 self.unpause_message (msg);
             } else {
-                if (!finfo.get_attribute_boolean (Gio.FILE_ATTRIBUTE_ACCESS_CAN_READ)) {
-                    //TODO
-                    debug ("not found (permission denie): " + finfo.get_name ());
-                    if (finfo.get_name () == "style.css") {
-                        msg.set_status (200);
-                        msg.response_headers.append ("Server", "Obmin");
-                        msg.set_response ("text/css", Soup.MemoryUse.COPY, GLib.file_get_contents (theme + "style.css")[1]);
-                        self.unpause_message (msg);
-                    } else if (finfo.get_name () == "home.png") {
-                        msg.set_status (200);
-                        msg.response_headers.append ("Server", "Obmin");
-                        msg.set_response ("image/png", Soup.MemoryUse.COPY, GLib.file_get_contents (theme + "home.png")[1]);
-                        self.unpause_message (msg);
-                    } else this.not_found (server, msg);
+                if (!this.is_remote (finfo) && !finfo.get_attribute_boolean (Gio.FILE_ATTRIBUTE_ACCESS_CAN_READ)) {
+                    debug ("not found: " + finfo.get_name ());
+                    this.not_found (server, msg);
                     counter.ready++;
                     counter.upload += msg.response_body.length;
                     this.update_stats ();
                     return true;
                 }
                 if (finfo.get_size () < 65536) {
-                    msg.set_status (200);
-                    msg.response_headers.append ("Server", "Obmin");
-                    msg.response_headers.append ("Content-Disposition", "filename=\"" + finfo.get_name () + "\"");
-                    msg.response_headers.set_content_length (finfo.get_size ());
-                    msg.set_response (finfo.get_content_type (), Soup.MemoryUse.COPY, file.load_contents (null)[1]);
+                    try {
+                        msg.set_response (finfo.get_content_type (), Soup.MemoryUse.COPY, file.load_contents (null)[1]);
+                        msg.set_status (200);
+                        msg.response_headers.append ("Server", "Obmin");
+                        msg.response_headers.append ("Content-Disposition", "filename=\"" + finfo.get_name () + "\"");
+                        msg.response_headers.set_content_length (finfo.get_size ());
+                    } catch (e) {
+                        error (e.message);
+                        this.not_found (server, msg);
+                    }
                     self.unpause_message (msg);
                 } else {
                     debug ("start chunking");
@@ -358,7 +357,7 @@ const ObminServer = new Lang.Class({
         let self = server, slash, size, d = new Date(0), ds;
         debug ("DIR:"+dir.get_path ());
         this.list_dir ({path: dir.get_path (), recursive: r});
-        let html_body = "<body><div class=\"path\"><a href=\"/\"><img src=\"home.png\" class=\"home\">> </a>" + this.get_path (path) + h_menu_btn + "</div>" + h_menu + "<div class=\"contents\">";
+        let html_body = "<body><div class=\"path\"><a href=\"/\"><img src=\"/home.png\" class=\"home\">> </a>" + this.get_path (path) + h_menu_btn + "</div>" + h_menu + "<div class=\"contents\">";
         files.forEach (f => {
             if (f.type == 2) { slash = "/"; size = "Folder";}
             else {slash = ""; size = " " + GLib.format_size (f.size);}
@@ -378,14 +377,17 @@ const ObminServer = new Lang.Class({
 
     _root_handler: function (server, msg) {
         let self = server, i = 0, slash, size, d = new Date(0), ds, index = null;
-        let html_body = "<body><div class=\"path\"><a href=\"/\"><img src=\"home.png\" class=\"home\">> </a>" + h_menu_btn + "</div>" + h_menu + "<div class=\"contents\">";
+        let html_body = "<body><div class=\"path\"><a href=\"/\"><img src=\"/home.png\" class=\"home\">> </a>" + h_menu_btn + "</div>" + h_menu + "<div class=\"contents\">";
         if (mode > 0)
             if (this._send_content (server, msg, '/index.html', this.access_counter) || (mode == 2)) return;
         files = [];
         sources.forEach (s => {
-            var fl = Gio.File.new_for_path (s.path);
+            var fl = Gio.File.new_for_path (s.path), finfo;
             if (fl.query_exists (null)) {
-                this.add_file (fl.query_info ("*", 0, null), s.path);
+                finfo = fl.query_info ("*", 0, null);
+                this.add_file (finfo, s.path);
+                if ((files.length > 0) && this.is_remote(finfo))
+                    files[files.length - 1].name = this.remote_name (finfo);
             }
         });
         files.forEach (f => {
@@ -418,13 +420,18 @@ const ObminServer = new Lang.Class({
             finfo = dir.query_info (ATTRIBUTES, 0, null);
             if (finfo.get_is_symlink ()) {
                 if (follow_links) {
-                    loc.path = finfo.get_symlink_target ();
                     debug ("Symlink Target " + loc.path);
-                    dir = Gio.File.new_for_path (loc.path);
-                    finfo = dir.query_info ("*", 0, null);
+                    if (this.is_remote (finfo)) {
+                        //Let the path route to the backend
+                        debug (dir.resolve_relative_path (finfo.get_symlink_target ()).get_path());
+                    } else {
+                        loc.path = finfo.get_symlink_target ();
+                        dir = Gio.File.new_for_path (loc.path);
+                    }
+                    finfo = dir.query_info (ATTRIBUTES, 0, null);
                 } else return;
             }
-            if (!finfo.get_attribute_boolean (Gio.FILE_ATTRIBUTE_ACCESS_CAN_READ)) return;
+            if (!this.is_remote (finfo) && !finfo.get_attribute_boolean (Gio.FILE_ATTRIBUTE_ACCESS_CAN_READ)) return;
             if (!mounts && finfo.get_attribute_boolean (Gio.FILE_ATTRIBUTE_UNIX_IS_MOUNTPOINT)) return;
             if (finfo.get_file_type () == Gio.FileType.REGULAR) {
                 this.add_file (finfo, loc.path);
@@ -432,6 +439,7 @@ const ObminServer = new Lang.Class({
             }
             var e = dir.enumerate_children (ATTRIBUTES, follow_links?Gio.FileQueryInfoFlags.NONE:Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS, null);
             while ((finfo = e.next_file (null)) != null) {
+                if (!this.is_remote (finfo) && !finfo.get_attribute_boolean (Gio.FILE_ATTRIBUTE_ACCESS_CAN_READ)) continue;
                 if (!check_hidden) {
                     if (finfo.get_name ().startsWith ("."))
                         continue;
@@ -462,13 +470,28 @@ const ObminServer = new Lang.Class({
     },
 
     add_file: function (finfo, path) {
-        debug ("add_file " + finfo.get_name ());
+        debug ("add_file:" + finfo.get_name ());
+        //debug ("unix_mode:"+finfo.get_attribute_uint32 (Gio.FILE_ATTRIBUTE_UNIX_MODE));
         files.push ({path: path,
             name: finfo.get_name (),
             type: finfo.get_file_type (),
             mime: finfo.get_content_type (),
             size: finfo.get_size (),
             date: finfo.get_attribute_uint64 (Gio.FILE_ATTRIBUTE_TIME_MODIFIED)});
+    },
+
+    is_remote: function (finfo) {
+        let fs = finfo.get_attribute_string (Gio.FILE_ATTRIBUTE_ID_FILESYSTEM);
+        for (let i = 0; i < vfss.length; i++) {
+            if (fs.toLowerCase().indexOf (vfss[i]) > -1) return true;
+        }
+        return false;
+    },
+
+    remote_name: function (finfo) {
+        let fs = finfo.get_attribute_string (Gio.FILE_ATTRIBUTE_ID_FILESYSTEM);
+        if (fs.indexOf("host=") > -1) return fs.substring (fs.indexOf("host=") + 5);
+        return fs;
     }
 });
 
