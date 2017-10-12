@@ -7,11 +7,13 @@
 .rlabel {
   font-size: 1.8em;
 }
-.hb {
+.hb, .hb * {
   color: rgba(0,0,0,0);
-  margin:0;
-  padding:0.5em;
+  background-color: @bg_color;
+  background-image: none;
   text-shadow:none;
+  margin:0;
+  padding:0;
   box-shadow:none;
   border-bottom: 0;
 }

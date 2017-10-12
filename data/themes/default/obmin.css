@@ -39,11 +39,10 @@
 .rlabel {
   font-size: 1.8em;
 }
-.hb {
+.hb, .hb GtkLabel, .hb label {
   color: @obmin_bg_color;
   background-color: @obmin_bg_color;
   background-image: none;
-  font-size: 1.7em;
   font-weight: bold;
   border-width: 0;
   border-radius: 0;
@@ -51,14 +50,12 @@
   box-shadow:none;
   outline-width:0;
   border-image:none;
-  padding:0.5em;
+  padding:0;
   margin:0;
   border:0;
   text-shadow:none;
 }
-.hb:hover, .hb:focus, .hb:active {
-  background-color: shade (@obmin_bg_color, 0.5);
-}
+
 .titlebar {
   padding:0;
   margin:0;
