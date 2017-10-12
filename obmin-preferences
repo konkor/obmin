@@ -34,6 +34,8 @@ const Preferences = new Lang.Class ({
 
     _init: function () {
         this.application = new Gtk.Application ();
+        GLib.set_application_name ("OBMIN Preferences");
+        GLib.set_prgname ("OBMIN Preferences");
         this.application.connect ('activate', Lang.bind (this, this._onActivate));
         this.application.connect ('startup', Lang.bind (this, this._onStartup));
     },
@@ -46,7 +48,12 @@ const Preferences = new Lang.Class ({
         this._window = new Gtk.Window ();
         this._window.title = "Obmin Preferences";
         this._window.set_icon_name ('obmin');
-        this._window.set_default_size (512, 420);
+        if (!this._window.icon) try {
+            this._window.icon = Gtk.Image.new_from_file (APPDIR + "/data/icons/obmin.svg").pixbuf;
+        } catch (e) {
+            error (e.message);
+        }
+        this._window.set_default_size (640, 480);
         Prefs.init ();
         this.w = new Prefs.ObminWidget ();
         this._window.add (this.w.notebook);

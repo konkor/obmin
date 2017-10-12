@@ -19,10 +19,15 @@ dark_orangedir=$(datadir)/gnome-shell/extensions/obmin@konkor/data/themes/dark-o
 dark_orange_DATA= \
     dark-orange/obmin.css
 
+sysdir=$(datadir)/gnome-shell/extensions/obmin@konkor/data/themes/system
+sys_DATA= \
+    system/obmin.css
+
 EXTRA_DIST = \
         $(blue_DATA) \
         $(gray_DATA) \
         $(mint_DATA) \
         $(dark_orange_DATA) \
+        $(sys_DATA) \
         $(defs_DATA)
 

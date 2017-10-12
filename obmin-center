@@ -70,7 +70,8 @@ const ObminCenter = new Lang.Class ({
     _init: function () {
         this.application = new Gtk.Application ({application_id: "org.konkor.obmin.center",
                 flags: Gio.ApplicationFlags.HANDLES_OPEN});
-        GLib.set_application_name("OBMIN Control Center");
+        GLib.set_application_name ("OBMIN Control Center");
+        GLib.set_prgname ("OBMIN");
         Convenience.initTranslations ();
 
         settings = Convenience.getSettings ();
@@ -150,21 +151,25 @@ const ObminCenter = new Lang.Class ({
     _build: function () {
         window = new Gtk.Window ();
         this.space = null;
-        window.title = "OBMIN Control Center";
+        window.title = "OBMIN";
         window.set_position (Gtk.WindowPosition.CENTER);
-        window.set_icon_name ('obmin');
+        window.set_icon_name ('obmin-off');
+        if (!window.icon) try {
+            window.icon = Gtk.Image.new_from_file (APPDIR + "/data/icons/obmin.svg").pixbuf;
+        } catch (e) {
+            error (e.message);
+        }
         window.set_default_size (1024, 640);
         cssp = get_css_provider ();
         this.hb = new Gtk.HeaderBar ();
         this.hb.set_show_close_button (false);
-        this.hb.title = "OBMIN SERVER";
         this.hb.get_style_context ().add_class ("hb");
         window.set_titlebar (this.hb);
         this.space = new HeaderSpace ();
         this.space.marging = 0;
         this.hb.pack_start (this.space);
         this.space.visible = false;
-        this.hb.title = "";
+        this.hb.title = "OBMIN Control Center";
         if (cssp) {
             Gtk.StyleContext.add_provider_for_screen (
                 window.get_screen(), cssp, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);

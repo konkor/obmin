@@ -1,0 +1,27 @@
+.sb {
+  font-size: 1.2em;
+}
+.hb-space {
+  background-color: @bg_color;
+}
+.rlabel {
+  font-size: 1.8em;
+}
+.hb {
+  color: rgba(0,0,0,0);
+  margin:0;
+  padding:0.5em;
+  text-shadow:none;
+  box-shadow:none;
+  border-bottom: 0;
+}
+.titlebar {
+  padding:0;
+  margin:0;
+}
+.obmin-title {
+  font-size: 1.8em;
+  font-weight: bold;
+  padding:0;
+  margin:0;
+}

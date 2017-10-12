@@ -73,6 +73,8 @@ const ObminIndicator = new Lang.Class ({
         this.application = new Gtk.Application ({
             application_id: "org.konkor.obmin.indicator",
             flags: Gio.ApplicationFlags.HANDLES_OPEN});
+        GLib.set_application_name ("OBMIN Indicator");
+        GLib.set_prgname ("OBMIN Indicator");
         this.application.connect ('activate', Lang.bind (this, this._onActivate));
         this.application.connect ('startup', Lang.bind (this, this._onStartup));
         debug (desktop);
@@ -85,8 +87,13 @@ const ObminIndicator = new Lang.Class ({
 
     _onStartup: function () {
         this._window = new Gtk.Window ();
-        this._window.title = "Obmin";
+        this._window.title = "OBMIN Indicator";
         this._window.set_icon_name ('obmin');
+        if (!this._window.icon) try {
+            this._window.icon = Gtk.Image.new_from_file (APPDIR + "/data/icons/obmin.svg").pixbuf;
+        } catch (e) {
+            error (e.message);
+        }
         this.application.add_window (this._window);
         server = this.server_enabled;
         this.build_menu ();
@@ -117,7 +124,7 @@ const ObminIndicator = new Lang.Class ({
                 break;
             }
         }
-        debug ("status: " + run?"OK":"Stopped");
+        debug ("status: " + run?"":"Stopped");
         if (run != server) {
             server = run;
             this.lock = true;
@@ -378,7 +385,7 @@ function get_info_string (cmd) {
 }
 
 function debug (msg) {
-    if (DEBUG > 1) print ("[obmin][indicator] " + msg);
+    if (msg && (DEBUG > 1)) print ("[obmin][indicator] " + msg);
 }
 
 function error (msg) {
