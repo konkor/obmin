@@ -1,10 +1,16 @@
+obmin (10.0-1) UNRELEASED; urgency=medium
+
+  * Next development version
+
+ -- Kostiantyn K <kapa76@gmail.com>  Sat, 13 Oct 2017 00:57:00 +0300
+
 obmin (9.0-1) UNRELEASED; urgency=medium
 
   * Add obmin control center and monitor
   * Update brazilian portuguese locale, pt_BR
   * Update assets and documentation
 
- -- Kostiantyn K <kapa76@gmail.com>  Sat, 16 Sep 2017 11:45:00 +0300
+ -- Kostiantyn K <kapa76@gmail.com>  Thu, 12 Sep 2017 18:30:00 +0300
 
 obmin (8.0-1) UNRELEASED; urgency=medium
 
