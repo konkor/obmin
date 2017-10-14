@@ -1,8 +1,10 @@
 obmin (10.0-1) UNRELEASED; urgency=medium
 
-  * Next development version
+  * Add local logger for the server journal
+  * Update theming
+  * Minor fixes and updates
 
- -- Kostiantyn K <kapa76@gmail.com>  Sat, 13 Oct 2017 00:57:00 +0300
+ -- Kostiantyn K <kapa76@gmail.com>  Sat, 14 Oct 2017 21:57:00 +0300
 
 obmin (9.0-1) UNRELEASED; urgency=medium
 
