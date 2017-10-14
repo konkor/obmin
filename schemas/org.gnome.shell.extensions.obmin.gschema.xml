@@ -141,5 +141,11 @@
         <description>Unique User ID</description>
     </key>
 
+    <key type="b" name="logs">
+      <default>true</default>
+      <summary>Local server logs</summary>
+      <description>(enable - default/disable)</description>
+    </key>
+
   </schema>
 </schemalist>

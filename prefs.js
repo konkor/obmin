@@ -31,6 +31,7 @@ const HIDDENS_KEY = 'hidden-settings';
 const BACKUPS_KEY = 'backup-settings';
 const SOURCES_KEY = 'content-sources';
 const MONITOR_KEY = 'stats-monitor';
+const JOURNAL_KEY = 'logs';
 const SUPPORT_KEY = 'support';
 const THEME_GUI_KEY = 'theme-gui';
 const THEME_KEY = 'theme';
@@ -57,6 +58,7 @@ let mode = 0;
 let port = 8088;
 let DEBUG = 1;
 let monitor = true;
+let journal = true;
 
 let settings = null;
 let sources = [];
@@ -455,7 +457,18 @@ const PageNotify = new Lang.Class({
             settings.set_int (DEBUG_KEY, DEBUG);
         }));
         hbox.pack_end (this.level, false, false, 0);
+        this.cb_journal = Gtk.CheckButton.new_with_label (_("Enable local server logs"));
+        this.cb_journal.tooltip_text = _("Use local logs for the server messages (default enabled).") +
+            "\n" + _("If disabled it uses the systemd journal only.");
+        this.cb_journal.margin = 6;
+        this.add (this.cb_journal);
+        this.cb_journal.active = journal;
+        this.cb_journal.connect ('toggled', Lang.bind (this, ()=>{
+            journal = this.cb_journal.active;
+            settings.set_boolean (JOURNAL_KEY, journal);
+        }));
 
+        this.add (new Gtk.Label ({label: "<b>" + _("Applet notifications") + "</b>", use_markup:true, xalign:0, margin_top:12}));
         this.cb_activity = Gtk.CheckButton.new_with_label (_("Activity Monitor"));
         this.cb_activity.tooltip_text = _("Monitor usage statistic and active connections");
         this.cb_activity.margin = 6;

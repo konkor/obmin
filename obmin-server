@@ -31,6 +31,7 @@ const APPDIR = get_appdir ();
 //debug ("APPDIR:" + APPDIR);
 imports.searchPath.unshift (APPDIR);
 const Convenience = imports.convenience;
+String.prototype.format = Convenience.Format.format;
 
 const ATTRIBUTES = "standard," +
     Gio.FILE_ATTRIBUTE_TIME_MODIFIED + "," +
@@ -52,6 +53,7 @@ const HIDDENS_KEY = 'hidden-settings';
 const BACKUPS_KEY = 'backup-settings';
 const SOURCES_KEY = 'content-sources';
 const UUID_KEY = 'user-id';
+const JOURNAL_KEY = 'logs';
 const CONTEST_KEY = 'contest';
 const STATS_MONITOR_KEY = 'stats-monitor';
 const STATS_DATA_KEY = 'stats';
@@ -61,6 +63,7 @@ const MODE_KEY = 'server-mode';
 const PORT_KEY = 'port';
 const DEBUG_KEY = 'debug';
 const SETTINGS_ID = 'org.gnome.shell.extensions.obmin';
+const LOG_DOMAIN = 'server';
 
 const MEDIA = [
 "3g2",  "3gp",  "3gp2", "3gpp", "aac",  "ac3",  "aif",  "aifc",
@@ -96,8 +99,9 @@ let check_hidden = false;
 let check_backup = false;
 let theme = APPDIR + "/data/themes/www/default/";
 let support = 0;
-let stats_monitor = true;
 let uuid = '';
+let journal = true;
+let stats_monitor = true;
 let contest = true;
 let mode = 0;
 let port = 8088;
@@ -136,9 +140,8 @@ const ObminServer = new Lang.Class({
         let self = server, drop = false, num;
         counter.access++;
         num = counter.access;
-        debug (counter.access + "(" + counter.ready + ") " + GLib.format_size (counter.upload));
-        info ("Request (" + counter.access + ") from " + client.get_host () +
-            " " + msg.method + " " + path + " HTTP/1." + msg.get_http_version ());
+        //info ("Request (" + counter.access + ") " + client.get_host () + " HTTP/1." + msg.get_http_version () + " " + msg.method + " " + path );
+        info ("Request (%d) %d %s HTTP/1.%d %s %s".format (counter.access, port, client.get_host (), msg.get_http_version (), msg.method, path ));
         msg.request_headers.foreach ( (n, v) => {
             debug (n + ": " + v);
         });
@@ -738,18 +741,16 @@ function sorting (a, b) {
     return 0;
 }
 
-const LOG_DOMAIN = 'obmin.server';
-
 function info (msg) {
-    log ("[obmin][info] " + msg);
+    Convenience.info (LOG_DOMAIN, msg);
 }
 
 function debug (msg) {
-    if (DEBUG > 1) print ("[obmin][debug] " + msg);
+    if (DEBUG > 1) Convenience.debug (LOG_DOMAIN, msg);
 }
 
 function error (msg) {
-    log ("[obmin] (EE) " + msg);
+    Convenience.error (LOG_DOMAIN, msg);
 }
 
 let settings = Convenience.getSettings();
@@ -798,6 +799,8 @@ function load_settings () {
     if (config.debug) DEBUG = config.debug;
     else DEBUG = settings.get_int (DEBUG_KEY);
     support = settings.get_int (SUPPORT_KEY);
+    if (config.logs) journal = config.logs;
+    else journal = settings.get_boolean (JOURNAL_KEY);
     uuid = settings.get_string (UUID_KEY);
     if (!uuid) {
         uuid = Gio.dbus_generate_guid ();
@@ -839,7 +842,7 @@ function get_excluded_locations () {
 
 let obmin;
 if (load_settings ()) {
-    //GLib.setenv('G_MESSAGES_DEBUG', LOG_DOMAIN, true);
+    if (journal) Convenience.InitLogger (LOG_DOMAIN);
 
     obmin = new ObminServer ();
     Mainloop.run ('obminMainloop');

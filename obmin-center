@@ -43,6 +43,7 @@ const STATS_MONITOR_KEY = 'stats-monitor';
 const THEME_GUI_KEY = 'theme-gui';
 const STATS_DATA_KEY = 'stats';
 const SUPPORT_KEY = 'support';
+const JOURNAL_KEY = 'logs';
 const PORT_KEY = 'port';
 const STATUS_KEY = 'status';
 
@@ -51,6 +52,7 @@ let support = 0;
 let port = 8088;
 let DEBUGGING = 1;
 let status = 5;
+let journal = true;
 let stats_monitor = true;
 let stats = {access:0, ready:0, upload:0};
 let theme_gui = APPDIR + "/data/themes/default/obmin.css";
@@ -78,6 +80,7 @@ const ObminCenter = new Lang.Class ({
         DEBUGGING = settings.get_int (DEBUG_KEY);
         port = settings.get_int (PORT_KEY);
         startup = settings.get_boolean (STARTUP_KEY);
+        journal = settings.get_boolean (JOURNAL_KEY);
         support = settings.get_int (SUPPORT_KEY);
         status = settings.get_int (STATUS_KEY);
         stats_monitor = settings.get_boolean (STATS_MONITOR_KEY);
@@ -819,7 +822,7 @@ const Logs = new Lang.Class({
         column = new Gtk.TreeViewColumn ({title: _("Time")});
         column.pack_start (render, false);
         column.add_attribute (render, "text", 1);
-        column.fixed_width = 140;
+        column.fixed_width = 128;
         column.resizable = true;
         column.sizing = Gtk.TreeViewColumnSizing.FIXED;
         column.sort_column_id = 1;
@@ -834,31 +837,51 @@ const Logs = new Lang.Class({
         column.sort_column_id = 2;
         this.view.append_column (column);
 
-        column = new Gtk.TreeViewColumn ({title: _("Request")});
+        column = new Gtk.TreeViewColumn ({title: _("Target")});
         column.pack_start (render, true);
         column.add_attribute (render, "text", 3);
-        column.fixed_width = 300;
+        column.fixed_width = 240;
         column.resizable = true;
         column.sizing = Gtk.TreeViewColumnSizing.FIXED;
         column.sort_column_id = 3;
         this.view.append_column (column);
 
-        column = new Gtk.TreeViewColumn ({title: _("Type")});
-        column.pack_start (render, false);
+        column = new Gtk.TreeViewColumn ({title: _("Request")});
+        column.pack_start (render, true);
         column.add_attribute (render, "text", 4);
-        column.fixed_width = 40;
+        column.fixed_width = 120;
         column.resizable = true;
         column.sizing = Gtk.TreeViewColumnSizing.FIXED;
         column.sort_column_id = 4;
         this.view.append_column (column);
 
+        column = new Gtk.TreeViewColumn ({title: _("Type")});
+        column.pack_start (render, false);
+        column.add_attribute (render, "text", 5);
+        column.fixed_width = 44;
+        column.resizable = true;
+        column.sizing = Gtk.TreeViewColumnSizing.FIXED;
+        column.sort_column_id = 5;
+        this.view.append_column (column);
+
+        column = new Gtk.TreeViewColumn ({title: _("Port")});
+        column.pack_start (render, false);
+        column.add_attribute (render, "text", 6);
+        column.fixed_width = 40;
+        column.resizable = true;
+        column.sizing = Gtk.TreeViewColumnSizing.FIXED;
+        column.sort_column_id = 6;
+        this.view.append_column (column);
+        column.visible = false;
+
         column = new Gtk.TreeViewColumn ({title:''});
         column.sizing = Gtk.TreeViewColumnSizing.AUTOSIZE;
         column.pack_start (render, false);
-        column.add_attribute (render, "text", 5);
+        column.add_attribute (render, "text", 7);
         this.view.append_column (column);
 
         this.view.set_model (this.store);
+        this.view.set_tooltip_column (4);
 
         this.box.add (this.view);
     },
@@ -877,13 +900,15 @@ const LogStore = new Lang.Class({
         this.parent ();
         this.set_column_types ([GObject.TYPE_INT,
             GObject.TYPE_STRING, GObject.TYPE_STRING,
-            GObject.TYPE_STRING, GObject.TYPE_STRING, GObject.TYPE_STRING]);
+            GObject.TYPE_STRING, GObject.TYPE_STRING,
+            GObject.TYPE_STRING, GObject.TYPE_INT,
+            GObject.TYPE_STRING]);
     },
 
     reload: function () {
         let list = this.parse_logs ();
         this.clear ();
-        list.forEach ( r => {this.set (this.append (), [0,1,2,3,4], r);});
+        list.forEach ( r => {this.set (this.append (), [0,1,2,3,4,5,6], r);});
     },
 
     parse_logs: function () {
@@ -895,33 +920,53 @@ const LogStore = new Lang.Class({
         //TODO WARN NO PERMISSIONS
         if (output) output.forEach (o => {
             let s = o.toString ();
-            let i = s.indexOf ("[obmin][info] Request (");
+            let i = s.indexOf ("(II) [obmin][server] Request (");
             if (i > -1) {
-                let n = 0, g = '', p = '', m = '';
+                let n = 0, g = '', r = '', m = '', p = 0, t = '', v = '';
                 let d = s.substring (0, 15);
-                i = s.indexOf ("[obmin][info] Request (");
+                i = s.indexOf ("(II) [obmin][server] Request (");
                 if (i == -1) return;
-                s = s.substring (i + 23);
+                s = s.substring (i + 30);
                 i = s.indexOf (")");
                 if ((i > -1) && (parseInt(s.substring (0, i)) >= 0))
                     n = parseInt(s.substring (0, i));
-                if (s.length < i + 7) return;
-                s = s.substring (i + 7);
+                s = s.substring (i + 2);
+                i = s.indexOf (" ");
+                if ((i > -1) && (parseInt(s.substring (0, i)) >= 0))
+                    p = parseInt(s.substring (0, i));
+                s = s.substring (i + 1);
                 i = s.indexOf (" ");
                 if (i == -1) return;
                 g = s.substring (0, i);
                 s = s.substring (i + 1);
                 i = s.indexOf (" ");
                 if (i == -1) return;
-                m = s.substring (0, i);
+                v = s.substring (0, i);
                 s = s.substring (i + 1);
-                i = s.indexOf (" HTTP");
+                i = s.indexOf (" ");
                 if (i == -1) return;
-                p = s.substring (0, i);
-                list.push ([n,d,g,p,m]);
+                m = s.substring (0, i);
+                r = s.substring (i + 1);
+                t = this.target (r);
+                list.push ([n, d, g, t, r, m, p]);
             }
         });
         return list;
+    },
+
+    target: function (request) {
+        if (!request) return '';
+        let t = '/', i;
+        i = request.lastIndexOf (t);
+        if (i == -1) return '';
+        if (i + 1 < request.length) {
+            return request.substring (i + 1);
+        } else {
+            t = request.substring (0, i);
+            if (t.lastIndexOf ('/') == -1) return '/';
+            t = request.substring (t.lastIndexOf ('/') + 1);
+        }
+        return t;
     }
 });
 
@@ -977,11 +1022,11 @@ function get_appdir () {
 }
 
 function debug (msg) {
-    if (DEBUGGING > 1) print ("[obmin][center] " + msg);
+    if (DEBUGGING > 1) Convenience.debug ("center", msg);
 }
 
 function error (msg) {
-    log ("[obmin][dash] (EE) " + msg);
+    Convenience.error ("center", msg);
 }
 
 let app = new ObminCenter ();
