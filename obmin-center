@@ -1116,14 +1116,14 @@ const LogRangeSelector = new Lang.Class ({
 
     _init: function () {
         this.parent ({orientation:Gtk.Orientation.HORIZONTAL, margin:8, spacing:8});
-        this.add (new Gtk.Label ({label: _("View range")}));
         this.level = new Gtk.ComboBoxText ();
         [_("Last modified"),_("24 Hours"),_("48 Hours"),_("Week"),
         _("Month"),_("Year"),_("All")].forEach (s => {
             this.level.append_text (s);
         });
         this.level.active = 0;
-        this.pack_end (this.level, false, false, 0);
+        this.pack_start (this.level, false, false, 0);
+        this.add (new Gtk.Label ({label: _("View range")}));
     }
 });
 

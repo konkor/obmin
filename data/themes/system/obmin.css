@@ -2,19 +2,20 @@
   font-size: 1.2em;
 }
 .hb-space {
-  background-color: @bg_color;
+  background-color: rgba(0,0,0,0);
 }
 .rlabel {
   font-size: 1.8em;
 }
-.hb, .hb * {
-  color: rgba(0,0,0,0);
-  background-color: @bg_color;
+.hb {
   text-shadow:none;
   margin:0;
   padding:0;
   box-shadow:none;
   border-bottom: 0;
+}
+.hb GtkLabel, .hb label {
+  background-color: rgba(0,0,0,0);
 }
 .titlebar {
   padding:0;
