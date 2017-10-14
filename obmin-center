@@ -104,6 +104,9 @@ const ObminCenter = new Lang.Class ({
                 this.space.visible = true;
             }
         }));
+        settings.connect ("changed::" + JOURNAL_KEY, Lang.bind (this, function() {
+            journal = settings.get_boolean (JOURNAL_KEY);
+        }));
     },
 
     _onActivate: function () {
@@ -806,6 +809,12 @@ const Logs = new Lang.Class({
     },
 
     _build: function () {
+        this.range = new LogRangeSelector ();
+        this.box.add (this.range);
+        this.range.level.connect ('changed', Lang.bind (this, (o)=>{
+            this.refresh (o.active);
+        }));
+
         this.view.headers_clickable = true;
         this.view.get_selection ().mode = Gtk.SelectionMode.MULTIPLE;
         let render = new Gtk.CellRendererText ();
@@ -886,11 +895,22 @@ const Logs = new Lang.Class({
         this.box.add (this.view);
     },
 
-    refresh: function () {
-        this.store.reload ();
+    refresh: function (log_range) {
+        this.range.visible = journal;
+        this.store.reload (log_range);
         this.loged = stats.access;
     }
 });
+
+const LogRange = {
+    LAST:0,
+    TODAY:1,
+    COUPLE:2,
+    WEEK:3,
+    MONTH:4,
+    YEAR:5,
+    ALL:6
+};
 
 const LogStore = new Lang.Class({
     Name: 'LogStore',
@@ -905,19 +925,79 @@ const LogStore = new Lang.Class({
             GObject.TYPE_STRING]);
     },
 
-    reload: function () {
-        let list = this.parse_logs ();
+    reload: function (log_range) {
+        let list = this.parse_logs (log_range);
         this.clear ();
         list.forEach ( r => {this.set (this.append (), [0,1,2,3,4,5,6], r);});
     },
 
-    parse_logs: function () {
+    parse_logs: function (log_range) {
+        if (journal) return this.local_logs (log_range);
+        else return this.system_logs ();
+    },
+
+    local_logs: function (log_range) {
+        let list = [];
+        var file, contents = [];
+        let logs = this.get_local_logs (log_range);
+
+        if (logs) logs.forEach (l => {
+            try {
+                file = Gio.File.new_for_path (l);
+                contents = file.load_contents (null)[1].toString().split('\n');
+                list = list.concat (this.parse_local (contents));
+            } catch (e) {
+                error (e.message);
+            }
+        });
+
+        return list;
+    },
+
+    parse_local: function (output) {
+        let list = [];
+        if (output) output.forEach (o => {
+            let s = o.toString ();
+            let i = s.indexOf ("(II) Request (");
+            if (i > 0) {
+                let n = 0, g = '', r = '', m = '', p = 0, t = '', v = '';
+                let d = s.substring (1, i - 1);
+                i = s.indexOf ("(II) Request (");
+                if (i == -1) return;
+                s = s.substring (i + 14);
+                i = s.indexOf (")");
+                if ((i > -1) && (parseInt(s.substring (0, i)) >= 0))
+                    n = parseInt(s.substring (0, i));
+                s = s.substring (i + 2);
+                i = s.indexOf (" ");
+                if ((i > -1) && (parseInt(s.substring (0, i)) >= 0))
+                    p = parseInt(s.substring (0, i));
+                s = s.substring (i + 1);
+                i = s.indexOf (" ");
+                if (i == -1) return;
+                g = s.substring (0, i);
+                s = s.substring (i + 1);
+                i = s.indexOf (" ");
+                if (i == -1) return;
+                v = s.substring (0, i);
+                s = s.substring (i + 1);
+                i = s.indexOf (" ");
+                if (i == -1) return;
+                m = s.substring (0, i);
+                r = s.substring (i + 1);
+                t = this.target (r);
+                list.push ([n, d, g, t, r, m, p]);
+            }
+        });
+        return list;
+    },
+
+    system_logs: function () {
         let list = [];
         let output = get_info_list ("journalctl");
         if (!output || output.length < 20) {
             output = get_info_list ("pkexec journalctl");
         }
-        //TODO WARN NO PERMISSIONS
         if (output) output.forEach (o => {
             let s = o.toString ();
             let i = s.indexOf ("(II) [obmin][server] Request (");
@@ -967,6 +1047,83 @@ const LogStore = new Lang.Class({
             t = request.substring (t.lastIndexOf ('/') + 1);
         }
         return t;
+    },
+
+    get_local_logs: function (log_range) {
+        let period = LogRange.LAST; //default is last modified
+        if (log_range) period = log_range;
+        return this.get_logs (period);
+    },
+
+    get_logs: function (period) {
+        let list = [], finfo, fname, last_date = 0, d;
+        let now = new Date(), fdate = new Date();
+        var log_path = GLib.get_user_data_dir () + "/obmin/";
+        let dir = Gio.File.new_for_path (log_path);
+        if (!dir.query_exists (null)) return list;
+        var e = dir.enumerate_children ("*", Gio.FileQueryInfoFlags.NONE, null);
+        while ((finfo = e.next_file (null)) != null) {
+            if (finfo.get_file_type () == Gio.FileType.DIRECTORY) continue;
+            fname = finfo.get_name ();
+            if (!fname.endsWith (".log") || (fname.indexOf ("server-") != 0)) continue;
+            if (period == LogRange.LAST) {
+                d = finfo.get_attribute_uint64 (Gio.FILE_ATTRIBUTE_TIME_MODIFIED);
+                if (d > last_date) {
+                    last_date = d;
+                    list = [];
+                    list.push (log_path + finfo.get_name ());
+                }
+            } else if (period == LogRange.TODAY) {
+                d = now.valueOf() - finfo.get_attribute_uint64 (Gio.FILE_ATTRIBUTE_TIME_MODIFIED) * 1000;
+                //fdate.setTime (0); fdate.setDate (2);
+                //debug ("%d < %d %s".format (d, fdate.valueOf(), fdate.toString()));
+                if (d < 86400000) {
+                    if (finfo.get_size () > 0) list.push (log_path + finfo.get_name ());
+                }
+            } else if (period == LogRange.COUPLE) {
+                d = now.valueOf() - finfo.get_attribute_uint64 (Gio.FILE_ATTRIBUTE_TIME_MODIFIED) * 1000;
+                if (d < 172800000) {
+                    if (finfo.get_size () > 0) list.push (log_path + finfo.get_name ());
+                }
+            } else if (period == LogRange.WEEK) {
+                d = now.valueOf() - finfo.get_attribute_uint64 (Gio.FILE_ATTRIBUTE_TIME_MODIFIED) * 1000;
+                if (d < 604800000) {
+                    if (finfo.get_size () > 0) list.push (log_path + finfo.get_name ());
+                }
+            } else if (period == LogRange.MONTH) {
+                d = now.valueOf() - finfo.get_attribute_uint64 (Gio.FILE_ATTRIBUTE_TIME_MODIFIED) * 1000;
+                //fdate.setTime (0); fdate.setDate (31);
+                if (d < 2592000000) {
+                    if (finfo.get_size () > 0) list.push (log_path + finfo.get_name ());
+                }
+            } else if (period == LogRange.YEAR) {
+                d = now.valueOf() - finfo.get_attribute_uint64 (Gio.FILE_ATTRIBUTE_TIME_MODIFIED) * 1000;
+                //fdate.setTime (0); fdate.setFullYear(1971, 0, 1);
+                if (d < 31536000000) {
+                    if (finfo.get_size () > 0) list.push (log_path + finfo.get_name ());
+                }
+            } else {
+                if (finfo.get_size () > 0) list.push (log_path + finfo.get_name ());
+            }
+        }
+        return list;
+    }
+});
+
+const LogRangeSelector = new Lang.Class ({
+    Name: 'LogRangeSelector',
+    Extends: Gtk.Box,
+
+    _init: function () {
+        this.parent ({orientation:Gtk.Orientation.HORIZONTAL, margin:8, spacing:8});
+        this.add (new Gtk.Label ({label: _("View range")}));
+        this.level = new Gtk.ComboBoxText ();
+        [_("Last modified"),_("24 Hours"),_("48 Hours"),_("Week"),
+        _("Month"),_("Year"),_("All")].forEach (s => {
+            this.level.append_text (s);
+        });
+        this.level.active = 0;
+        this.pack_end (this.level, false, false, 0);
     }
 });
 

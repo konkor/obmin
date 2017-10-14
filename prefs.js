@@ -79,6 +79,7 @@ var ObminWidget = new Lang.Class({
         hiddens = settings.get_boolean (HIDDENS_KEY);
         backups = settings.get_boolean (BACKUPS_KEY);
         monitor = settings.get_boolean (MONITOR_KEY);
+        journal = settings.get_boolean (JOURNAL_KEY);
         theme = settings.get_string (THEME_KEY);
         if (theme.length < 1) theme = "default";
         let srcs =  settings.get_string (SOURCES_KEY);
