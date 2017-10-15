@@ -334,20 +334,22 @@ const ObminServer = new Lang.Class({
         msg.request_headers.foreach ( (n, v) => {
             if (n.toLowerCase() == "referer") ref = GLib.uri_unescape_string (v, null);
         });
-        this.list_dir ({path: dir.get_path (), recursive: r}, true);
+        this.list_dir ({path: dir.get_path (), recursive: r});
         files.forEach (f => {
-            if (ext == "urls")
-                list += GLib.uri_escape_string (ref + f.name, ac, true) + "\n";
-            else if (ext == "pls") {
-                if (this.is_media (f.name)) {
-                    list += "File" + idx + "=" + GLib.uri_escape_string (ref + f.name, ac, false) + "\n";
-                    //list += "Title" + idx + "=" + f.name + "\n";
-                    idx++;
-                }
-            } else if (ext == "m3u") {
-                if (this.is_media (f.name)) {
-                    list += "#EXTINF:," + f.name + "\n";
-                    list += GLib.uri_escape_string (ref + f.name, ac, false) + "\n";
+            if (f.type != Gio.FileType.DIRECTORY) {
+                if (ext == "urls")
+                    list += GLib.uri_escape_string (ref + f.name, ac, true) + "\n";
+                else if (ext == "pls") {
+                    if (this.is_media (f.name)) {
+                        list += "File" + idx + "=" + GLib.uri_escape_string (ref + f.name, ac, false) + "\n";
+                        //list += "Title" + idx + "=" + f.name + "\n";
+                        idx++;
+                    }
+                } else if (ext == "m3u") {
+                    if (this.is_media (f.name)) {
+                        list += "#EXTINF:," + f.name + "\n";
+                        list += GLib.uri_escape_string (ref + f.name, ac, false) + "\n";
+                    }
                 }
             }
         });
@@ -369,11 +371,21 @@ const ObminServer = new Lang.Class({
 
     get_dir: function (server, msg, dir, r, path) {
         let self = server, slash, size, d = new Date(0), ds, link, i = 0;
-        if (dir) this.list_dir ({path: dir.get_path (), recursive: r});
+        files = [];
+        if (dir) files = this.list_dir ({path: dir.get_path (), recursive: r});
+        else sources.forEach (s => {
+            var fl = Gio.File.new_for_path (s.path), finfo;
+            if (fl.query_exists (null)) {
+                finfo = fl.query_info ("*", 0, null);
+                files.push (this.add_file (finfo, s.path));
+                if ((files.length > 0) && this.is_remote(finfo))
+                    files[files.length - 1].name = this.remote_name (finfo);
+            }
+        });
         let html_body = "<body><div class=\"path\"><a href=\"/\"><img src=\"/home.png\" class=\"home\">> </a>" +
                         this.get_path (path) + h_menu_btn + "</div>" + h_menu + "<div class=\"contents\">";
         files.forEach (f => {
-            link = dir?f.name:i.toString();
+            link = dir?f.name.toString():i.toString();
             if (f.type == 2) { slash = "/"; size = "Folder";}
             else {slash = ""; size = " " + GLib.format_size (f.size);}
             d.setTime (f.date*1000);
@@ -392,24 +404,14 @@ const ObminServer = new Lang.Class({
     _root_handler: function (server, msg) {
         if (mode > 0)
             if (this._send_content (server, msg, '/index.html', this.access_counter) || (mode == 2)) return '';
-        files = [];
-        sources.forEach (s => {
-            var fl = Gio.File.new_for_path (s.path), finfo;
-            if (fl.query_exists (null)) {
-                finfo = fl.query_info ("*", 0, null);
-                this.add_file (finfo, s.path);
-                if ((files.length > 0) && this.is_remote(finfo))
-                    files[files.length - 1].name = this.remote_name (finfo);
-            }
-        });
         return this.get_dir (server, msg, null, false, null);
     },
 
     list_dir: function (loc, list) {
         var finfo;
         var dir = Gio.File.new_for_path (loc.path);
-        files = [];
-        if (!dir.query_exists (null)) return;
+        let files = [];
+        if (!dir.query_exists (null)) return files;
         try {
             finfo = dir.query_info (ATTRIBUTES, 0, null);
             if (finfo.get_is_symlink ()) {
@@ -423,13 +425,13 @@ const ObminServer = new Lang.Class({
                         dir = Gio.File.new_for_path (loc.path);
                     }
                     finfo = dir.query_info (ATTRIBUTES, 0, null);
-                } else return;
+                } else return files;
             }
-            if (!this.is_remote (finfo) && !finfo.get_attribute_boolean (Gio.FILE_ATTRIBUTE_ACCESS_CAN_READ)) return;
-            if (!mounts && finfo.get_attribute_boolean (Gio.FILE_ATTRIBUTE_UNIX_IS_MOUNTPOINT)) return;
+            if (!this.is_remote (finfo) && !finfo.get_attribute_boolean (Gio.FILE_ATTRIBUTE_ACCESS_CAN_READ)) return files;
+            if (!mounts && finfo.get_attribute_boolean (Gio.FILE_ATTRIBUTE_UNIX_IS_MOUNTPOINT)) return files;
             if (finfo.get_file_type () == Gio.FileType.REGULAR) {
-                this.add_file (finfo, loc.path);
-                return;
+                files.push (this.add_file (finfo, loc.path));
+                return files;
             }
             var e = dir.enumerate_children (ATTRIBUTES, follow_links?Gio.FileQueryInfoFlags.NONE:Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS, null);
             while ((finfo = e.next_file (null)) != null) {
@@ -444,16 +446,16 @@ const ObminServer = new Lang.Class({
                 }
                 switch (finfo.get_file_type ()) {
                     case Gio.FileType.DIRECTORY:
-                        if (loc.recursive && !list) {
+                        if (loc.recursive) {
                             let l = {path: loc.path + "/" + finfo.get_name (), recursive: true};
-                            this.add_file (finfo, loc.path);
+                            files.push (this.add_file (finfo, loc.path));
                         }
                         break;
                     case Gio.FileType.REGULAR:
-                        this.add_file (finfo, loc.path);
+                        files.push (this.add_file (finfo, loc.path));
                         break;
                     default:
-                        print ("DEFAULT", finfo.get_name (), finfo.get_file_type (), Gio.FILE_TYPE_DIRECTORY, Gio.FILE_TYPE_REGULAR);
+                        info ("DEFAULT %s filetype %d".format (finfo.get_name (), finfo.get_file_type ()));
                         break;
                 }
             }
@@ -461,17 +463,18 @@ const ObminServer = new Lang.Class({
             error (err);
         }
         files.sort (sorting);
+        return files;
     },
 
     add_file: function (finfo, path) {
         debug ("add_file:" + finfo.get_name ());
         //debug ("unix_mode:"+finfo.get_attribute_uint32 (Gio.FILE_ATTRIBUTE_UNIX_MODE));
-        files.push ({path: path,
+        return {path: path,
             name: finfo.get_name (),
             type: finfo.get_file_type (),
             mime: finfo.get_content_type (),
             size: finfo.get_size (),
-            date: finfo.get_attribute_uint64 (Gio.FILE_ATTRIBUTE_TIME_MODIFIED)});
+            date: finfo.get_attribute_uint64 (Gio.FILE_ATTRIBUTE_TIME_MODIFIED)};
     },
 
     is_remote: function (finfo) {
