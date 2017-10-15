@@ -20,7 +20,7 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-const VERSION = 10;
+const VERSION = 11;
 
 const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
