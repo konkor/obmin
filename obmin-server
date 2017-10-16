@@ -31,6 +31,7 @@ const APPDIR = get_appdir ();
 //debug ("APPDIR:" + APPDIR);
 imports.searchPath.unshift (APPDIR);
 const Convenience = imports.convenience;
+const PlugsBase = imports.plugins.base;
 String.prototype.format = Convenience.Format.format;
 
 const ATTRIBUTES = "standard," +
@@ -65,31 +66,10 @@ const DEBUG_KEY = 'debug';
 const SETTINGS_ID = 'org.gnome.shell.extensions.obmin';
 const LOG_DOMAIN = 'server';
 
-const MEDIA = [
-"3g2",  "3gp",  "3gp2", "3gpp", "aac",  "ac3",  "aif",  "aifc",
-"aiff", "al",   "alaw", "ape",  "asf",  "asx",  "au",   "avi",
-"cda",  "cdr",  "divx", "dv",   "flac", "flv",  "gvi",  "gvp",
-"m1v",  "m21",  "m2p",  "m2v",  "m4a",  "m4b",  "m4e",  "m4p",
-"m4u",  "m4v",  "mp+",  "mid",  "midi", "mjp",  "mkv",  "moov",
-"mov",  "movie","mp1",  "mp2",  "mp21", "mp3",  "mp4",  "mpa",
-"mpc",  "mpe",  "mpeg", "mpg",  "mpga", "mpp",  "mpu",  "mpv",
-"mpv2", "oga",  "ogg",  "ogv",  "ogm",  "omf",  "qt",   "ra",
-"ram",  "raw",  "rm",   "rmvb", "rts",  "smil", "swf",  "tivo",
-"u",    "vfw",  "vob",  "wav",  "wave", "wax",  "wm",   "wma",
-"wmd",  "wmv",  "wmx",  "wv",   "wvc",  "wvx",  "yuv",  "f4v",
-"f4a",  "f4b",  "669",  "it",   "med",  "mod",  "mol",  "mtm",
-"nst",  "s3m",  "stm",  "ult",  "wow",  "xm",   "xnm",  "spx",
-"ts",   "webm", "spc",  "mka",  "opus", "amr"
-];
-
 const html_head = "<head><meta charset=\"utf-8\"><title>Obmin - Simple File Sharing</title><meta name=\"viewport\" content=\"width=device-width\"><link href=\"/style.css\" rel=\"stylesheet\" type=\"text/css\"></head>";
 const h_menu_btn = "<a class=\"nmenu-button\" href=\"javascript:void(0);\" onclick=\"toggle()\" title=\"Toggle Menu\">&#x2630;</a>";
-let h_menu = "<div id=\"navmenu\" class=\"nmenu hide\">" +
-    "<a href=\"?list=urls\" class=\"nmenu-item\" onclick=\"toggle()\" title=\"Generate URLs File List\">Filelist URLs...</a>" +
-    "<a href=\"?list=pls\" class=\"nmenu-item\" onclick=\"toggle()\" title=\"Generate PLS Playlist\">Playlist PLS ...</a>" +
-    "<a href=\"?list=m3u\" class=\"nmenu-item\" onclick=\"toggle()\" title=\"Generate M3U Playlist\">Playlist M3U...</a>" +
-    "<a href=\"https://github.com/konkor/obmin/wiki\" class=\"nmenu-item right\" onclick=\"toggle()\" title=\"About Obmin\">About ...</a>" +
-    "</div>";
+var html_menu = "<div id=\"navmenu\" class=\"nmenu hide\">";
+const h_menu = "<a href=\"https://github.com/konkor/obmin/wiki\" class=\"nmenu-item right\" onclick=\"toggle()\" title=\"About Obmin\">About ...</a>";
 const h_menu1 = "<a href=\"https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=WVAS5RXRMYVC4\" class=\"nmenu-item right\" onclick=\"toggle()\" title=\"Make donation to the project\">Donate ...</a>";
 const h_js = "<script>function toggle(){var x=document.getElementById(\"navmenu\");if(x.className.indexOf(\"show\")==-1){x.className += \" show\";}else{x.className=x.className.replace(\" show\",\"\");}}</script>";
 
@@ -106,12 +86,21 @@ let contest = true;
 let mode = 0;
 let port = 8088;
 var DEBUG = 1;
+var S_TIMEOUT = 50;
+var P_TIMEOUT = 500;
 
 let server = null;
 let files = [];
 let sources = [];
 let excluded = [];
-var counter = {};
+var counter = {access:0, ready:0, upload:0};
+
+//TODO PLUG MANAGER
+let enabled_plugs = [
+"f7d92e608a582d0fe0313bb959e3d51f"
+];
+var plugins = null;
+var plug_events = null;
 
 const ObminServer = new Lang.Class({
     Name: 'ObminServer',
@@ -119,10 +108,8 @@ const ObminServer = new Lang.Class({
 
     _init: function () {
         this.parent ();
-        if (!counter.access)
-            counter = {access:0, ready:0, upload:0};
         settings.set_string (STATS_DATA_KEY, JSON.stringify (counter));
-        if (support < 2) h_menu = h_menu.replace ("</div>", h_menu1 + "</div>");
+        this.plugs_init ();
         this.add_handler (null, Lang.bind (this, this._default_handler));
         try {
             this.listen_all (port, 0);
@@ -130,10 +117,40 @@ const ObminServer = new Lang.Class({
         } catch (err) {
             throw err;
         }
-        /*Mainloop.timeout_add (5000, Lang.bind (this, function () {
-            debug (counter.access + "(" + counter.ready + ") " + GLib.format_size (counter.upload));
-            return true;
-        }));*/
+    },
+
+    plugs_init: function () {
+        plugins = new Map ();
+        plug_events = new Map ();
+        let finfo;
+        let dir = Gio.File.new_for_path (APPDIR + "/plugins");
+        if (!dir.query_exists (null)) return;
+        var e = dir.enumerate_children ("standard::*", Gio.FileQueryInfoFlags.NONE, null);
+        while ((finfo = e.next_file (null)) != null) {
+            if (finfo.get_file_type () != Gio.FileType.DIRECTORY) continue;
+            if (!Gio.File.new_for_path(dir.get_path() + "/" + finfo.get_name() + "/plugin.js").query_exists (null))
+                continue;
+            try {
+                let P = imports.plugins[finfo.get_name ()].plugin;
+                if (P.hasOwnProperty("METADATA")) {
+                    if (enabled_plugs.indexOf (P.METADATA.uuid) == -1) continue;
+                    let plug = new P.Plugin (this);
+                    plugins.set (plug.puid, plug);
+                }
+            } catch (e) {
+                error (e.message);
+            }
+        }
+        for (let p of plugins.values()) debug ("plugin: " + p.name);
+        this.init_html_menu ();
+    },
+
+    init_html_menu: function () {
+        for (let p of plugins.values()) if (p.type == PlugsBase.PlugType.MENU_ITEM)
+                html_menu += p.menu_item ("nmenu-item right");
+        html_menu += h_menu;
+        if (support < 2) html_menu += h_menu1;
+        html_menu += "</div>";
     },
 
     _default_handler: function (server, msg, path, query, client) {
@@ -145,6 +162,27 @@ const ObminServer = new Lang.Class({
         msg.request_headers.foreach ( (n, v) => {
             debug (n + ": " + v);
         });
+        if (query && query.plug && plugins.has (query.plug)) {
+            debug ("plug response " + plugins.get (query.plug).puid);
+            if (plug_events.has (query.plug) && (plug_events.get (query.plug) != 0)) {
+                Mainloop.source_remove (plug_events.get (query.plug));
+                plug_events.set (query.plug, 0);
+            }
+            plug_events.set (query.plug, Mainloop.timeout_add (P_TIMEOUT, Lang.bind (this, function () {
+                plug_events.set (query.plug, 0);
+                if (!plugins.get (query.plug).response (self, msg, path, query, client, num)) {
+                    debug ("plugin not responding: " + query.plug);
+                    this.not_found (server, msg);
+                }
+                counter.ready++;
+                counter.upload += msg.response_body.length;
+                this.update_stats ();
+                return false;
+            })));
+            self.pause_message (msg);
+            this.update_stats ();
+            return;
+        }
         if (msg.method == "POST") {
             counter.ready++;
             this.update_stats ();
@@ -152,7 +190,7 @@ const ObminServer = new Lang.Class({
         }
         if (msg.request_body.length > 0) debug (msg.request_body);
         debug ("Default handler start (" + counter.access + ")");
-        Mainloop.timeout_add (50, Lang.bind (this, function () {
+        Mainloop.timeout_add (S_TIMEOUT, Lang.bind (this, function () {
             if (path == '/') {
                 msg.response_headers.append ("Server", "Obmin");
                 msg.set_response ("text/html", Soup.MemoryUse.COPY, this._root_handler (server, msg));
@@ -160,7 +198,7 @@ const ObminServer = new Lang.Class({
                 self.unpause_message (msg);
                 counter.ready++;
                 this.update_stats ();
-            } else this._send_content (self, msg, path, num, query);
+            } else this._send_content (self, msg, path, query, client, num);
 
             return false;
         }));
@@ -168,7 +206,7 @@ const ObminServer = new Lang.Class({
         this.update_stats ();
     },
 
-    _send_content: function (server, msg, path, num, query) {
+    _send_content: function (server, msg, path, query, client, num) {
         let self = server;
         let file, r, finfo;
         [file, r] = this.get_file (path);
@@ -177,18 +215,10 @@ const ObminServer = new Lang.Class({
             finfo = file.query_info (ATTRIBUTES, 0, null);
             if (finfo.get_file_type () == 2) {
                 if (mode > 0)
-                    if (this._send_content (self, msg, path + 'index.html', num, query) || (mode == 2)) {
-                        return true;
-                    }
-                if (query && query.list) {
-                    if (query.list == "urls") this.get_list (self, msg, file, r, path, "urls");
-                    else if (query.list == "pls") this.get_list (self, msg, file, r, path, "pls");
-                    else if (query.list == "m3u") this.get_list (self, msg, file, r, path, "m3u");
-                } else {
-                    msg.response_headers.append ("Server", "Obmin");
-                    msg.set_response ("text/html", Soup.MemoryUse.COPY, this.get_dir (self, msg, file, r, path));
-                    msg.set_status (200);
-                }
+                    if (this._send_content (self, msg, path + 'index.html', num, query) || (mode == 2)) return true;
+                msg.response_headers.append ("Server", "Obmin");
+                msg.set_response ("text/html", Soup.MemoryUse.COPY, this.get_dir (self, msg, file, r, path));
+                msg.set_status (200);
                 self.unpause_message (msg);
             } else {
                 if (!this.is_remote (finfo) && !finfo.get_attribute_boolean (Gio.FILE_ATTRIBUTE_ACCESS_CAN_READ)) {
@@ -328,47 +358,6 @@ const ObminServer = new Lang.Class({
         return res;
     },
 
-    get_list: function (server, msg, dir, r, path, ext) {
-        let list = "", ref = "", idx = 1, ac = "/:_-()"; //ac = "/:_-();@&=+$";
-        debug ("list: " + dir.get_path ());
-        msg.request_headers.foreach ( (n, v) => {
-            if (n.toLowerCase() == "referer") ref = GLib.uri_unescape_string (v, null);
-        });
-        this.list_dir ({path: dir.get_path (), recursive: r});
-        files.forEach (f => {
-            if (f.type != Gio.FileType.DIRECTORY) {
-                if (ext == "urls")
-                    list += GLib.uri_escape_string (ref + f.name, ac, true) + "\n";
-                else if (ext == "pls") {
-                    if (this.is_media (f.name)) {
-                        list += "File" + idx + "=" + GLib.uri_escape_string (ref + f.name, ac, false) + "\n";
-                        //list += "Title" + idx + "=" + f.name + "\n";
-                        idx++;
-                    }
-                } else if (ext == "m3u") {
-                    if (this.is_media (f.name)) {
-                        list += "#EXTINF:," + f.name + "\n";
-                        list += GLib.uri_escape_string (ref + f.name, ac, false) + "\n";
-                    }
-                }
-            }
-        });
-        if (ext == "pls") {
-            msg.response_headers.set_content_type ("audio/x-scpls", null);
-            list = "[playlist]\nNumberOfEntries=" + (idx -1) + "\n" + list;
-        } else if (ext == "m3u") msg.response_headers.set_content_type ("audio/x-mpegurl", null);
-        msg.response_headers.append ("Server", "Obmin");
-        msg.response_headers.append ("Content-Disposition", "attachment; filename=\"" + dir.get_basename () + "." + ext + "\";");
-        msg.set_response ("text/plain", Soup.MemoryUse.COPY, list);
-        msg.set_status (200);
-    },
-
-    is_media: function (name) {
-        let f = false;
-        MEDIA.forEach ((e)=>{if (name.endsWith ("." + e)) f = true;});
-        return f;
-    },
-
     get_dir: function (server, msg, dir, r, path) {
         let self = server, slash, size, d = new Date(0), ds, link, i = 0;
         files = [];
@@ -383,7 +372,7 @@ const ObminServer = new Lang.Class({
             }
         });
         let html_body = "<body><div class=\"path\"><a href=\"/\"><img src=\"/home.png\" class=\"home\">> </a>" +
-                        this.get_path (path) + h_menu_btn + "</div>" + h_menu + "<div class=\"contents\">";
+                        this.get_path (path) + h_menu_btn + "</div>" + html_menu + "<div class=\"contents\">";
         files.forEach (f => {
             link = dir?f.name.toString():i.toString();
             if (f.type == 2) { slash = "/"; size = "Folder";}
@@ -407,10 +396,11 @@ const ObminServer = new Lang.Class({
         return this.get_dir (server, msg, null, false, null);
     },
 
-    list_dir: function (loc, list) {
+    list_dir: function (loc, recursive) {
         var finfo;
         var dir = Gio.File.new_for_path (loc.path);
         let files = [];
+        //debug ("path: %s <-> %s".format (loc.path, dir.get_path()));
         if (!dir.query_exists (null)) return files;
         try {
             finfo = dir.query_info (ATTRIBUTES, 0, null);
@@ -447,8 +437,9 @@ const ObminServer = new Lang.Class({
                 switch (finfo.get_file_type ()) {
                     case Gio.FileType.DIRECTORY:
                         if (loc.recursive) {
-                            let l = {path: loc.path + "/" + finfo.get_name (), recursive: true};
-                            files.push (this.add_file (finfo, loc.path));
+                            let l = {path: dir.get_path() + "/" + finfo.get_name (), recursive: true};
+                            files.push (this.add_file (finfo, dir.get_path()));
+                            if (recursive) files = files.concat (this.list_dir (l,true));
                         }
                         break;
                     case Gio.FileType.REGULAR:
@@ -462,12 +453,12 @@ const ObminServer = new Lang.Class({
         } catch (err) {
             error (err);
         }
-        files.sort (sorting);
+        if (!recursive) files.sort (sorting);
         return files;
     },
 
     add_file: function (finfo, path) {
-        debug ("add_file:" + finfo.get_name ());
+        //debug ("add_file:" + finfo.get_name ());
         //debug ("unix_mode:"+finfo.get_attribute_uint32 (Gio.FILE_ATTRIBUTE_UNIX_MODE));
         return {path: path,
             name: finfo.get_name (),
