@@ -27,8 +27,8 @@ const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
 const Soup = imports.gi.Soup;
 const Gettext = imports.gettext;
-const Format = imports.format;
 
+var Format = imports.format;
 String.prototype.format = Format.format;
 
 function initTranslations (domain) {

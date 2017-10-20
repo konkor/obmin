@@ -24,7 +24,7 @@ const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
 const Soup = imports.gi.Soup;
 
-const FileStream = new Lang.Class({
+var FileStream = new Lang.Class({
     Name: 'FileStream',
     _init: function (server, message, file, finfo, count) {
         this.BUFFER = 65536;
@@ -164,7 +164,7 @@ const FileStream = new Lang.Class({
     }
 });
 
-const PipeStream = new Lang.Class({
+var PipeStream = new Lang.Class({
     Name: 'PipeStream',
     _init: function (server, message, args, name, mime, count) {
         //debug (args);

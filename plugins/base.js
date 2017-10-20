@@ -26,7 +26,7 @@ const GObject = imports.gi.GObject;
 // 0-error,1-info,2-debug
 var DEBUG_LVL = 1;
 
-const PlugType = {
+var PlugType = {
 UNDEFINED: 0,
 MENU_ITEM: 1,
 PROVIDER: 1 << 1
@@ -43,7 +43,7 @@ PROVIDER: 1 << 1
     type: Base.PlugType.MENU_ITEM
 };*/
 
-const Plugin = new Lang.Class ({
+var Plugin = new Lang.Class ({
     Name: 'BasePlugin',
     Extends: GObject.Object,
 
