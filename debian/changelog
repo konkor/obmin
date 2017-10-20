@@ -1,8 +1,11 @@
 obmin (11.0-1) UNRELEASED; urgency=medium
 
-  * Next development version
+  * Moduled server architecture (extension API)
+  * Filelist extension has recursion
+  * New extension for making archives from content folders
+  * Various minor fixes and improvements
 
- -- Kostiantyn K <kapa76@gmail.com>  Sat, 14 Oct 2017 22:18:00 +0300
+ -- Kostiantyn K <kapa76@gmail.com>  Fri, 20 Oct 2017 14:45:00 +0300
 
 obmin (10.0-1) UNRELEASED; urgency=medium
 
