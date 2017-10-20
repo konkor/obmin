@@ -22,6 +22,8 @@ AC_PATH_PROG([DESKTOP_FILE_VALIDATE], [desktop-file-validate], [/bin/true])
 
 AC_OUTPUT([
 Makefile
+common/Makefile
+plugins/Makefile
 man/Makefile
 data/Makefile
 data/icons/Makefile
