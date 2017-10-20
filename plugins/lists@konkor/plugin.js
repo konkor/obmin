@@ -28,7 +28,7 @@ const APPDIR = get_appdir ();
 imports.searchPath.unshift (APPDIR);
 const Base = imports.plugins.base;
 
-const MEDIA = [
+var MEDIA = [
 "3g2",  "3gp",  "3gp2", "3gpp", "aac",  "ac3",  "aif",  "aifc",
 "aiff", "al",   "alaw", "ape",  "asf",  "asx",  "au",   "avi",
 "cda",  "cdr",  "divx", "dv",   "flac", "flv",  "gvi",  "gvp",
@@ -67,7 +67,7 @@ var LISTS = [
 {query:"m3u&recursive=1", title: "Get playlist for the folder and all subdirs", label: "M3U+"}
 ];
 
-const Plugin = new Lang.Class ({
+var Plugin = new Lang.Class ({
     Name: 'ListsPlugin',
     Extends: Base.Plugin,
 

@@ -52,7 +52,7 @@ var LISTS = [
 {query:"xz", title: "Compress Folder With XZ", label: "XZ+"},
 ];
 
-const Plugin = new Lang.Class ({
+var Plugin = new Lang.Class ({
     Name: 'GzipPlugin',
     Extends: Base.Plugin,
 
