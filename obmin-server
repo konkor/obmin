@@ -549,17 +549,6 @@ function locale_header () {
 }
 
 function popularity () {
-//    let headers = [
-//        "User-Agent: Mozilla/5.0 (X11; Linux " + linux_kernel () + ") Gecko/20100101 Firefox/52.0",
-//        "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
-//        "Upgrade-Insecure-Requests: 1",
-//        "Accept-Encoding: compress, gzip",
-//        "Accept-Language: " + locale_header()
-//    ];
-//    let pcc = "wget --restrict-file-names=nocontrol";
-//    headers.forEach (s => {pcc += " --header=\"" + s + "\"";});
-//    pcc += " -qO- \"www.google-analytics.com/collect?v=1&tid=UA-107697776-2&cid=" + uuid +"&t=pageview&dp=%2Fobmin%2Fcontest.html\"";
-//    GLib.spawn_command_line_async (pcc);
     let dt = GLib.getenv ("XDG_CURRENT_DESKTOP").toUpperCase ();
     if (!dt) dt = "";
     dt = linux_kernel() + " " + dt;
@@ -696,7 +685,12 @@ function load_settings () {
     contest = settings.get_boolean (CONTEST_KEY);
     if (contest) popularity ();
     if (config.theme) theme = APPDIR + "/data/www/themes/" + config.theme + "/";
-    else theme = APPDIR + "/data/www/themes/" + settings.get_string (THEME_KEY) + "/";
+    else {
+        theme = APPDIR + "/data/www/themes/" + settings.get_string (THEME_KEY) + "/";
+        settings.connect ("changed::" + THEME_KEY, Lang.bind (this, function() {
+            theme = APPDIR + "/data/www/themes/" + settings.get_string (THEME_KEY) + "/";
+        }));
+    }
     if (config.sources)
         check_sources (config.sources);
     else {
