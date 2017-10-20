@@ -335,7 +335,8 @@ const PublicItem = new Lang.Class ({
     Extends: InfoMenuItem,
 
     _init: function () {
-        this.parent (_("Public IP"), this.ip, true, 'obmin-ip-item', 'obmin-ip-label');
+        this.parent (_("Public IP"), "", true, 'obmin-ip-item', 'obmin-ip-label');
+        this._ip = "";
     },
 
     activate: function (event) {
@@ -344,22 +345,15 @@ const PublicItem = new Lang.Class ({
         this.emit ('activate', event);
     },
 
-    get ip () {
-        let l = "";
-        this.curl = GLib.find_program_in_path ('wget');
-        if (this.curl) {
-            l = get_info_string ("wget -qO- http://ipecho.net/plain");
-        } else {
-            this.curl = GLib.find_program_in_path ('curl');
-            if (this.curl) {
-                l = get_info_string ("curl http://ipecho.net/plain");
-            }
-        }
-        return l;
-    },
-
     update: function () {
-        this.set_text (this.ip);
+        Convenience.fetch ("http://ipecho.net/plain", null, null, Lang.bind (this, (text, s) => {
+            if ((s == 200) && text) {
+                this._ip = text.split("\n")[0];
+                if (!this._ip || this._ip.length < 7) this._ip = "";
+            } else this._ip = "";
+            this.set_text (this._ip);
+            return false;
+        }));
     }
 });
 

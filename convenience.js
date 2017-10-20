@@ -11,7 +11,7 @@
  * Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * Filefinder is distributed in the hope that it will be useful, but
+ * Obmin is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
@@ -22,9 +22,10 @@
 
 const API_VERSION = 1;
 
+const Lang = imports.lang;
 const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
-const Lang = imports.lang;
+const Soup = imports.gi.Soup;
 const Gettext = imports.gettext;
 const Format = imports.format;
 
@@ -149,3 +150,20 @@ const Logger = new Lang.Class({
             d.getHours(),d.getMinutes(),d.getSeconds(),d.getMilliseconds());
     }
 });
+
+function fetch (url, agent, headers, callback) {
+    callback = callback || null;
+    agent = agent || "Obmin ver." + API_VERSION;
+
+    let session = new Soup.SessionAsync({ user_agent: agent });
+    Soup.Session.prototype.add_feature.call (session, new Soup.ProxyResolverDefault());
+    let request = Soup.Message.new ("GET", url);
+    if (headers) headers.forEach (h=>{
+        request.request_headers.append (h[0], h[1]);
+    });
+    session.queue_message (request, (source, message) => {
+        if (callback)
+            callback (message.response_body.data?message.response_body.data.toString():"", message.status_code);
+    });
+}
+

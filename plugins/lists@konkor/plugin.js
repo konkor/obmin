@@ -59,12 +59,12 @@ var METADATA = {
 };
 
 var LISTS = [
-{query:"urls", title: "Generate URLS File List", label: "URLS"},
-{query:"pls", title: "Generate PLS Playlist", label: "PLS"},
-{query:"m3u", title: "Generate M3U Playlist", label: "M3U"},
-{query:"urls&recursive=1", title: "Generate Recursive URLS File List", label: "URLS+"},
-{query:"pls&recursive=1", title: "Generate Recursive PLS Playlist", label: "PLS+"},
-{query:"m3u&recursive=1", title: "Generate Recursive M3U Playlist", label: "M3U+"}
+{query:"urls", title: "Get URLS file list", label: "URLS"},
+{query:"pls", title: "Get PLS playlist", label: "PLS"},
+{query:"m3u", title: "Get M3U playlist", label: "M3U"},
+{query:"urls&recursive=1", title: "Get file list for the folder and all subdirs", label: "URLS+"},
+{query:"pls&recursive=1", title: "Get playlist for the folder and all subdirs", label: "PLS+"},
+{query:"m3u&recursive=1", title: "Get playlist for the folder and all subdirs", label: "M3U+"}
 ];
 
 const Plugin = new Lang.Class ({

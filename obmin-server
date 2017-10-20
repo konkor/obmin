@@ -1,6 +1,6 @@
 #!/usr/bin/gjs
 /*
- * Obmin - Simple File Sharing Server For GNOME Desktop
+ * Obmin - Simple File Sharing Server
  *
  * Copyright (C) 2017 Kostiantyn Korienkov <kapa76@gmail.com>
  *
@@ -11,7 +11,7 @@
  * Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * Filefinder is distributed in the hope that it will be useful, but
+ * Obmin is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
@@ -31,7 +31,9 @@ const APPDIR = get_appdir ();
 //debug ("APPDIR:" + APPDIR);
 imports.searchPath.unshift (APPDIR);
 const Convenience = imports.convenience;
+const Stream = imports.common.stream;
 const PlugsBase = imports.plugins.base;
+
 String.prototype.format = Convenience.Format.format;
 
 const ATTRIBUTES = "standard," +
@@ -85,7 +87,7 @@ let stats_monitor = true;
 let contest = true;
 let mode = 0;
 let port = 8088;
-var DEBUG = 1;
+var DEBUG_LVL = 1;
 var S_TIMEOUT = 50;
 var P_TIMEOUT = 500;
 
@@ -97,7 +99,8 @@ var counter = {access:0, ready:0, upload:0};
 
 //TODO PLUG MANAGER
 let enabled_plugs = [
-"f7d92e608a582d0fe0313bb959e3d51f"
+"f7d92e608a582d0fe0313bb959e3d51f",
+"bd269ad77d725c4e8fa19ecd59e5dd68"
 ];
 var plugins = null;
 var plug_events = null;
@@ -147,7 +150,7 @@ const ObminServer = new Lang.Class({
 
     init_html_menu: function () {
         for (let p of plugins.values()) if (p.type == PlugsBase.PlugType.MENU_ITEM)
-                html_menu += p.menu_item ("nmenu-item right");
+                html_menu += p.menu_item ("nmenu-item");
         html_menu += h_menu;
         if (support < 2) html_menu += h_menu1;
         html_menu += "</div>";
@@ -242,11 +245,11 @@ const ObminServer = new Lang.Class({
                     }
                     self.unpause_message (msg);
                 } else {
-                    let st = new ContentStream (self, msg, file, finfo, num);
+                    let st = new Stream.FileStream (self, msg, file, finfo, num);
                     msg.connect ("finished", (o)=> {
                         debug ("st finished" + st);
                         counter.ready++;
-                        this.update_stats ();
+                        this.upload (st.uploaded);
                         st = null;
                         System.gc();
                     });
@@ -480,153 +483,34 @@ const ObminServer = new Lang.Class({
         let fs = finfo.get_attribute_string (Gio.FILE_ATTRIBUTE_ID_FILESYSTEM);
         if (fs.indexOf("host=") > -1) return fs.substring (fs.indexOf("host=") + 5);
         return fs;
-    }
-});
-
-const ContentStream = new Lang.Class({
-    Name: 'ContentStream',
-    _init: function (server, message, file, finfo, count) {
-        this.BUFFER = 65536;
-        this.server = server;
-        this.msg = message;
-        this.version = message.get_http_version ();
-        this.msg.connect ("wrote-chunk", Lang.bind (this, this.wrote_chunk));
-        this.msg.connect ("finished", ()=>{
-            debug ("ContentStream " + this.num + " finished");
-            this.done = true;
-            if (this.read_event != 0) {
-                Mainloop.source_remove (this.read_event);
-                this.read_event = 0;
-            }
-            try{if (this.stream) this.stream.close_async (100, null, null);
-            }catch (err) {
-            error ("Error close stream " + err);
-            }
-            this.b = [];
-            try{this.msg.set_status (200);
-            }catch (err) {
-            error ("Error set status " + err);
-            }
-            try{
-            this.msg.response_body.complete ();
-            }catch (err) {
-            error ("Error complete " + err);
-            }
-            /*try{this.msg.response_body.free();
-            }catch (err) {
-            error ("Error free body " + err);
-            }*/
-            try{System.gc ();
-            }catch (err) {
-            error ("Error gc " + err);
-            }
-        });
-        this.file = file;
-        this.mime = finfo.get_content_type ();
-        this.size = finfo.get_size ();
-        this.range = this.size - 1;
-        this.date = new Date (finfo.get_attribute_uint64 (Gio.FILE_ATTRIBUTE_TIME_MODIFIED)*1000).toUTCString();
-        this.num = count.toString();
-        this.stream = null;
-        this.offset = 0;
-        this.wrotes = 0;
-        this.reads = 0;
-        this.read_event = 0;
-        this.done = false;
-        this.msg.request_headers.foreach ( (n, v) => {
-            if (n.indexOf ("Range") > -1)
-                if (v.indexOf ("bytes=") > -1) {
-                    let s = v.slice (6).split("-");
-                    if (s[0]) this.offset = parseInt(s[0]);
-                    if (s[1]) this.range = parseInt(s[1]);
-                }
-        });
-        this.range_type = (this.range - this.offset +1) < this.size;
-        debug ("Request(" + this.num + ") offset " + this.offset + ":" + this.range + " from " + this.size);
-        if (this.offset >= this.size) {
-            this.done = true;
-            this.msg.set_status (200);
-            this.msg.response_body.complete ();
-            this.server.unpause_message (this.msg);
-        }
-        debug ("Start steamimg");
-        this.file.read_async (GLib.PRIORITY_DEFAULT, null, Lang.bind (this, this.opened));
     },
 
-    wrote_chunk: function (sender, msg) {
-        this.wrotes++;
+    check_backup: function () {
+        return check_backup;
     },
 
-    opened: function (sender, result) {
-        try {
-            this.msg.response_headers.set_encoding (Soup.Encoding.CHUNKED);
-            this.msg.response_headers.set_content_type (this.mime, null);
-            this.msg.response_headers.set_content_length (this.range - this.offset + 1);
-            this.msg.response_headers.append ("Last-Modified", this.date);
-            this.msg.response_headers.append ("Accept-Ranges", "bytes");
-            this.msg.response_headers.append ("Server", "Obmin");
-            this.msg.response_headers.append ("Content-Disposition", "filename=\"" + this.file.get_basename () + "\"");
-            this.msg.response_headers.set_content_range (this.offset,this.range,this.size);
-            this.msg.response_body.set_accumulate (false);
-            this.stream = this.file.read_finish (result);
-            if ((this.version == 1) && this.range_type) this.msg.set_status (206);
-            else this.msg.set_status (200);
-            this.read_more (this.offset > 0);
-        } catch (err) {
-            error (err);
-            this.msg.set_status (500);
-            this.server.unpause_message (this.msg);
-        }
+    check_hidden: function () {
+        return check_hidden;
     },
 
-    read_more: function (seek) {
-        if (this.read_event != 0) {
-            Mainloop.source_remove (this.read_event);
-            this.read_event = 0;
+    ready: function (val) {
+        if (val) {
+            counter.ready += val;
+            if (val > 0) this.update_stats ();
         }
-        if (this.done) return;
-        if (seek) this.stream.seek (this.offset, GLib.SeekType.SET, null);
-        if ((this.reads - this.wrotes) > 32) {
-            this.read_event = Mainloop.timeout_add (250, Lang.bind (this, this.read_more));
-            return;
-        }
-        if ((this.range - this.offset + 1) < this.BUFFER) this.BUFFER = this.range - this.offset + 1;
-        this.stream.read_bytes_async (this.BUFFER, GLib.PRIORITY_DEFAULT, null, Lang.bind (this, this.read_done));
-        this.reads++;
+        System.gc();
     },
 
-    read_done: function (sender, result) {
-        try {
-            this.b = this.stream.read_bytes_finish (result);
-            if (this.done) {
-                debug ("Stream " + this.num + " done");
-                this.b = [];
-                this.msg.response_body.complete ();
-                this.stream.close_async (100, null, null);
-                counter.upload += this.b.get_size ();
-                return;
-            }
-            if (this.b.get_size() == 0) {
-                debug (this.b + " " + this.b.get_size());
-                this.done = true;
-                this.msg.response_body.complete ();
-                this.server.unpause_message (this.msg);
-                this.stream.close_async (100, null, null);
-            } else {
-                this.offset += this.b.get_size ();
-                this.msg.response_body.append_buffer (new Soup.Buffer (this.b.get_data()));
-                this.server.unpause_message (this.msg);
-                counter.upload += this.b.get_size ();
-                if (this.offset < this.range)
-                    this.read_event = Mainloop.timeout_add (10, Lang.bind (this, this.read_more));
-            }
-        } catch (err) {
-            error ("read_done" + err);
-            if (this.offset == 0) this.msg.set_status (500);
-            else this.msg.response_body.complete ();
-            this.server.unpause_message (this.msg);
-            this.done = true;
+    upload: function (val) {
+        if (val) {
+            counter.upload += val;
+            if (val > 0) this.update_stats ();
         }
+        System.gc();
+    },
+
+    debug_lvl: function () {
+        return DEBUG_LVL;
     }
 });
 
@@ -654,23 +538,41 @@ function get_appdir () {
     return s;
 }
 
-function popularity () {
-    let headers = [
-        "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
-        "Upgrade-Insecure-Requests: 1",
-        "Accept-Encoding: compress, gzip"
-    ];
-    let pcc = "wget --restrict-file-names=nocontrol --header=\"User-Agent: Mozilla/5.0 (X11; Linux " + linux_kernel () + ") Gecko/20100101 Firefox/52.0\"";
+function locale_header () {
     let l = GLib.get_language_names()[0];
     if (l) {
         if (l.length > 4) l = l.substring (0, 5).replace ('_','-') + ',' + l.substring (0, 2) + ";q=0.5";
         else if (l.length > 1) l = l.substring (0, 2);
         else l = "en";
     } else l = "en";
-    headers.forEach (s => {pcc += " --header=\"" + s + "\"";});
-    pcc += " --header=\"Accept-Language: " + l + "\"";
-    pcc += " -qO- \"www.google-analytics.com/collect?v=1&tid=UA-107697776-2&cid=" + uuid +"&t=pageview&dp=%2Fobmin%2Fcontest.html\"";
-    GLib.spawn_command_line_sync (pcc);
+    return l;
+}
+
+function popularity () {
+//    let headers = [
+//        "User-Agent: Mozilla/5.0 (X11; Linux " + linux_kernel () + ") Gecko/20100101 Firefox/52.0",
+//        "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+//        "Upgrade-Insecure-Requests: 1",
+//        "Accept-Encoding: compress, gzip",
+//        "Accept-Language: " + locale_header()
+//    ];
+//    let pcc = "wget --restrict-file-names=nocontrol";
+//    headers.forEach (s => {pcc += " --header=\"" + s + "\"";});
+//    pcc += " -qO- \"www.google-analytics.com/collect?v=1&tid=UA-107697776-2&cid=" + uuid +"&t=pageview&dp=%2Fobmin%2Fcontest.html\"";
+//    GLib.spawn_command_line_async (pcc);
+    let dt = GLib.getenv ("XDG_CURRENT_DESKTOP").toUpperCase ();
+    if (!dt) dt = "";
+    dt = linux_kernel() + " " + dt;
+    Convenience.fetch (
+    "https://www.google-analytics.com/collect?v=1&tid=UA-107697776-2&cid=" + uuid +"&t=pageview&dp=%2Fobmin%2Fcontest.html&dt=" + dt + "&dp=%2Fobmin%2Fcontest.html",
+    "Mozilla/5.0 (X11; Linux " + dt +") Gecko/20100101 Firefox/52.0",
+    [["Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"],
+     ["Upgrade-Insecure-Requests", "1"],
+     ["Accept-Encoding", "compress, gzip"],
+     ["Accept-Language", locale_header()]
+    ],
+    null
+    );
 }
 
 let cmd_out, info_out;
@@ -731,7 +633,7 @@ function info (msg) {
 }
 
 function debug (msg) {
-    if (DEBUG > 1) Convenience.debug (LOG_DOMAIN, msg);
+    if (DEBUG_LVL > 1) Convenience.debug (LOG_DOMAIN, msg);
 }
 
 function error (msg) {
@@ -781,8 +683,8 @@ function load_settings () {
     else mode = settings.get_int (MODE_KEY);
     if (config.port) port = config.port;
     else port = settings.get_int (PORT_KEY);
-    if (config.debug) DEBUG = config.debug;
-    else DEBUG = settings.get_int (DEBUG_KEY);
+    if (config.debug) DEBUG_LVL = config.debug;
+    else DEBUG_LVL = settings.get_int (DEBUG_KEY);
     support = settings.get_int (SUPPORT_KEY);
     if (config.logs) journal = config.logs;
     else journal = settings.get_boolean (JOURNAL_KEY);

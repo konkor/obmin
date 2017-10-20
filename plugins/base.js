@@ -10,7 +10,7 @@
  * Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * Filefinder is distributed in the hope that it will be useful, but
+ * Obmin is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
@@ -21,12 +21,15 @@
 
 const Lang = imports.lang;
 const GObject = imports.gi.GObject;
-const Gio = imports.gi.Gio;
+//const Gio = imports.gi.Gio;
+
+// 0-error,1-info,2-debug
+var DEBUG_LVL = 1;
 
 const PlugType = {
 UNDEFINED: 0,
 MENU_ITEM: 1,
-PROVIDER: 2
+PROVIDER: 1 << 1
 };
 
 /*var METADATA = {
@@ -47,7 +50,10 @@ const Plugin = new Lang.Class ({
     _init: function (server, meta) {
         this.parent();
         this.obmin = null;
-        if (server) this.obmin = server;
+        if (server) {
+            this.obmin = server;
+            DEBUG_LVL = this.obmin.debug_lvl ();
+        }
         this.name = '';
         this.uuid = '';
         this.summary = '';
@@ -72,6 +78,10 @@ const Plugin = new Lang.Class ({
         this.puid = this.uuid;
     },
 
+    has: function (attribute) {
+        return (this.type & attribute) == attribute;
+    },
+
     menu_item: function (class_name) {
         return '';
     },
@@ -80,7 +90,39 @@ const Plugin = new Lang.Class ({
         return null;
     },
 
+    root_handler: function (server, msg) {
+        msg.set_status (302);
+        msg.response_headers.append ("Location", "/");
+        server.unpause_message (msg);
+        return true;
+    },
+
     destroy: function () {
         GObject.signal_handlers_destroy(this);
     }
 });
+
+//DOMAIN ERROR:0:RED, INFO:1:BLUE, DEBUG:2:GREEN
+const domain_color = ["00;31","00;32","00;34"];
+const domain_name = ["EE","II","DD"];
+
+function error (source, msg) {
+    print_msg (0, source, msg);
+}
+
+function info (source, msg) {
+    print_msg (1, source, msg);
+}
+
+function debug (source, msg) {
+    print_msg (2, source, msg);
+}
+
+function print_msg (domain, source, output) {
+    let ds = new Date().toString ();
+    let i = ds.indexOf (" GMT");
+    if (i > 0) ds = ds.substring (0, i);
+
+    print ("\x1b[%sm[%s](%s) [obmin][%s]\x1b[0m %s".format (
+        domain_color[domain],ds,domain_name[domain],source,output));
+}

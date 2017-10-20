@@ -11,7 +11,7 @@
  * Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * Filefinder is distributed in the hope that it will be useful, but
+ * Obmin is distributed in the hope that it will be useful, but
  * WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
  * See the GNU General Public License for more details.
@@ -312,29 +312,22 @@ const PublicItem = new Lang.Class ({
 
     _init: function () {
         this.prefix = "<b>" + _("Public IP") + "</b> ";
-        this.parent ({label:this.prefix + this.ip});
+        this.parent ({label:this.prefix});
         this.tooltip_text = _("External Network IP Address");
-    },
-
-    get ip () {
-        let l = "";
-        this.curl = GLib.find_program_in_path ('wget');
-        if (this.curl) {
-            l = get_info_string ("wget -qO- http://ipecho.net/plain");
-        } else {
-            this.curl = GLib.find_program_in_path ('curl');
-            if (this.curl) {
-                l = get_info_string ("curl http://ipecho.net/plain");
-            }
-        }
-        return l;
+        this._ip = "";
     },
 
     update: function () {
-        let ip = this.ip;
-        if (ip) this.visible = true;
-        else this.visible = false;
-        this.get_child().set_markup (this.prefix + ip);
+        Convenience.fetch ("http://ipecho.net/plain", null, null, Lang.bind (this, (text, s) => {
+            if ((s == 200) && text) {
+                this._ip = text.split("\n")[0];
+                if (!this._ip || this._ip.length < 7) this._ip = "";
+            } else this._ip = "";
+            if (this._ip) this.visible = true;
+            else this.visible = false;
+            this.get_child().set_markup (this.prefix + this._ip);
+            return false;
+        }));
     }
 });
 
