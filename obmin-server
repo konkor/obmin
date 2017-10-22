@@ -100,7 +100,8 @@ var counter = {access:0, ready:0, upload:0};
 //TODO PLUG MANAGER
 let enabled_plugs = [
 "f7d92e608a582d0fe0313bb959e3d51f",
-"bd269ad77d725c4e8fa19ecd59e5dd68"
+"bd269ad77d725c4e8fa19ecd59e5dd68",
+"6a3c0b97ba5450736bc9ebad59eb27ff"
 ];
 var plugins = null;
 var plug_events = null;
@@ -149,8 +150,8 @@ const ObminServer = new Lang.Class({
     },
 
     init_html_menu: function () {
-        for (let p of plugins.values()) if (p.type == PlugsBase.PlugType.MENU_ITEM)
-                html_menu += p.menu_item ("nmenu-item");
+        for (let p of plugins.values()) if (p.has (PlugsBase.PlugType.MENU_ITEM))
+            html_menu += p.menu_item ("nmenu-item");
         html_menu += h_menu;
         if (support < 2) html_menu += h_menu1;
         html_menu += "</div>";
@@ -168,7 +169,7 @@ const ObminServer = new Lang.Class({
         if (query && query.plug && plugins.has (query.plug)) {
             debug ("plug response " + plugins.get (query.plug).puid);
             if (plug_events.has (query.plug) && (plug_events.get (query.plug) != 0)) {
-                Mainloop.source_remove (plug_events.get (query.plug));
+                //Mainloop.source_remove (plug_events.get (query.plug));
                 plug_events.set (query.plug, 0);
             }
             plug_events.set (query.plug, Mainloop.timeout_add (P_TIMEOUT, Lang.bind (this, function () {
@@ -399,10 +400,10 @@ const ObminServer = new Lang.Class({
         return this.get_dir (server, msg, null, false, null);
     },
 
-    list_dir: function (loc, recursive) {
+    list_dir: function (loc, recursive, filter) {
         var finfo;
         var dir = Gio.File.new_for_path (loc.path);
-        let files = [];
+        let files = [], item;
         //debug ("path: %s <-> %s".format (loc.path, dir.get_path()));
         if (!dir.query_exists (null)) return files;
         try {
@@ -423,7 +424,8 @@ const ObminServer = new Lang.Class({
             if (!this.is_remote (finfo) && !finfo.get_attribute_boolean (Gio.FILE_ATTRIBUTE_ACCESS_CAN_READ)) return files;
             if (!mounts && finfo.get_attribute_boolean (Gio.FILE_ATTRIBUTE_UNIX_IS_MOUNTPOINT)) return files;
             if (finfo.get_file_type () == Gio.FileType.REGULAR) {
-                files.push (this.add_file (finfo, loc.path));
+                item = this.add_file (finfo, loc.path, filter);
+                if (item) files.push (item);
                 return files;
             }
             var e = dir.enumerate_children (ATTRIBUTES, follow_links?Gio.FileQueryInfoFlags.NONE:Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS, null);
@@ -441,12 +443,14 @@ const ObminServer = new Lang.Class({
                     case Gio.FileType.DIRECTORY:
                         if (loc.recursive) {
                             let l = {path: dir.get_path() + "/" + finfo.get_name (), recursive: true};
-                            files.push (this.add_file (finfo, dir.get_path()));
+                            item = this.add_file (finfo, dir.get_path(), filter);
+                            if (item) files.push (item);
                             if (recursive) files = files.concat (this.list_dir (l,true));
                         }
                         break;
                     case Gio.FileType.REGULAR:
-                        files.push (this.add_file (finfo, loc.path));
+                        item = this.add_file (finfo, loc.path, filter);
+                        if (item) files.push (item);
                         break;
                     default:
                         info ("DEFAULT %s filetype %d".format (finfo.get_name (), finfo.get_file_type ()));
@@ -460,15 +464,21 @@ const ObminServer = new Lang.Class({
         return files;
     },
 
-    add_file: function (finfo, path) {
+    add_file: function (finfo, path, filter) {
         //debug ("add_file:" + finfo.get_name ());
         //debug ("unix_mode:"+finfo.get_attribute_uint32 (Gio.FILE_ATTRIBUTE_UNIX_MODE));
-        return {path: path,
+        let item = {path: path,
             name: finfo.get_name (),
             type: finfo.get_file_type (),
             mime: finfo.get_content_type (),
             size: finfo.get_size (),
             date: finfo.get_attribute_uint64 (Gio.FILE_ATTRIBUTE_TIME_MODIFIED)};
+        if (filter) {
+            if (filter.mime && filter.mime.indexOf (item.mime) == -1) item = null;
+            if (filter.mask && filter.name.indexOf (item.mask) == -1) item = null;
+            if (filter.ext && !filter.name.endsWith (item.ext)) item = null;
+        }
+        return item;
     },
 
     is_remote: function (finfo) {

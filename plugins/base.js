@@ -28,8 +28,11 @@ var DEBUG_LVL = 1;
 
 var PlugType = {
 UNDEFINED: 0,
-MENU_ITEM: 1,
-PROVIDER: 1 << 1
+LINK:      1,
+MENU_ITEM: 1 << 1,
+SCRIPT:    1 << 2,
+TOOLBAR:   1 << 3,
+FOOTER:    1 << 4
 };
 
 /*var METADATA = {

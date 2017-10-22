@@ -36,7 +36,7 @@ var METADATA = {
     name: "gzip@konkor",
     uuid: "bd269ad77d725c4e8fa19ecd59e5dd68",
     summary: "GZIP File Compressor",
-    tooltip: "Compress files to gzip archive...",
+    tooltip: "Compress files to an archive...",
     schema: "obmin.plugins.konkor.gzip",
     author: "konkor",
     url: "https://github.com/konkor/obmin/",
