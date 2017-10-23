@@ -48,7 +48,8 @@ var SHOWS = [
 {query:"auto=4", title: "Automatic Slideshow With 2 Seconds Interval", label: "Slideshow+"}
 ];
 
-var mime = "image/png;image/jpeg;image/gif;image/svg+xml";
+var mime = "image/png;image/jpeg;image/gif;image/x-icon;image/x-ico;image/x-win-bitmap;image/svg+xml;image/svg;image/svg-xml;image/vnd.adobe.svg+xml;text/xml-svg;image/svg+xml-compressed";
+var mime_raw = "image/x-canon-cr2;image/x-panasonic-raw2";
 
 var Plugin = new Lang.Class ({
     Name: 'SlideshowPlugin',
@@ -73,7 +74,7 @@ var Plugin = new Lang.Class ({
         let file, r, auto = 0;
         if (path == '/') return this.root_handler (server, msg);
         [file, r] = this.obmin.get_file (path);
-        if (!file) [file, r] = this.get_file (GLib.uri_unescape_string (path, null));
+        if (!file) [file, r] = this.obmin.get_file (GLib.uri_unescape_string (path, null));
         if (!file) return false;
         var finfo = file.query_info ("standard::*", 0, null);
         var ftype = finfo.get_file_type ();
@@ -114,7 +115,7 @@ var Plugin = new Lang.Class ({
 "<html><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"+
 "<style>"+
 "* {box-sizing:border-box}"+
-"body {color:#f2f2f2;background-color:#333;font-family:sans;text-align:center;vertical-align:middle;margin:0}"+
+"body {color:#f2f2f2;background-color:#111;font-family:roboto,sans;text-align:center;vertical-align:middle;margin:0}"+
 ".mySlides {display:none}"+
 ".screen-container{width:100%;height:100%;display:table}"+
 ".slideshow-container{position:relative;margin:auto;vertical-align:middle;display: table-cell;}"+
@@ -122,9 +123,14 @@ var Plugin = new Lang.Class ({
 "color:white;font-weight:bold;font-size:18px;transition:0.6s ease;border-radius:0 3px 3px 0;}"+
 ".prev {left:0}.next {right:0;border-radius:3px 0 0 3px;}"+
 ".prev:hover, .next:hover {background-color:rgba(0,0,0,0.8);}"+
-".text {font-size:15px;padding:8px 12px;position:absolute;bottom:32px;width:100%;text-align:center;}"+
-".numbertext {font-size:12px;padding:8px 12px;position:absolute;top:0;}"+
-".text,.numbertext {text-shadow:1px 1px 1px #000}"+
+".text {font-size:15px;padding:8px 12px;position:absolute;bottom:24px;width:100%;text-align:center;}"+
+".return {color:rgba(255,255,255,0.6);cursor:pointer;font-size:2.4em;padding:0.5em 0.5em;position:absolute;top:0;display:block;text-decoration: none}"+
+".return:hover {color:#fff}"+
+".numbertext {color:rgba(255,255,255,0.7);font-size:1.2em;padding:1em 1em;position:absolute;top:3em}"+
+".album {font-size:.6em;padding:0em 0.8em;vertical-align:middle}"+
+".text,.numbertext,.return {text-shadow:1px 1px 1px #000}"+
+".ctrl {display:none}"+
+".show {display:block}"+
 ".fade {-webkit-animation-name: fade;-webkit-animation-duration: 1.5s;animation-name: fade;animation-duration: 1.5s;}"+
 "@-webkit-keyframes fade {from {opacity: .4} to {opacity: 1}}"+
 "@keyframes fade {from {opacity: .4} to {opacity: 1}}"+
@@ -136,34 +142,91 @@ var Plugin = new Lang.Class ({
             return this.none (server, msg);
         if (files.length < n)
             n = files.length;
+        var mid = 0;
+        if (n == 3) mid = 1;
+        else if (n > 3) mid = Math.round (n/2) - 1;
 
+        html += "<a class=\"return ctrl\" title=\"Back to the folder\" href=\".\">< <span class=\"album\">" +
+            dir.get_basename () + "</span></a>";
+        html += "<div class=\"numbertext ctrl\">1 / " + files.length + "</div>";
+        //html += "<div class=\"album\">" + dir.get_basename () + "</div>";
+        for (let i = 0; i < mid; i++) {
+            html += "<div class=\"mySlides fade\"><img src=\"" + files[i].name.toString() + "?plug=" + this.puid +
+            "\"  class=\"myImages\" style=\"max-width:100%;max-height:100vh;width:auto;height:auto;\">"+
+            "<div class=\"text\">" + files[i].name.toString() + "</div></div>";
+        }
         for (let i = 0; i < files.length; i++) {
-            if (i < n) {
-                html += "<div class=\"mySlides fade\"><div class=\"numbertext\">" +
-                (i + 1).toString () + " / " + files.length + "</div><img src=\"" +
-                files[i].name.toString() + "?plug=" + this.puid + "\" style=\"max-width:100%;max-height:100vh;width:auto;height:auto;\">"+
+            if (i < n - mid) {
+                html += "<div class=\"mySlides fade\"><img src=\"" + files[i].name.toString() + "?plug=" + this.puid +
+                "\"  class=\"myImages\" style=\"max-width:100%;max-height:100vh;width:auto;height:auto;\">"+
                 "<div class=\"text\">" + files[i].name.toString() + "</div></div>";
             }
             script += "\"" + files[i].name.toString() + "\",";
-        };
-        html +=  "<a class=\"prev\" onclick=\"plusSlides(-1)\">&#10094;</a>"+
-"<a class=\"next\" onclick=\"plusSlides(1)\">&#10095;</a>"+ "</div></div>" + script +
-"];\nvar slideIndex=1,timeoutID=0,delay=" + auto + ";\nshowSlides ();\nfunction plusSlides (n) {\n"+
-"if (timeoutID) {clearTimeout(timeoutID);timeoutID=0;slideIndex--}"+
-"  slideIndex += n;\n"+
-"  showSlides ();}\n"+
-"function showSlides () {"+
-"  var i;"+
-"  var slides = document.getElementsByClassName(\"mySlides\");"+
-"  if (slideIndex > slides.length) {slideIndex = 1}"+
-"  if (slideIndex < 1) {slideIndex = slides.length}"+
-"  for (i = 0; i < slides.length; i++) {"+
-"      slides[i].style.display = \"none\";"+
-"  }"+
-"  slides[slideIndex-1].style.display = \"block\";"+
-"  if (delay) {slideIndex++;timeoutID=setTimeout(showSlides, delay);}"+
+        }
+        html +=  "<a class=\"prev ctrl\" onclick=\"plusSlides(-1)\">&#10094;</a>"+
+"<a class=\"next ctrl\" onclick=\"plusSlides(1)\">&#10095;</a>"+ "</div></div>" + script + "];\n"+
+"var slideIndex=0,picIndex=0,timeoutID=0,ctrlID=0,delay=" + auto + ",mid=" + mid + ";\n"+
+"var slides = document.getElementsByClassName(\"mySlides\");\n"+
+"var images = document.getElementsByClassName(\"myImages\");\n"+
+"var texts = document.getElementsByClassName(\"text\");\n"+
+"var ctrls = document.getElementsByClassName(\"ctrl\");\n"+
+"var numtext = document.getElementsByClassName(\"numbertext\");\n"+
+"if (mid > 0) for (let i = 1; i <= mid; i++)\n"+
+"    images[mid - i].src = pictures[pictures.length - i] + \"?plug=6a3c0b97ba5450736bc9ebad59eb27ff\";\n"+
+"showSlides (0);\n"+
+"show_ctrl(10000);"+
+"function plusSlides (n) {\n"+
+"    if (timeoutID) {\n"+
+"        clearTimeout(timeoutID);\n"+
+"        timeoutID=0;\n"+
+"    }\n"+
+"    showSlides (n);\n"+
+"}\n"+
+"function showSlides (n) {\n"+
+"    n = (typeof n !== \'undefined\') ?  n : 1;\n"+
+"    picIndex += n;\n"+
+"    for (let i = 0; i < slides.length; i++)\n"+
+"        slides[i].style.display = \"none\";\n"+
+"    if (n != 0) get_slides (n);\n"+
+"    slides[mid].style.display = \"block\";\n"+
+"    if (delay) {\n"+
+"        //slideIndex++;\n"+
+"        timeoutID=setTimeout(showSlides, delay);\n"+
+"    }\n"+
+"}\n"+
+"function get_slides (n) {\n"+
+"    var i, bi = picIndex+mid*n;\n"+
+"    if (n > 0) {\n"+
+"        for (i = 0; i < slides.length - 1; i++) {"+
+"            images[i].src = images[i+1].src;texts[i].innerHTML = texts[i+1].innerHTML;}\n"+
+"        if (picIndex >= pictures.length) picIndex = 0;\n"+
+"        if (bi >= pictures.length) bi -= pictures.length;\n"+
+"    } else {\n"+
+"        for (i = slides.length - 1; i > 0; i--) {"+
+"            images[i].src = images[i-1].src;texts[i].innerHTML = texts[i-1].innerHTML;}\n"+
+"        if (picIndex < 0) picIndex = pictures.length - 1;\n"+
+"        if (bi < 0) bi += pictures.length;\n"+
+"    }\n"+
+"    numtext[0].innerHTML = (picIndex+1).toString() + \" / \" + pictures.length;\n"+
+"    texts[i].innerHTML = pictures[bi];\n"+
+"    images[i].src = pictures[bi] + \"?plug=6a3c0b97ba5450736bc9ebad59eb27ff\";\n"+
+"}\n"+
+"window.onmousemove = function(){show_ctrl()};"+
+"function show_ctrl(delay) {"+
+"    if (ctrlID) {"+
+"        clearTimeout(ctrlID);"+
+"        ctrlID=0;"+
+"    }"+
+"    delay = delay || 2000;"+
+"    for (let i = 0; i < ctrls.length; i++)"+
+"        ctrls[i].style.display = \"block\";"+
+"    ctrlID = setTimeout (hide_ctrl, delay);"+
 "}"+
-"\n"+
+"function hide_ctrl() {"+
+"    for (let i = 0; i < ctrls.length; i++)"+
+"        ctrls[i].style.display = \"none\";"+
+"    ctrlID=0;"+
+"}"+
 "</script></body></html>";
 
         msg.response_headers.append ("Server", "Obmin");
