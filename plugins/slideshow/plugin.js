@@ -45,7 +45,7 @@ var METADATA = {
 
 var SHOWS = [
 {query:"", title: "Make Slideshow", label: "Slideshow"},
-{query:"auto=4", title: "Automatic Slideshow With 2 Seconds Interval", label: "Slideshow+"}
+{query:"auto=8", title: "Automatic Slideshow With 2 Seconds Interval", label: "Slideshow+"}
 ];
 
 var mime = "image/png;image/jpeg;image/gif;image/x-icon;image/x-ico;image/x-win-bitmap;image/svg+xml;image/svg;image/svg-xml;image/vnd.adobe.svg+xml;text/xml-svg;image/svg+xml-compressed";
@@ -112,28 +112,27 @@ var Plugin = new Lang.Class ({
 
     get_show: function (server, msg, dir, rec_attr, auto) {
         let html =
-"<html><head><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"+
+"<html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"+
 "<style>"+
 "* {box-sizing:border-box}"+
 "body {color:#f2f2f2;background-color:#111;font-family:roboto,sans;text-align:center;vertical-align:middle;margin:0}"+
 ".mySlides {display:none}"+
 ".screen-container{width:100%;height:100%;display:table}"+
 ".slideshow-container{position:relative;margin:auto;vertical-align:middle;display: table-cell;}"+
-".prev, .next {cursor:pointer;position:absolute;top:50%;width:auto;padding:16px;margin-top:-22px;"+
-"color:white;font-weight:bold;font-size:18px;transition:0.6s ease;border-radius:0 3px 3px 0;}"+
+".prev, .next,.return {cursor:pointer;position:absolute;top:50%;width:auto;padding:32px;margin-top:-22px;"+
+"color:white;font-weight:bold;font-size:18px;transition:0.6s ease;border-radius:0 3px 3px 0;;outline: 0}"+
 ".prev {left:0}.next {right:0;border-radius:3px 0 0 3px;}"+
 ".prev:hover, .next:hover {background-color:rgba(0,0,0,0.8);}"+
 ".text {font-size:15px;padding:8px 12px;position:absolute;bottom:24px;width:100%;text-align:center;}"+
-".return {color:rgba(255,255,255,0.6);cursor:pointer;font-size:2.4em;padding:0.5em 0.5em;position:absolute;top:0;display:block;text-decoration: none}"+
-".return:hover {color:#fff}"+
+".return {color:rgba(255,255,255,0.6);font-size:2.4em;padding:.5em .5em;top:0;display:block;text-decoration: none;margin:0;}"+
+".return:hover,.return:active {color:#fff; background-color:rgba(0,0,0,0.8)}"+
 ".numbertext {color:rgba(255,255,255,0.7);font-size:1.2em;padding:1em 1em;position:absolute;top:3em}"+
-".album {font-size:.6em;padding:0em 0.8em;vertical-align:middle}"+
+".album {font-size:.6em;padding:0em 0.4em;vertical-align:middle}"+
 ".text,.numbertext,.return {text-shadow:1px 1px 1px #000}"+
 ".ctrl {display:none}"+
-".show {display:block}"+
-".fade {-webkit-animation-name: fade;-webkit-animation-duration: 1.5s;animation-name: fade;animation-duration: 1.5s;}"+
-"@-webkit-keyframes fade {from {opacity: .4} to {opacity: 1}}"+
-"@keyframes fade {from {opacity: .4} to {opacity: 1}}"+
+".fade {-webkit-animation-name: fade;-webkit-animation-duration: 2.5s;animation-name: fade;animation-duration: 2.5s;}"+
+"@-webkit-keyframes fade {from {opacity: .7} to {opacity: 1}}"+
+"@keyframes fade {from {opacity: .7} to {opacity: 1}}"+
 "</style></head><body><div class=\"screen-container\"><div class=\"slideshow-container\">";
         let script = "<script> var pictures = [";
         let filter = mime, n = 5;
@@ -149,15 +148,14 @@ var Plugin = new Lang.Class ({
         html += "<a class=\"return ctrl\" title=\"Back to the folder\" href=\".\">< <span class=\"album\">" +
             dir.get_basename () + "</span></a>";
         html += "<div class=\"numbertext ctrl\">1 / " + files.length + "</div>";
-        //html += "<div class=\"album\">" + dir.get_basename () + "</div>";
         for (let i = 0; i < mid; i++) {
-            html += "<div class=\"mySlides fade\"><img src=\"" + files[i].name.toString() + "?plug=" + this.puid +
+            html += "<div class=\"mySlides\"><img src=\"" + files[i].name.toString() + "?plug=" + this.puid +
             "\"  class=\"myImages\" style=\"max-width:100%;max-height:100vh;width:auto;height:auto;\">"+
             "<div class=\"text\">" + files[i].name.toString() + "</div></div>";
         }
         for (let i = 0; i < files.length; i++) {
             if (i < n - mid) {
-                html += "<div class=\"mySlides fade\"><img src=\"" + files[i].name.toString() + "?plug=" + this.puid +
+                html += "<div class=\"mySlides\"><img src=\"" + files[i].name.toString() + "?plug=" + this.puid +
                 "\"  class=\"myImages\" style=\"max-width:100%;max-height:100vh;width:auto;height:auto;\">"+
                 "<div class=\"text\">" + files[i].name.toString() + "</div></div>";
             }
@@ -171,8 +169,13 @@ var Plugin = new Lang.Class ({
 "var texts = document.getElementsByClassName(\"text\");\n"+
 "var ctrls = document.getElementsByClassName(\"ctrl\");\n"+
 "var numtext = document.getElementsByClassName(\"numbertext\");\n"+
+"var onctrl = false;\n"+
 "if (mid > 0) for (let i = 1; i <= mid; i++)\n"+
 "    images[mid - i].src = pictures[pictures.length - i] + \"?plug=6a3c0b97ba5450736bc9ebad59eb27ff\";\n"+
+"for (let i = 0; i < ctrls.length; i++)\n"+
+"    ctrls[i].onmouseover = function(){onctrl=true};\n"+
+"for (let i = 0; i < ctrls.length; i++)\n"+
+"    ctrls[i].onmouseout = function(){onctrl=false};\n"+
 "showSlides (0);\n"+
 "show_ctrl(10000);"+
 "function plusSlides (n) {\n"+
@@ -189,6 +192,8 @@ var Plugin = new Lang.Class ({
 "        slides[i].style.display = \"none\";\n"+
 "    if (n != 0) get_slides (n);\n"+
 "    slides[mid].style.display = \"block\";\n"+
+"    slides[mid].classList.toggle(\"fade\");\n"+
+"    setTimeout(()=>{slides[mid].classList.toggle(\"fade\");}, 2550);\n"+
 "    if (delay) {\n"+
 "        //slideIndex++;\n"+
 "        timeoutID=setTimeout(showSlides, delay);\n"+
@@ -223,9 +228,11 @@ var Plugin = new Lang.Class ({
 "    ctrlID = setTimeout (hide_ctrl, delay);"+
 "}"+
 "function hide_ctrl() {"+
+"    if (onctrl) return false;"+
 "    for (let i = 0; i < ctrls.length; i++)"+
 "        ctrls[i].style.display = \"none\";"+
 "    ctrlID=0;"+
+"    return false;"+
 "}"+
 "</script></body></html>";
 
