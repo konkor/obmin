@@ -21,7 +21,6 @@
 
 const Lang = imports.lang;
 const GObject = imports.gi.GObject;
-//const Gio = imports.gi.Gio;
 
 // 0-error,1-info,2-debug
 var DEBUG_LVL = 1;
@@ -33,6 +32,16 @@ MENU_ITEM: 1 << 1,
 SCRIPT:    1 << 2,
 TOOLBAR:   1 << 3,
 FOOTER:    1 << 4
+};
+
+//filter conditions
+var Condition = {
+EQUAL:     0,
+NOT_EQUAL: 1,
+LESS_EQUAL:2,
+LESS:      3,
+MORE:      4,
+MORE_EQUAL:5
 };
 
 /*var METADATA = {

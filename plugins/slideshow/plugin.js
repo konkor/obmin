@@ -136,7 +136,9 @@ var Plugin = new Lang.Class ({
 "</style></head><body><div class=\"screen-container\"><div class=\"slideshow-container\">";
         let script = "<script> var pictures = [";
         let filter = mime, n = 5;
-        var files = this.obmin.list_dir ({path: dir.get_path (), recursive: rec_attr}, false, {mime:filter});
+        var files = this.obmin.list_dir (
+            {path: dir.get_path (), recursive: rec_attr}, false,
+            {mime:filter,size:0,size_condition:Base.Condition.MORE});
         if (files.length == 0)
             return this.none (server, msg);
         if (files.length < n)

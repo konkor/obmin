@@ -32,7 +32,7 @@ const APPDIR = get_appdir ();
 imports.searchPath.unshift (APPDIR);
 const Convenience = imports.convenience;
 const Stream = imports.common.stream;
-const PlugsBase = imports.plugins.base;
+const Plugs = imports.plugins.base;
 
 String.prototype.format = Convenience.Format.format;
 
@@ -150,7 +150,7 @@ const ObminServer = new Lang.Class({
     },
 
     init_html_menu: function () {
-        for (let p of plugins.values()) if (p.has (PlugsBase.PlugType.MENU_ITEM))
+        for (let p of plugins.values()) if (p.has (Plugs.PlugType.MENU_ITEM))
             html_menu += p.menu_item ("nmenu-item");
         html_menu += h_menu;
         if (support < 2) html_menu += h_menu1;
@@ -467,6 +467,7 @@ const ObminServer = new Lang.Class({
     add_file: function (finfo, path, filter) {
         //debug ("add_file:" + finfo.get_name ());
         //debug ("unix_mode:"+finfo.get_attribute_uint32 (Gio.FILE_ATTRIBUTE_UNIX_MODE));
+        var size_condition = 0;
         let item = {path: path,
             name: finfo.get_name (),
             type: finfo.get_file_type (),
@@ -475,8 +476,29 @@ const ObminServer = new Lang.Class({
             date: finfo.get_attribute_uint64 (Gio.FILE_ATTRIBUTE_TIME_MODIFIED)};
         if (filter) {
             if (filter.mime && filter.mime.indexOf (item.mime) == -1) item = null;
-            if (filter.mask && filter.name.indexOf (item.mask) == -1) item = null;
-            if (filter.ext && !filter.name.endsWith (item.ext)) item = null;
+            if (item && filter.mask && item.name.indexOf (filter.mask) == -1) item = null;
+            if (item && (filter.size !== 'undefined') && (filter.size !== null)) {
+                if (filter.size_condition) size_condition = filter.size_condition;
+                switch (size_condition) {
+                    case Plugs.Condition.NOT_EQUAL:
+                        if (filter.size == item.size) item = null;
+                        break;
+                    case Plugs.Condition.LESS:
+                        if (filter.size <= item.size) item = null;
+                        break;
+                    case Plugs.Condition.LESS_EQUAL:
+                        if (filter.size < item.size) item = null;
+                        break;
+                    case Plugs.Condition.MORE:
+                        if (filter.size >= item.size) item = null;
+                        break;
+                    case Plugs.Condition.MORE_EQUAL:
+                        if (filter.size > item.size) item = null;
+                        break;
+                    default:
+                        if (filter.size != item.size) item = null;
+                }
+            }
         }
         return item;
     },
