@@ -119,19 +119,24 @@ var Plugin = new Lang.Class ({
 ".mySlides {display:none}"+
 ".screen-container{width:100%;height:100%;display:table}"+
 ".slideshow-container{position:relative;margin:auto;vertical-align:middle;display: table-cell;}"+
-".prev, .next,.return {cursor:pointer;position:absolute;top:50%;width:auto;padding:32px;margin-top:-22px;"+
-"color:white;font-weight:bold;font-size:18px;transition:0.6s ease;border-radius:0 3px 3px 0;;outline: 0}"+
+".prev, .next {cursor:pointer;position:absolute;top:50%;width:auto;padding:32px;margin-top:-22px;"+
+"color:white;font-weight:bold;font-size:18px;transition:0.6s ease;border-radius:0 3px 3px 0;outline: 0}"+
 ".prev {left:0}.next {right:0;border-radius:3px 0 0 3px;}"+
 ".prev:hover, .next:hover {background-color:rgba(0,0,0,0.8);}"+
-".text {font-size:15px;padding:8px 12px;position:absolute;bottom:24px;width:100%;text-align:center;}"+
-".return {color:rgba(255,255,255,0.6);font-size:2.4em;padding:.5em .5em;top:0;display:block;text-decoration: none;margin:0;}"+
-".return:hover,.return:active {color:#fff; background-color:rgba(0,0,0,0.8)}"+
-".numbertext {color:rgba(255,255,255,0.7);font-size:1.2em;padding:1em 1em;position:absolute;top:3em}"+
-".album {font-size:.6em;padding:0em 0.4em;vertical-align:middle}"+
-".text,.numbertext,.return {text-shadow:1px 1px 1px #000}"+
-".ctrl {display:none}"+
-".fade {-webkit-animation-name: fade;-webkit-animation-duration: 2.5s;animation-name: fade;animation-duration: 2.5s;}"+
-"@-webkit-keyframes fade {from {opacity: .7} to {opacity: 1}}"+
+".text {font-size:16px;padding:8px 12px;position:absolute;bottom:24px;width:100%;text-align:center;}"+
+".return {cursor:pointer;position:absolute;color:rgba(255,255,255,0.7);font-size:22px;padding:1em;top:0;display:block;text-decoration:none;margin:0;}"+
+".return:hover,.return:active,.speedbtn:hover,.speedbtn:active {color:#fff; background-color:rgba(0,0,0,0.8)}"+
+".numbertext {color:rgba(255,255,255,0.7);font-size:1em;padding:1em 1em;position:absolute;top:3.5em}"+
+".album {font-size:18px;padding:0em 0.4em;vertical-align:middle}"+
+".text,.numbertext,.return,.speedbtn {text-shadow:1px 1px 1px #000}"+
+".toolbar {position:absolute;margin:0;top:0;right:0;text-align:right}"+
+".speedbtn {cursor:pointer;color:rgba(255,255,255,0.7);background-color:transparent;border:none;font-size:1em;padding:1em;outline:0;text-align:right;font-size:18px}"+
+".speed-menu{display:block;position:relative;background-color:#f9f9f9;min-width:160px;overflow:auto;box-shadow:0px 8px 16px 0px rgba(255,255,255,0.4);font-size:16px;right:0}"+
+".speed-menu a {cursor:pointer;color:black;padding:12px 16px;display:block;}"+
+".speed-menu a:hover {background-color: #aaa}"+
+".ctrl,.speed-menu{display:none}"+
+".fade {-webkit-animation-name: fade;-webkit-animation-duration: 2.0s;animation-name: fade;animation-duration: 2.0s;}"+
+"@-webkit-keyframes fade {from {opacity: .6} to {opacity: 1}}"+
 "@keyframes fade {from {opacity: .7} to {opacity: 1}}"+
 "</style></head><body><div class=\"screen-container\"><div class=\"slideshow-container\">";
         let script = "<script> var pictures = [";
@@ -150,6 +155,9 @@ var Plugin = new Lang.Class ({
         html += "<a class=\"return ctrl\" title=\"Back to the folder\" href=\".\">< <span class=\"album\">" +
             dir.get_basename () + "</span></a>";
         html += "<div class=\"numbertext ctrl\">1 / " + files.length + "</div>";
+        html += "<div class=\"toolbar ctrl\"><div class=\"speed\"><button class=\"speedbtn\" onclick=\"toggle_speed()\">Speed</button><div class=\"speed-menu\"><a onclick=\"set_speed(0)\">Manual</a>";
+        [4,8,12,20,30,60].forEach (p=>{html += "<a onclick=\"set_speed("+p+")\">"+p+" seconds</a>";});
+        html += "</div></div></div>";
         for (let i = 0; i < mid; i++) {
             html += "<div class=\"mySlides\"><img src=\"" + files[i].name.toString() + "?plug=" + this.puid +
             "\"  class=\"myImages\" style=\"max-width:100%;max-height:100vh;width:auto;height:auto;\">"+
@@ -159,7 +167,7 @@ var Plugin = new Lang.Class ({
             if (i < n - mid) {
                 html += "<div class=\"mySlides\"><img src=\"" + files[i].name.toString() + "?plug=" + this.puid +
                 "\"  class=\"myImages\" style=\"max-width:100%;max-height:100vh;width:auto;height:auto;\">"+
-                "<div class=\"text\">" + files[i].name.toString() + "</div></div>";
+                "<div class=\"text ctrl\">" + files[i].name.toString() + "</div></div>";
             }
             script += "\"" + files[i].name.toString() + "\",";
         }
@@ -171,6 +179,7 @@ var Plugin = new Lang.Class ({
 "var texts = document.getElementsByClassName(\"text\");\n"+
 "var ctrls = document.getElementsByClassName(\"ctrl\");\n"+
 "var numtext = document.getElementsByClassName(\"numbertext\");\n"+
+"var speed_menu = document.getElementsByClassName(\"speed-menu\")[0];\n"+
 "var onctrl = false;\n"+
 "if (mid > 0) for (let i = 1; i <= mid; i++)\n"+
 "    images[mid - i].src = pictures[pictures.length - i] + \"?plug=6a3c0b97ba5450736bc9ebad59eb27ff\";\n"+
@@ -194,8 +203,8 @@ var Plugin = new Lang.Class ({
 "        slides[i].style.display = \"none\";\n"+
 "    if (n != 0) get_slides (n);\n"+
 "    slides[mid].style.display = \"block\";\n"+
-"    slides[mid].classList.toggle(\"fade\");\n"+
-"    setTimeout(()=>{slides[mid].classList.toggle(\"fade\");}, 2550);\n"+
+"    images[mid].classList.toggle(\"fade\");\n"+
+"    setTimeout(()=>{images[mid].classList.toggle(\"fade\");}, 2550);\n"+
 "    if (delay) {\n"+
 "        //slideIndex++;\n"+
 "        timeoutID=setTimeout(showSlides, delay);\n"+
@@ -236,6 +245,15 @@ var Plugin = new Lang.Class ({
 "    ctrlID=0;"+
 "    return false;"+
 "}"+
+"function set_speed(val){"+
+"    delay=val*1000;"+
+"    plusSlides(0);"+
+"    toggle_speed();"+
+"}"+
+"function toggle_speed(){"+
+"    if (speed_menu.style.display == \"none\") speed_menu.style.display=\"block\";"+
+"    else speed_menu.style.display=\"none\";"+
+"}"+
 "</script></body></html>";
 
         msg.response_headers.append ("Server", "Obmin");
@@ -251,13 +269,6 @@ var Plugin = new Lang.Class ({
         "<html><head><title>Not found</title></head>" +
         "<body style=\"color:#fff;background-color:#333\"><h1>No images found</h1></body></html>");
         msg.set_status (200);
-        server.unpause_message (msg);
-        return true;
-    },
-
-    root_handler: function (server, msg) {
-        msg.set_status (302);
-        msg.response_headers.append ("Location", "/");
         server.unpause_message (msg);
         return true;
     }

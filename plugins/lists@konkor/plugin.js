@@ -147,13 +147,6 @@ var Plugin = new Lang.Class ({
         let f = false;
         MEDIA.forEach ((e)=>{if (name.endsWith ("." + e)) f = true;});
         return f;
-    },
-
-    root_handler: function (server, msg) {
-        msg.set_status (302);
-        msg.response_headers.append ("Location", "/");
-        server.unpause_message (msg);
-        return true;
     }
 });
 

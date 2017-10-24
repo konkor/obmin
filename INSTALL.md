@@ -10,14 +10,14 @@
  * gir1.2-glib-2.0
  * gir1.2-gtk-3.0
  * gir1.2-soup-2.4
-* psmisc, curl or wget (mics tools for applets)
+* psmisc (mics tools for applets)
 * gir1.2-appindicator3 (the obmin-indicator for non-Gnome shell extension)
-* Gnome Shell 3.14+ (the gnome version only)
+* Gnome Shell 3.14+ (the gnome extension only)
 * Font Roboto (recommended for the client side browsers)
 
 ```
 sudo apt-get update
-sudo apt-get install gjs gir1.2-atk-1.0 gir1.2-glib-2.0 gir1.2-gtk-3.0 gir1.2-soup-2.4 psmisc curl gir1.2-appindicator3
+sudo apt-get install gjs gir1.2-gtk-3.0 gir1.2-soup-2.4 psmisc gir1.2-appindicator3
 ```
 
 ### Install From Gnome repository [extensions.gnome.org](https://extensions.gnome.org/extension/1254/obmin/)
@@ -43,7 +43,7 @@ exit
 2. Install dependencies for apt based distributions:
 ```
 sudo apt-get update
-sudo apt-get install gjs gir1.2-atk-1.0 gir1.2-glib-2.0 gir1.2-gtk-3.0 gir1.2-soup-2.4 psmisc curl gir1.2-appindicator3
+sudo apt-get install gjs gir1.2-atk-1.0 gir1.2-glib-2.0 gir1.2-gtk-3.0 gir1.2-soup-2.4 psmisc gir1.2-appindicator3
 ```
 3. Open terminal where is the zip package was extracted.
 ```
@@ -97,7 +97,7 @@ cd packaging
 ```
 ### Sources and binary packages
 * [GitHub master branch](https://github.com/konkor/obmin/archive/master.zip)
-* [GitHub development branch](https://github.com/konkor/obmin/archive/devel.zip)
+* [GitHub release branch](https://github.com/konkor/obmin/archive/release.zip)
 * [Gnome extensions repository](https://extensions.gnome.org/extension/1254/obmin/)
 * [Latest Debian/Ubuntu flavors](https://github.com/konkor/obmin/raw/devel/releases/obmin_latest_all.deb)
 
