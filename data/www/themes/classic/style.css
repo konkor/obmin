@@ -3,7 +3,7 @@ body {background: #f0f0f0;color:#212121;font-family:roboto,sans;font-size: 0.9em
 a,a:visited,a:focus {text-decoration:none;color: #f0f0f0;}
 a:hover,a:active {text-decoration:none;color: #0c99d5;}
 .home {height:24px;}
-.path {color: #f0f0f0;background-color: #323843; margin: 0px auto 0px auto; padding: .5em;font-weight: bold;font-size: 1.2em;line-height:140%;display:table;vertical-align: middle;width:100%}
+.path {color: #f0f0f0;background-color: #323843; margin: 0px auto 0px auto; padding: .5em 0px;font-weight: bold;font-size: 1.2em;line-height:140%;display:table;vertical-align: middle;width:100%}
 .nmenu-button {padding:8px 16px;width:auto;border:none;outline:none;display:table-cell;float:right}
 .contents {width: 97%; margin: 0px auto 0px auto;}
 .content {color:#343a3a;padding: 4px; margin: 2px auto 2px auto;border: 0px solid;border-bottom-width: 2px;border-color: #a4aaaa;}
