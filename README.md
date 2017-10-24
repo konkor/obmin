@@ -50,14 +50,14 @@ _Behind the development for the Linux Desktop are ordinary people who spend a lo
  * gir1.2-glib-2.0
  * gir1.2-gtk-3.0
  * gir1.2-soup-2.4
-* psmisc, curl or wget (mics tools for applets)
+* psmisc (mics tools for applets)
 * gir1.2-appindicator3 (the obmin-indicator for non-Gnome shell extension)
-* Gnome Shell 3.14+ (the gnome version only)
+* Gnome Shell 3.14+ (for gnome extension only)
 
 Debian/Ubuntu flavors:
 ```
 sudo apt-get update
-sudo apt-get install gjs gir1.2-gtk-3.0 gir1.2-soup-2.4 psmisc curl gir1.2-appindicator3
+sudo apt-get install gjs gir1.2-gtk-3.0 gir1.2-soup-2.4 psmisc gir1.2-appindicator3
 ```
 
 ### Install From Gnome repository [extensions.gnome.org](https://extensions.gnome.org/extension/1254/obmin/)
