@@ -246,8 +246,7 @@ var PipeStream = new Lang.Class({
             this.msg.response_headers.append ("Server", "Obmin");
             this.msg.response_headers.append ("Content-Disposition", "filename=\"" + this.name + "\"");
             this.msg.response_body.set_accumulate (false);
-            if (this.version == 1) this.msg.set_status (206);
-            else this.msg.set_status (200);
+            this.msg.set_status (200);
         } catch (e) {
             error (e);
             this.msg.set_status (500);
@@ -274,13 +273,12 @@ var PipeStream = new Lang.Class({
             this.b = this.stream.read_bytes_finish (result);
             if (this.b.get_size() == 0) {
                 //debug ("read_done offset:" + this.offset);
-                this.msg.response_headers.set_content_length (this.offset);
                 if (this.offset == 0) this.msg.set_status (500);
                 else this.msg.set_status (200);
                 this.complete ();
             } else if (this.done) {
                 //debug ("Stream " + this.num + " done");
-                msg.response_headers.set_content_length (this.offset);
+                this.msg.response_headers.set_content_length (this.offset);
                 if (this.offset == 0) this.msg.set_status (500);
                 else this.msg.set_status (200);
                 this.complete ();

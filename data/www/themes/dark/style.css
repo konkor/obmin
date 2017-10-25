@@ -2,7 +2,7 @@
 body {background: #282c2c;color:#edede2;font-family:roboto,sans;font-size: 1.0em; margin: 0px;}
 a,a:visited,a:focus {text-decoration:none;color: #343a3a;}
 a:hover,a:active {text-decoration:none;color: #464e4e;}
-.home {height:32px;}
+.home {height:32px;display:inline-block; margin: 4px 6px 0px 8px}
 .path {background: #ffcc0c;color: #343a3a; margin: 0px auto 0px auto; padding: 8px 0px;font-weight: bold;font-size: 1.6em;box-shadow: inset 0px 2px 4px rgba(0,0,0,0.6);display:table;vertical-align: middle;width:100%}
 .nmenu-button {padding:8px 16px;width:auto;border:none;outline:none;display:table-cell;float:right}
 .contents {width: 97%; margin: 0px auto 0px auto;}
