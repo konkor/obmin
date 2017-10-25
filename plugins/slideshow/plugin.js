@@ -27,6 +27,7 @@ const GdkPixbuf = imports.gi.GdkPixbuf;
 const APPDIR = get_appdir ();
 imports.searchPath.unshift (APPDIR);
 const Base = imports.plugins.base;
+const Stream = imports.common.stream;
 
 var LOG_DOMAIN = "slideshow";
 
@@ -49,7 +50,7 @@ var SHOWS = [
 ];
 
 var mime = "image/png;image/jpeg;image/gif;image/x-icon;image/x-ico;image/x-win-bitmap;image/svg+xml;image/svg;image/svg-xml;image/vnd.adobe.svg+xml;text/xml-svg;image/svg+xml-compressed";
-var mime_raw = "image/x-canon-cr2;image/x-panasonic-raw2";
+var mime_raw = ";image/x-adobe-dng;image/x-canon-cr2;image/x-canon-crw;image/x-dcraw;image/x-fuji-raf;image/x-hdr;image/x-kde-raw;image/x-kodak-dcr;image/x-kodak-k25;image/x-kodak-kdc;image/x-minolta-mrw;image/x-nikon-nef;image/x-olympus-orf;image/x-panasonic-raw;image/x-panasonic-raw2;image/x-pentax-pef;image/x-sigma-x3f;image/x-sony-arw;image/x-sony-sr2;image/x-sony-srf";
 
 var Plugin = new Lang.Class ({
     Name: 'SlideshowPlugin',
@@ -57,6 +58,8 @@ var Plugin = new Lang.Class ({
 
     _init: function (obmin) {
         this.parent (obmin, METADATA);
+        this.dcraw = GLib.find_program_in_path ("dcraw");
+        if (this.dcraw) mime += mime_raw;
     },
 
     menu_item: function (class_name) {
@@ -79,7 +82,7 @@ var Plugin = new Lang.Class ({
         var finfo = file.query_info ("standard::*", 0, null);
         var ftype = finfo.get_file_type ();
         if ((ftype == 1) && (mime.indexOf (finfo.get_content_type ()) > -1))
-            return this.get_slide (server, msg, file, finfo);
+            return this.get_slide (server, msg, file, finfo, num);
         else if (ftype == 2) if (query) {
             if (query.auto && Number.isInteger (parseInt (query.auto))) auto = parseInt (query.auto)*1000;
             return this.get_show (server, msg, file, r, auto);
@@ -87,7 +90,9 @@ var Plugin = new Lang.Class ({
         return false;
     },
 
-    get_slide: function (server, msg, file, finfo) {
+    get_slide: function (server, msg, file, finfo, num) {
+        if (this.dcraw && mime_raw.indexOf (finfo.get_content_type ()) > -1)
+            return this.get_raw (server, msg, file, finfo, num);
         try {
         if (finfo.get_size () < 512000) {
             msg.set_response (finfo.get_content_type (), 2, file.load_contents (null)[1]);
@@ -107,6 +112,20 @@ var Plugin = new Lang.Class ({
             error (e);
             return false;
         }
+        return true;
+    },
+
+    get_raw: function (server, msg, file, finfo, num) {
+        let archive = file.get_basename() + ".thumb.jpg";
+        let args = [this.dcraw,"-e","-c",file.get_path()];
+        let st = new Stream.PipeStream (server, msg, args, archive, "image/jpeg", num);
+        this.obmin.ready (-1);
+        msg.connect ("finished", Lang.bind (this, (o)=> {
+            debug ("raw finished %s:%d".format(st.num,st.offset));
+            this.obmin.ready (1);
+            this.obmin.upload (st.offset);
+            st = null;
+        }));
         return true;
     },
 
@@ -134,8 +153,8 @@ var Plugin = new Lang.Class ({
 ".speed-menu{display:block;position:relative;background-color:#f9f9f9;min-width:160px;overflow:auto;box-shadow:0px 8px 16px 0px rgba(255,255,255,0.4);font-size:16px;right:0}"+
 ".speed-menu a {cursor:pointer;color:black;padding:12px 16px;display:block;}"+
 ".speed-menu a:hover {background-color: #aaa}"+
-".ctrl,.speed-menu{display:none}"+
-".fade {-webkit-animation-name: fade;-webkit-animation-duration: 2.0s;animation-name: fade;animation-duration: 2.0s;}"+
+".ctrl,.speed-menu{display:none;z-index:1}"+
+".fade {-webkit-animation-name: fade;-webkit-animation-duration: 1.0s;animation-name: fade;animation-duration: 1.0s;}"+
 "@-webkit-keyframes fade {from {opacity: .6} to {opacity: 1}}"+
 "@keyframes fade {from {opacity: .7} to {opacity: 1}}"+
 "</style></head><body><div class=\"screen-container\"><div class=\"slideshow-container\">";
@@ -194,17 +213,18 @@ var Plugin = new Lang.Class ({
 "        clearTimeout(timeoutID);\n"+
 "        timeoutID=0;\n"+
 "    }\n"+
-"    showSlides (n);\n"+
+"    showSlides (n, false);\n"+
 "}\n"+
-"function showSlides (n) {\n"+
+"function showSlides (n, fx) {\n"+
 "    n = (typeof n !== \'undefined\') ?  n : 1;\n"+
+"    fx = (typeof fx !== \'undefined\') ?  fx : true;\n"+
 "    picIndex += n;\n"+
 "    for (let i = 0; i < slides.length; i++)\n"+
 "        slides[i].style.display = \"none\";\n"+
 "    if (n != 0) get_slides (n);\n"+
 "    slides[mid].style.display = \"block\";\n"+
-"    images[mid].classList.toggle(\"fade\");\n"+
-"    setTimeout(()=>{images[mid].classList.toggle(\"fade\");}, 2550);\n"+
+"    if (fx) images[mid].classList.toggle(\"fade\");\n"+
+"    if (fx) setTimeout(()=>{images[mid].classList.toggle(\"fade\");}, 950);\n"+
 "    if (delay) {\n"+
 "        //slideIndex++;\n"+
 "        timeoutID=setTimeout(showSlides, delay);\n"+

@@ -18,7 +18,7 @@ Depends: ${shlibs:Depends},
          gir1.2-soup-2.4,
          gir1.2-appindicator3-0.1,
          psmisc,
-         wget,
+         dcraw,
          gjs
 Recommends: fonts-roboto, curl
 Description: Lightweight HTTP File Server
