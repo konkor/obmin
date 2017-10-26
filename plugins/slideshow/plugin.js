@@ -111,7 +111,7 @@ var Plugin = new Lang.Class ({
             server.unpause_message (msg);
             return true
         }
-        var pb = GdkPixbuf.Pixbuf.new_from_file_at_scale (file.get_path(), 2000, 2000, true);
+        var pb = GdkPixbuf.Pixbuf.new_from_file_at_scale (file.get_path(), 2000, 2000, true).apply_embedded_orientation();
         let [res, buf] = pb.save_to_bufferv ("jpeg", [], []);
         if (!res) return false;
         msg.set_response ("image/jpeg", 2, buf);
