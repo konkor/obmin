@@ -1,8 +1,12 @@
 obmin (12.0-1) UNRELEASED; urgency=medium
 
-  * Next development version
+  * Add slideshow extension
+  * Add new widgets class panel
+  * Add additional file's filter conditions (internal)
+  * Add Chromium supporting for obmin extensions
+  * Fix the content padding
 
- -- Kostiantyn K <kapa76@gmail.com>  Wed, 25 Oct 2017 00:06:00 +0100
+ -- Kostiantyn K <kapa76@gmail.com>  Thu, 26 Oct 2017 00:13:23 +0100
 
 obmin (11.0-1) UNRELEASED; urgency=medium
 
