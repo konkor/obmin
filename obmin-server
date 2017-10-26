@@ -73,7 +73,7 @@ const h_menu_btn = "<a class=\"nmenu-button\" href=\"javascript:void(0);\" oncli
 var html_menu = "<div id=\"navmenu\" class=\"nmenu hide\">";
 const h_menu = "<a href=\"https://github.com/konkor/obmin/wiki\" class=\"nmenu-item right\" onclick=\"toggle()\" title=\"About Obmin\">About ...</a>";
 const h_menu1 = "<a href=\"https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=WVAS5RXRMYVC4\" class=\"nmenu-item right\" onclick=\"toggle()\" title=\"Make donation to the project\">Donate ...</a>";
-const h_js = "<script>function toggle(){var x=document.getElementById(\"navmenu\");if(x.className.indexOf(\"show\")==-1){x.className += \" show\";}else{x.className=x.className.replace(\" show\",\"\");}}</script>";
+const h_js = "<script>function toggle(id){id = (typeof id !== \'undefined\')?id:\'navmenu\'; var x=document.getElementById(id);if(x.className.indexOf(\"show\")==-1){x.className += \" show\";}else{x.className=x.className.replace(\" show\",\"\");}}function hide(id){if (!id) return; var x=document.getElementById(id);if(x.className.indexOf(\"hide\")==-1){x.className += \" hide\";}}</script>";
 
 let mounts = true;
 let follow_links = true;
@@ -376,7 +376,10 @@ const ObminServer = new Lang.Class({
             }
         });
         let html_body = "<body><div class=\"path\"><a href=\"/\"><img src=\"/home.png\" class=\"home\">> </a>" +
-                        this.get_path (path) + h_menu_btn + "</div>" + html_menu + "<div class=\"contents\">";
+            this.get_path (path) + h_menu_btn + "</div>" + html_menu;
+        for (let p of plugins.values()) if (p.has (Plugs.PlugType.NOTIFY))
+            html_body += p.notify (files);
+        html_body += "<div class=\"contents\">";
         files.forEach (f => {
             link = dir?f.name.toString():i.toString();
             if (f.type == 2) { slash = "/"; size = "Folder";}

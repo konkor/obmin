@@ -41,7 +41,7 @@ var METADATA = {
     url: "https://github.com/konkor/obmin/",
     version: 1,
     api: 1,
-    type: Base.PlugType.MENU_ITEM | Base.PlugType.TOOLBAR | Base.PlugType.SCRIPT
+    type: Base.PlugType.MENU_ITEM | Base.PlugType.NOTIFY | Base.PlugType.SCRIPT
 };
 
 var SHOWS = [
@@ -51,7 +51,6 @@ var SHOWS = [
 
 var mime = "image/png;image/jpeg;image/gif;image/x-icon;image/x-ico;image/x-win-bitmap;image/svg+xml;image/svg;image/svg-xml;image/vnd.adobe.svg+xml;text/xml-svg;image/svg+xml-compressed";
 var mime_raw = ";image/x-adobe-dng;image/x-canon-cr2;image/x-canon-crw;image/x-dcraw;image/x-fuji-raf;image/x-hdr;image/x-kde-raw;image/x-kodak-dcr;image/x-kodak-k25;image/x-kodak-kdc;image/x-minolta-mrw;image/x-nikon-nef;image/x-olympus-orf;image/x-panasonic-raw;image/x-panasonic-raw2;image/x-pentax-pef;image/x-sigma-x3f;image/x-sony-arw;image/x-sony-sr2;image/x-sony-srf";
-
 var Plugin = new Lang.Class ({
     Name: 'SlideshowPlugin',
     Extends: Base.Plugin,
@@ -69,6 +68,17 @@ var Plugin = new Lang.Class ({
             s += "<a href=\"?plug=" + this.puid + q + "\" class=\"" +
             class_name + "\" onclick=\"toggle()\" title=\"" + l.title + "\">" + l.label + "</a>";
         });
+        return s;
+    },
+
+    notify: function (files) {
+        let s = "", c = 0;
+        files.forEach (f=>{if ((f.type == 1) && (mime.indexOf (f.mime) > -1)) c++;});
+        if (c < 2) return s;
+        var btn_style = "cursor:pointer;display:table-cell;float:right;margin:8px";
+        s = "<div id=\""+this.puid+"\" class=\"panel\"><a href=\"?plug="+this.puid+
+        "&auto=8\" style=\"display:table-cell;float:left;margin:8px\" title=\"Slideshow\">Slideshow available... ("+c+" pictures)</a><a style=\""+btn_style+"\" onclick=\"hide(\'"+
+        this.puid+"\')\" title=\"Close notification\">Close</a></div>";
         return s;
     },
 

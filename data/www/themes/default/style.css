@@ -5,6 +5,8 @@ a:hover,a:active {text-decoration:none;color: #464e4e;}
 .home {height:32px;display:inline-block; margin: 4px 6px 0px 8px}
 .path {background: #ffcc0c;color: #343a3a; margin: 0px auto 0px auto; padding: 8px 0px;font-weight: bold;font-size: 1.6em;box-shadow: inset 0px 2px 4px rgba(0,0,0,0.6);display:table;vertical-align: middle;width:100%}
 .nmenu-button {padding:8px 16px;width:auto;border:none;outline:none;display:table-cell;float:right}
+.panel {background:#333;display:table;vertical-align: middle;min-width:100%;width:100%;text-align:left;padding:12px 0px;transition:0.6s ease}
+.panel a {color:#777}.panel a:hover {color:#eee}
 .contents {width: 97%; margin: 0px auto 0px auto;}
 .content {background: #edede2;color:#343a3a;padding: 4px; margin: 2px auto 2px auto;border: 0px solid;border-bottom-width: 2px;border-color: #a4aaaa;}
 .content:hover, .content:focus, .content:active {background-color: #ffcc0c;color: #343a3a;}
@@ -14,7 +16,7 @@ a:hover,a:active {text-decoration:none;color: #464e4e;}
 .date {width: 80%;float: left;height: 1em;}
 .size {margin-left: 60%;text-align: end;height: 1em;}
 .hide {display:none!important} .show {display:table!important}
-.nmenu {background:rgba(43,43,43,0.93);min-width:100%;width:100%;text-align:left;padding:8px 0px}
+.nmenu {background:rgba(43,43,43,0.9);min-width:100%;width:100%;text-align:left;padding:8px 0px}
 .nmenu-item {padding:12px 16px;display:inline-block}
 .nmenu a,.nmenu a:visited,.nmenu a:focus{color:#ccc}.nmenu a:hover,.nmenu a:active{color:#333;background: #ffcc0c}
 .right {float:right}

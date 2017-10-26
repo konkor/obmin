@@ -26,12 +26,17 @@ const GObject = imports.gi.GObject;
 var DEBUG_LVL = 1;
 
 var PlugType = {
-UNDEFINED: 0,
-LINK:      1,
-MENU_ITEM: 1 << 1,
-SCRIPT:    1 << 2,
-TOOLBAR:   1 << 3,
-FOOTER:    1 << 4
+UNDEFINED:   0,
+LINK:        1,
+MENU_ITEM:   1 << 1,
+SCRIPT:      1 << 2,
+TOOLBAR:     1 << 3,
+NOTIFY:      1 << 4,
+TOP_PANEL:   1 << 5,
+BOTTOM_PANEL:1 << 6,
+LEFT_PANEL:  1 << 7,
+RIGHT_PANEL: 1 << 8,
+FOOTER:      1 << 9
 };
 
 //filter conditions
