@@ -45,12 +45,28 @@ var METADATA = {
 };
 
 var web_mime = "video/mp4;video/webm";
-var mime = "video/mp4;video/3gpp;video/3gpp2;video/dv;video/mp2t;video/mpeg;video/ogg;video/quicktime;video/vivo;video/webm;video/x-avi;video/x-flv;video/x-matroska;video/x-matroska-3d;video/x-mng;video/x-ms-asf;video/x-ms-wmp;video/x-ms-wmv;video/x-msvideo;video/x-nsv;video/x-ogm+ogg;video/x-theora+ogg;video/x-vnd.rn-realvideo";
+var mime = "video/mp4;video/3gpp;video/3gpp2;video/dv;video/mp2t;video/mpeg;video/ogg;video/quicktime;video/vivo;video/webm;video/x-avi;video/x-flv;video/x-matroska;video/x-matroska-3d;video/x-mng;video/x-msvideo;video/x-nsv;video/x-ogm+ogg;video/x-theora+ogg;video/x-vnd.rn-realvideo";
 var mime_audio = ";application/ogg;audio/x-vorbis+ogg;audio/ac3;audio/basic;audio/x-flac;audio/mp4;audio/mpeg;audio/x-mpeg;audio/x-ms-asx;audio/x-pn-realaudio;audio/flac";
+
 var containers = {
 quicktime: ["quicktime","video/mp4","h.264","mpeg-4 aac",".mp4"],
 webm: ["webm","video/webm","vp8","vorbis",".webm"]
 };
+
+var profiles = [
+["Auto", "Automatic encoding (remuxing if it possible)"],
+["ISO Low", "ISO H.264 container (480p baseline 128kbit)"],
+["ISO Normal", "ISO H.264 container (720p main 160kbit)"],
+["ISO High", "ISO H.264 container (1080p high 320kbit)"],
+["WEBM Low", "WEBM container (480p low 96kbit)"],
+["WEBM Normal", "WEBM container (720p main 160kbit)"],
+["WEBM High", "WEBM container (1080p high 256kbit)"]
+];
+var style = {
+container:"width:97%;padding:4px;margin:8px auto 12px auto;display:table;border:1px solid;border-color: #a4aaaa;border-radius:4px;vertical-align: middle",
+button:"display:table-cell;width:100%",
+rbutton:"display:table-cell;float:right;font-size:1.2em"
+}
 
 var Plugin = new Lang.Class ({
     Name: 'GStreamerPlugin',
@@ -61,12 +77,13 @@ var Plugin = new Lang.Class ({
         this.gst_discover = GLib.find_program_in_path ("gst-discoverer-1.0");
         this.gst = GLib.find_program_in_path ("gst-launch-1.0");
         //mime += mime_audio;
+        this.element = 0;
     },
 
     link: function (file, div) {
-        let l = div;
+        var l = div, href = " href=\"" + file.name + "?plug=d33096fb1a680b6709e01fea59f31bb1\"";
         if (mime.indexOf(file.mime)==-1) return div;
-        l += "<a href=\"" + file.name + "?plug=d33096fb1a680b6709e01fea59f31bb1\" style=\"margin:0 8px\" title=\"Watch Online (beta)\">PLAY</a>"
+        l += "<a"+href+" title=\"Watch Online (beta)\"><div style=\""+style.container+"\"><div style=\""+style.button+"\">WATCH ONLINE</div><a"+href+" download style=\""+style.rbutton+"\" title=\"Download\">⬇</a></div></a>";
         return l;
     },
 

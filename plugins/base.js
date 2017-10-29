@@ -27,16 +27,17 @@ var DEBUG_LVL = 1;
 
 var PlugType = {
 UNDEFINED:   0,
-LINK:        1,
-MENU_ITEM:   1 << 1,
-SCRIPT:      1 << 2,
-TOOLBAR:     1 << 3,
-NOTIFY:      1 << 4,
-TOP_PANEL:   1 << 5,
-BOTTOM_PANEL:1 << 6,
-LEFT_PANEL:  1 << 7,
-RIGHT_PANEL: 1 << 8,
-FOOTER:      1 << 9
+SCRIPT:      1,
+STYLE:       1 << 1,
+LINK:        1 << 2,
+MENU_ITEM:   1 << 3,
+TOOLBAR:     1 << 4,
+NOTIFY:      1 << 5,
+TOP_PANEL:   1 << 6,
+BOTTOM_PANEL:1 << 7,
+LEFT_PANEL:  1 << 8,
+RIGHT_PANEL: 1 << 9,
+FOOTER:      1 << 10
 };
 
 //filter conditions

@@ -20,6 +20,6 @@ Depends: ${shlibs:Depends},
          psmisc,
          dcraw,
          gjs
-Recommends: fonts-roboto, curl, gstreamer1.0-plugins-base-apps
+Recommends: fonts-roboto, curl, gstreamer1.0-plugins-base-apps, gstreamer1.0-nice, gstreamer1.0-libav, gstreamer1.0-plugins-base, gstreamer1.0-plugins-good, gstreamer1.0-plugins-bad, gstreamer1.0-plugins-ugly
 Description: Lightweight HTTP File Server
  One-Click File Sharing Solution for your network.
