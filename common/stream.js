@@ -208,8 +208,14 @@ var PipeStream = new Lang.Class({
         this.read_event = 0;
         this.done = false;
         this.add_headers ();
-        //debug ("Start steamimg pipeline " + this.num);
         this.stdout_fd = 0;
+//        var filename = new_filename();
+//        while (GLib.file_test (filename, GLib.FileTest.EXISTS))
+//            filename = this.new_filename;
+//        var f = Gio.File.new_for_path (filename);
+//        this.test_ios = f.create_readwrite (Gio.FileCreateFlags.PRIVATE,null);
+//        this.test_stream = this.test_ios.output_stream;
+
         try{
             let exit, pid, stdin_fd, stderr_fd;
             [exit, pid, stdin_fd, this.stdout_fd, stderr_fd] = GLib.spawn_async_with_pipes ("/",
@@ -221,10 +227,22 @@ var PipeStream = new Lang.Class({
             this.stream = Gio.DataInputStream.new (this.stdout);
             this.stream.buffer_size = this.BUFFER;
             GLib.close (stdin_fd);
-            GLib.close (stderr_fd);
+            //GLib.close (stderr_fd);
+            let errchannel = GLib.IOChannel.unix_new (stderr_fd);
+            GLib.io_add_watch (errchannel,0,GLib.IOCondition.IN | GLib.IOCondition.HUP, (channel, condition) => {
+                if (condition == GLib.IOCondition.HUP) return false;
+                try {
+                var [,line,] = channel.read_line ();
+                if (line) debug (line);
+                } catch (e) {
+                    return false;
+                }
+                return true;
+            });
             let watch = GLib.child_watch_add (GLib.PRIORITY_DEFAULT, pid, Lang.bind (this, (pid, status, o) => {
                 //debug ("watch handler " + pid + ":" + status + ":" + o);
                 GLib.source_remove (watch);
+                //GLib.spawn_close_pid (pid);
             }));
             this.read_more ();
         } catch (e) {
@@ -285,6 +303,7 @@ var PipeStream = new Lang.Class({
                 return;
             } else {
                 this.offset += this.b.get_size();
+                //this.test_stream.write (this.b.get_data(),null);
                 this.msg.response_body.append_buffer (new Soup.Buffer (this.b.get_data()));
                 this.server.unpause_message (this.msg);
                 this.read_event = GLib.timeout_add (0, 10, Lang.bind (this, this.read_more));
@@ -315,6 +334,7 @@ var PipeStream = new Lang.Class({
         } catch (e) {
             error (e.message);
         }
+        //this.test_stream.close_async (100, null, null);
         this.b = [];
     }
 });

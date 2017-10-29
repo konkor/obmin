@@ -99,8 +99,16 @@ var Plugin = new Lang.Class ({
         return (this.type & attribute) == attribute;
     },
 
+    link: function (file, div) {
+        return div;
+    },
+
     menu_item: function (class_name) {
-        return '';
+        return "";
+    },
+
+    notify: function (files) {
+        return "";
     },
 
     response: function (server, msg, path, query, client, num) {

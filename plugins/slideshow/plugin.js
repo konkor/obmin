@@ -45,8 +45,8 @@ var METADATA = {
 };
 
 var SHOWS = [
-{query:"", title: "Make Slideshow", label: "Slideshow"},
-{query:"auto=8", title: "Automatic Slideshow With 2 Seconds Interval", label: "Slideshow+"}
+{query:"", title: "Manual Slideshow", label: "Slideshow"},
+{query:"auto=8", title: "Automatic Slideshow", label: "Slideshow+"}
 ];
 
 var mime = "image/png;image/jpeg;image/gif;image/x-icon;image/x-ico;image/x-win-bitmap;image/svg+xml;image/svg;image/svg-xml;image/vnd.adobe.svg+xml;text/xml-svg;image/svg+xml-compressed";

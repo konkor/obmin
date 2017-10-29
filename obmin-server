@@ -101,7 +101,8 @@ var counter = {access:0, ready:0, upload:0};
 let enabled_plugs = [
 "f7d92e608a582d0fe0313bb959e3d51f",
 "bd269ad77d725c4e8fa19ecd59e5dd68",
-"6a3c0b97ba5450736bc9ebad59eb27ff"
+"6a3c0b97ba5450736bc9ebad59eb27ff",
+"d33096fb1a680b6709e01fea59f31bb1"
 ];
 var plugins = null;
 var plug_events = null;
@@ -363,7 +364,7 @@ const ObminServer = new Lang.Class({
     },
 
     get_dir: function (server, msg, dir, r, path) {
-        let self = server, slash, size, d = new Date(0), ds, link, i = 0;
+        let self = server, slash, size, d = new Date(0), ds, link, i = 0, item = "";
         files = [];
         if (dir) files = this.list_dir ({path: dir.get_path (), recursive: r});
         else sources.forEach (s => {
@@ -381,16 +382,20 @@ const ObminServer = new Lang.Class({
             html_body += p.notify (files);
         html_body += "<div class=\"contents\">";
         files.forEach (f => {
+            item = "";
             link = dir?f.name.toString():i.toString();
             if (f.type == 2) { slash = "/"; size = "Folder";}
             else {slash = ""; size = " " + GLib.format_size (f.size);}
             d.setTime (f.date*1000);
             ds = d.toString();
             if (ds.indexOf (" GMT")) ds = ds.substring (0, ds.indexOf (" GMT"));
-            html_body += "<a href=\"" + link + slash + "\"><div class=\"content\">";
-            html_body += "<div class=\"file\">" + f.name.replace (/\u002e/g,".&#8203;") + slash + "</div>";
-            html_body += "<section class=\"fileinfo\"><div class=\"date\">" + ds + "</div>";
-            html_body += "<div class=\"size\">" + size + "</div></section></div></a>";
+            item += "<a href=\"" + link + slash + "\"><div class=\"content\">";
+            item += "<div class=\"file\">" + f.name.replace (/\u002e/g,".&#8203;") + slash + "</div>";
+            item += "<section class=\"fileinfo\"><div class=\"date\">" + ds + "</div>";
+            item += "<div class=\"size\">" + size + "</div></section></div></a>";
+            for (let p of plugins.values()) if (p.has (Plugs.PlugType.LINK))
+                item = p.link (f,item);
+            html_body += item;
             i++;
         });
         html_body += "</div>" + h_js + "</body>";
