@@ -159,9 +159,9 @@ const ObminServer = new Lang.Class({
     },
 
     _default_handler: function (server, msg, path, query, client) {
-        let drop = false, num;
         counter.access++;
-        num = counter.access;
+        let drop = false, num = counter.access;
+        let request = {msg:msg, path:path, query:query, client:client, num:counter.access};
         //info ("Request (" + counter.access + ") " + client.get_host () + " HTTP/1." + msg.get_http_version () + " " + msg.method + " " + path );
         info ("Request (%d) %d %s HTTP/1.%d %s %s".format (counter.access, port, client.get_host (), msg.get_http_version (), msg.method, path ));
         msg.request_headers.foreach ( (n, v) => {
@@ -175,16 +175,16 @@ const ObminServer = new Lang.Class({
             }
             plug_events.set (query.plug, Mainloop.timeout_add (P_TIMEOUT, Lang.bind (this, function () {
                 plug_events.set (query.plug, 0);
-                if (!plugins.get (query.plug).response (server, msg, path, query, client, num)) {
+                if (!plugins.get (query.plug).response (request)) {
                     debug ("plugin not responding: " + query.plug);
-                    this.not_found (server, msg);
+                    this.not_found (msg);
                 }
                 counter.ready++;
                 counter.upload += msg.response_body.length;
                 this.update_stats ();
                 return false;
             })));
-            server.pause_message (msg);
+            this.pause_message (msg);
             this.update_stats ();
             return;
         }
@@ -198,36 +198,36 @@ const ObminServer = new Lang.Class({
         Mainloop.timeout_add (S_TIMEOUT, Lang.bind (this, function () {
             if (path == '/') {
                 msg.response_headers.append ("Server", "Obmin");
-                msg.set_response ("text/html", Soup.MemoryUse.COPY, this._root_handler (server, msg));
+                msg.set_response ("text/html", Soup.MemoryUse.COPY, this._root_handler (msg));
                 msg.set_status (200);
-                server.unpause_message (msg);
+                this.unpause_message (msg);
                 counter.ready++;
                 this.update_stats ();
-            } else this._send_content (server, msg, path, query, client, num);
+            } else this._send_content (request);
 
             return false;
         }));
-        server.pause_message (msg);
+        this.pause_message (msg);
         this.update_stats ();
     },
 
-    _send_content: function (server, msg, path, query, client, num) {
+    _send_content: function (request) {
         let file, r, finfo;
-        [file, r] = this.get_file (path);
-        if (!file) [file, r] = this.get_file (GLib.uri_unescape_string (path, null));
+        [file, r] = this.get_file (request.path);
+        if (!file) [file, r] = this.get_file (GLib.uri_unescape_string (request.path, null));
         if (file) {
             finfo = file.query_info (ATTRIBUTES, 0, null);
             if (finfo.get_file_type () == 2) {
-                if (mode > 0)
-                    if (this._send_content (server, msg, path + 'index.html', num, query) || (mode == 2)) return true;
-                msg.response_headers.append ("Server", "Obmin");
-                msg.set_response ("text/html", Soup.MemoryUse.COPY, this.get_dir (server, msg, file, r, path));
-                msg.set_status (200);
-                server.unpause_message (msg);
+                if (mode > 0) {
+                    request.path += "index.html";
+                    if (this._send_content (request) || (mode == 2)) return true;
+                    request.path = request.path.substring(0,request.path.length-10);
+                }
+                this.send_data (request.msg, this.get_dir (file, r, request.path));
             } else {
                 if (!this.is_remote (finfo) && !finfo.get_attribute_boolean (Gio.FILE_ATTRIBUTE_ACCESS_CAN_READ)) {
                     debug ("not found: " + finfo.get_name ());
-                    this.not_found (server, msg);
+                    this.not_found (request.msg);
                     counter.ready++;
                     counter.upload += msg.response_body.length;
                     this.update_stats ();
@@ -235,77 +235,65 @@ const ObminServer = new Lang.Class({
                 }
                 if (finfo.get_size () < 65536) {
                     try {
-                        msg.set_response (finfo.get_content_type (), Soup.MemoryUse.COPY, file.load_contents (null)[1]);
-                        msg.set_status (200);
-                        msg.response_headers.append ("Server", "Obmin");
-                        msg.response_headers.append ("Content-Disposition", "filename=\"" + finfo.get_name () + "\"");
-                        msg.response_headers.set_content_length (finfo.get_size ());
+                        this.send_data (request.msg,
+                            file.load_contents (null)[1],finfo.get_content_type (),finfo.get_name ());
                     } catch (e) {
                         error (e.message);
-                        this.not_found (server, msg);
+                        this.not_found (request);
                     }
-                    server.unpause_message (msg);
-                } else this.send_file_async (server, msg, file, finfo, num);
+                } else this.send_file_async (request, file, finfo);
             }
-        } else if (path == '/favicon.ico') {
-            msg.set_status (200);
-            msg.response_headers.append ("Server", "Obmin");
-            msg.set_response ("image/vnd.microsoft.icon", Soup.MemoryUse.COPY, GLib.file_get_contents (APPDIR + "/data/www/favicon.ico")[1]);
-            server.unpause_message (msg);
-        } else if (path.endsWith ('style.css')) {
-            msg.set_status (200);
-            msg.response_headers.append ("Server", "Obmin");
-            msg.set_response ("text/css", Soup.MemoryUse.COPY, GLib.file_get_contents (theme + "style.css")[1]);
-            server.unpause_message (msg);
-        } else if (path.endsWith ('home.png')) {
-            msg.set_status (200);
-            msg.response_headers.append ("Server", "Obmin");
-            msg.set_response ("image/png", Soup.MemoryUse.COPY, GLib.file_get_contents (theme + "home.png")[1]);
-            server.unpause_message (msg);
-        } else if (path.endsWith ('index.html') && (mode == 1)) {
+        } else if (request.path == '/favicon.ico') {
+            this.send_data (request.msg, GLib.file_get_contents (APPDIR + "/data/www/favicon.ico")[1], "image/vnd.microsoft.icon");
+        } else if (request.path.endsWith ('style.css')) {
+            this.send_data (request.msg, GLib.file_get_contents (theme + "style.css")[1], "text/css");
+        } else if (request.path.endsWith ('home.png')) {
+            this.send_data (request.msg, GLib.file_get_contents (theme + "home.png")[1], "image/png");
+        } else if (request.path.endsWith ('index.html') && (mode == 1)) {
             return false;
         } else {
-            this.not_found (server, msg);
+            this.not_found (request.msg);
         }
         counter.ready++;
-        counter.upload += msg.response_body.length;
+        counter.upload += request.msg.response_body.length;
         this.update_stats ();
         return true;
     },
 
-    not_found: function (server, msg) {
-        msg.set_response ("text/html", Soup.MemoryUse.COPY, "<html><head><title>404</title></head><body><h1>404</h1></body></html>");
-        msg.response_headers.append ("Server", "Obmin");
+    not_found: function (msg) {
+        //msg.set_response ("text/html", Soup.MemoryUse.COPY, "<html><head><title>404</title></head><body><h1>404</h1></body></html>");
+        //msg.response_headers.append ("Server", "Obmin");
         msg.set_status (404);
-        server.unpause_message (msg);
+        this.unpause_message (msg);
         return true;
     },
 
-    redirect: function (server, msg, path) {
+    redirect: function (msg, path) {
         path = path || "/";
         msg.set_status (302);
         msg.response_headers.append ("Location", path);
-        server.unpause_message (msg);
+        this.unpause_message (msg);
         return true;
     },
 
-    send_text: function (server, msg, text, mime, filename, attachment) {
+    send_data: function (msg, text, mime, filename, attachment) {
         mime = mime || "text/html";
         filename = filename?("filename=\"" + filename + "\";"):"";
         if (attachment) filename = "attachment;" + filename;
         if (filename) msg.response_headers.append ("Content-Disposition", filename);
         //msg.response_headers.set_content_type (mime, null);
+        //msg.response_headers.set_content_length (text.length);
         msg.response_headers.append ("Server", "Obmin");
         msg.set_response (mime, 2, text);
         msg.set_status (200);
-        server.unpause_message (msg);
+        this.unpause_message (msg);
         return true;
     },
 
-    send_file: function (server, msg, path) {
-        if (!path) return this.not_found (server, msg);
+    send_file: function (msg, path) {
+        if (!path) return this.not_found (msg);
         var f = Gio.File.new_for_path (path);
-        if (!f.query_exists (null)) this.not_found (server, msg);
+        if (!f.query_exists (null)) this.not_found (msg);
         var finfo = f.query_info ("standard::*", 0, null);
         if (finfo.get_size () < 65536) {
             try {
@@ -316,18 +304,18 @@ const ObminServer = new Lang.Class({
                 msg.set_status (200);
             } catch (e) {
                 error (e.message);
-                return this.not_found (server, msg);
+                return this.not_found (msg);
             }
-            server.unpause_message (msg);
-        } else this.send_file_async (server, msg, f, finfo, num);
+            this.unpause_message (msg);
+        } else this.send_file_async (request, f, finfo);
         return true;
     },
 
-    send_file_async: function (server, msg, file, finfo, num) {
-        if (!file) return this.not_found (server, msg);
+    send_file_async: function (request, file, finfo) {
+        if (!file) return this.not_found (request.msg);
         finfo = finfo || file.query_info ("standard::*", 0, null);
-        let st = new Stream.FileStream (server, msg, file, finfo, num);
-        msg.connect ("finished", (o)=> {
+        let st = new Stream.FileStream (this, request, file, finfo);
+        request.msg.connect ("finished", (o)=> {
             debug ("file stream finished:" + st.num);
             counter.ready++;
             this.upload (st.uploaded);
@@ -338,10 +326,10 @@ const ObminServer = new Lang.Class({
         return true;
     },
 
-    send_pipe_async: function (server, msg, args, name, mime, num) {
-        let st = new Stream.PipeStream (server, msg, args, name, mime, num);
+    send_pipe_async: function (request, args, name, mime) {
+        let st = new Stream.PipeStream (this, request, args, name, mime);
         counter.ready--;
-        msg.connect ("finished", Lang.bind (this, (o)=> {
+        request.msg.connect ("finished", Lang.bind (this, (o)=> {
             debug ("pipe finished %s:%d".format(st.num,st.offset));
             counter.ready++;
             this.upload (st.offset);
@@ -422,7 +410,7 @@ const ObminServer = new Lang.Class({
         return res;
     },
 
-    get_dir: function (server, msg, dir, r, path) {
+    get_dir: function (dir, r, path) {
         let slash, size, d = new Date(0), ds, link, i = 0, item = "";
         files = [];
         if (dir) files = this.list_dir ({path: dir.get_path (), recursive: r});
@@ -461,10 +449,10 @@ const ObminServer = new Lang.Class({
         return "<html>" + html_head + html_body + "</html>";
     },
 
-    _root_handler: function (server, msg) {
+    _root_handler: function (msg) {
         if (mode > 0)
-            if (this._send_content (server, msg, '/index.html', this.access_counter) || (mode == 2)) return '';
-        return this.get_dir (server, msg, null, false, null);
+            if (this._send_content ({msg:msg, path:'/index.html', num:this.access_counter}) || (mode == 2)) return '';
+        return this.get_dir (null, false, null);
     },
 
     list_dir: function (loc, recursive, filter) {

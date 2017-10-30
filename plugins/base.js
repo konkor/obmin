@@ -112,13 +112,13 @@ var Plugin = new Lang.Class ({
         return "";
     },
 
-    response: function (server, msg, path, query, client, num) {
+    response: function (request) {
         return null;
     },
 
-    root_handler: function (server, msg) {
+    root_handler: function (request) {
         if (!this.obmin) return false;
-        this.obmin.redirect (server, msg, "/");
+        this.obmin.redirect (request.msg, "/");
         return true;
     },
 

@@ -67,20 +67,20 @@ var Plugin = new Lang.Class ({
         return s;
     },
 
-    response: function (server, msg, path, query, client, num) {
+    response: function (request) {
         let file, r, recursive = false;
-        if (path == '/') return this.root_handler (server, msg);
-        [file, r] = this.obmin.get_file (path);
-        if (!file) [file, r] = this.get_file (GLib.uri_unescape_string (path, null));
+        if (request.path == '/') return this.root_handler (request);
+        [file, r] = this.obmin.get_file (request.path);
+        if (!file) [file, r] = this.get_file (GLib.uri_unescape_string (request.path, null));
         if (!file) return false;
-        if (query && query.recursive && query.recursive == 1) recursive = true;
-        if (query && query.format) 
-            return this.get_tar (server, msg, file, r, query.format, recursive, num);
+        if (request.query && request.query.recursive && request.query.recursive == 1) recursive = true;
+        if (request.query && request.query.format) 
+            return this.get_tar (request, file, r, recursive);
         return false;
     },
 
-    get_tar: function (server, msg, dir, rec_attr, ext, recursive, num) {
-        var finfo = dir.query_info ("standart::*", 0, null), path;
+    get_tar: function (request, dir, rec_attr, recursive) {
+        var finfo = dir.query_info ("standart::*", 0, null), path, ext = request.query.format;
         let mime, archive = dir.get_basename(), args = [];
         let tar = GLib.find_program_in_path("tar");
         debug ("tar", tar);
@@ -112,7 +112,7 @@ var Plugin = new Lang.Class ({
         args.push (path.get_basename());
         //args.push (".");
         //if (!recursive || !rec_attr) args.push ("--exclude=\'*/*\'");
-        return this.obmin.send_pipe_async (server, msg, args, archive, mime, num);
+        return this.obmin.send_pipe_async (request, args, archive, mime);
     }
 });
 

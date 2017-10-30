@@ -50,6 +50,7 @@ var SHOWS = [
 
 var mime = "image/png;image/jpeg;image/gif;image/x-icon;image/x-ico;image/x-win-bitmap;image/svg+xml;image/svg;image/svg-xml;image/vnd.adobe.svg+xml;text/xml-svg;image/svg+xml-compressed";
 var mime_raw = ";image/x-adobe-dng;image/x-canon-cr2;image/x-canon-crw;image/x-dcraw;image/x-fuji-raf;image/x-hdr;image/x-kde-raw;image/x-kodak-dcr;image/x-kodak-k25;image/x-kodak-kdc;image/x-minolta-mrw;image/x-nikon-nef;image/x-olympus-orf;image/x-panasonic-raw;image/x-panasonic-raw2;image/x-pentax-pef;image/x-sigma-x3f;image/x-sony-arw;image/x-sony-sr2;image/x-sony-srf";
+
 var Plugin = new Lang.Class ({
     Name: 'SlideshowPlugin',
     Extends: Base.Plugin,
@@ -81,34 +82,35 @@ var Plugin = new Lang.Class ({
         return s;
     },
 
-    response: function (server, msg, path, query, client, num) {
+    response: function (request) {
         debug ("response");
         let file, r, auto = 0;
-        if (path == '/') return this.root_handler (server, msg);
-        [file, r] = this.obmin.get_file (path);
-        if (!file) [file, r] = this.obmin.get_file (GLib.uri_unescape_string (path, null));
+        if (request.path == '/') return this.root_handler (request);
+        [file, r] = this.obmin.get_file (request.path);
+        if (!file) [file, r] = this.obmin.get_file (GLib.uri_unescape_string (request.path, null));
         if (!file) return false;
         var finfo = file.query_info ("standard::*", 0, null);
         var ftype = finfo.get_file_type ();
         if ((ftype == 1) && (mime.indexOf (finfo.get_content_type ()) > -1))
-            return this.get_slide (server, msg, file, finfo, num);
-        else if (ftype == 2) if (query) {
-            if (query.auto && Number.isInteger (parseInt (query.auto))) auto = parseInt (query.auto)*1000;
-            return this.get_show (server, msg, file, r, auto);
+            return this.get_slide (request, file, finfo);
+        else if (ftype == 2) if (request.query) {
+            if (request.query.auto && Number.isInteger (parseInt (request.query.auto)))
+                auto = parseInt (request.query.auto)*1000;
+            return this.get_show (request, file, r, auto);
         }
         return false;
     },
 
-    get_slide: function (server, msg, file, finfo, num) {
+    get_slide: function (request, file, finfo) {
         if (this.dcraw && mime_raw.indexOf (finfo.get_content_type ()) > -1)
-            return this.get_raw (server, msg, file, finfo, num);
+            return this.get_raw (request, file);
         try {
         if (finfo.get_size () < 128000)
-            return this.obmin.send_text (server, msg, file.load_contents (null)[1], "image/jpeg");
+            return this.obmin.send_data (request.msg, file.load_contents (null)[1], "image/jpeg");
         var pb = GdkPixbuf.Pixbuf.new_from_file_at_scale (file.get_path(), 2000, 2000, true).apply_embedded_orientation();
         let [res, buf] = pb.save_to_bufferv ("jpeg", [], []);
         if (!res) return false;
-        this.obmin.send_text (server, msg, buf, "image/jpeg");
+        this.obmin.send_data (request.msg, buf, "image/jpeg");
         } catch (e) {
             error (e);
             return false;
@@ -116,13 +118,13 @@ var Plugin = new Lang.Class ({
         return true;
     },
 
-    get_raw: function (server, msg, file, finfo, num) {
+    get_raw: function (request, file) {
         let archive = file.get_basename() + ".thumb.jpg";
         let args = [this.dcraw,"-e","-c",file.get_path()];
-        return this.obmin.send_pipe_async (server, msg, args, archive, "image/jpeg", num);
+        return this.obmin.send_pipe_async (request, args, archive, "image/jpeg");
     },
 
-    get_show: function (server, msg, dir, rec_attr, auto) {
+    get_show: function (request, dir, rec_attr, auto) {
         let html =
 "<html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"+
 "<style>"+
@@ -152,12 +154,12 @@ var Plugin = new Lang.Class ({
 "@keyframes fade {from {opacity: .7} to {opacity: 1}}"+
 "</style></head><body><div class=\"screen-container\"><div class=\"slideshow-container\">";
         let script = "<script> var pictures = [";
-        let filter = mime, n = 5;
+        let filter = mime, n = 7;
         var files = this.obmin.list_dir (
             {path: dir.get_path (), recursive: rec_attr}, false,
             {mime:filter,size:0,size_condition:Base.Condition.MORE});
         if (files.length == 0)
-            return this.none (server, msg);
+            return this.none (request.msg);
         if (files.length < n)
             n = files.length;
         var mid = 0;
@@ -270,11 +272,11 @@ var Plugin = new Lang.Class ({
 "</script></body></html>";
 
         files = [];
-        return this.obmin.send_text (server, msg, html);
+        return this.obmin.send_data (request.msg, html);
     },
 
-    none: function (server, msg) {
-        return this.obmin.send_text (server, msg, "<html><head><title>Not found</title></head>" +
+    none: function (msg) {
+        return this.obmin.send_data (msg, "<html><head><title>Not found</title></head>" +
         "<body style=\"color:#fff;background-color:#333\"><h1>No images found</h1></body></html>");
     }
 });

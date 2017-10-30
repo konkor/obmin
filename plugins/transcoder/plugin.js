@@ -121,25 +121,25 @@ var Plugin = new Lang.Class ({
         return f;
     },
 
-    response: function (server, msg, path, query, client, num) {
+    response: function (request) {
         debug ("gst response");
         let file, r, auto = 0;
-        if (path == '/') return this.root_handler (server, msg);
-        [file, r] = this.obmin.get_file (path);
-        if (!file) [file, r] = this.obmin.get_file (GLib.uri_unescape_string (path, null));
+        if (request.path == '/') return this.root_handler (request);
+        [file, r] = this.obmin.get_file (request.path);
+        if (!file) [file, r] = this.obmin.get_file (GLib.uri_unescape_string (request.path, null));
         if (!file) return false;
         var finfo = file.query_info ("standard::*", 0, null);
         var ftype = finfo.get_file_type ();
         if ((ftype == 1) && (mime.indexOf (finfo.get_content_type ()) > -1))
-            return this.get_media (server, msg, file, finfo, client, num);
+            return this.get_media (request, file, finfo);
         return false;
     },
 
-    get_media: function (server, msg, file, finfo, client, num) {
+    get_media: function (request, file, finfo) {
         var args = [this.gst,"--quiet","filesrc","location=\""+file.get_path()+"\"","!"];
-        if (mime_audio.indexOf(finfo.get_content_type ())>-1) return this.get_audio ();
+        if (mime_audio.indexOf(finfo.get_content_type ())>-1) return this.get_audio (request, file, finfo);
         var f = this.discover ({path:file.get_path(), mime:finfo.get_content_type()});
-        if (f.support == 1) return this.obmin.send_file_async (server, msg, file, finfo, num);
+        if (f.support == 1) return this.obmin.send_file_async (request, file, finfo);
         var c = this.get_container (f);
         if (!c) c = containers.quicktime;
         if (f.container && f.container == "matroska") {
@@ -182,7 +182,7 @@ var Plugin = new Lang.Class ({
             }
         }
         ["!","queue","!","mux."].forEach (s=>{args.push(s)});
-        return this.obmin.send_pipe_async (server, msg, args, file.get_basename()+c[4], c[1], num);
+        return this.obmin.send_pipe_async (request, args, file.get_basename()+c[4], c[1]);
     },
 
     get_container: function (f) {
@@ -195,10 +195,10 @@ var Plugin = new Lang.Class ({
         return c;
     },
 
-    get_audio: function (server, msg, file, finfo, client, num) {
+    get_audio: function (request, file, finfo) {
         //var f = this.discover ({path:file.get_path(), mime:finfo.get_content_type()});
         //TODO process audio
-        return this.obmin.send_file_async (server, msg, file, finfo, num);
+        return this.obmin.send_file_async (request, file, finfo);
     }
 });
 

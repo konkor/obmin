@@ -26,11 +26,11 @@ const Soup = imports.gi.Soup;
 
 var FileStream = new Lang.Class({
     Name: 'FileStream',
-    _init: function (server, message, file, finfo, count) {
+    _init: function (server, request, file, finfo) {
         this.BUFFER = 65536;
         this.server = server;
-        this.msg = message;
-        this.version = message.get_http_version ();
+        this.msg = request.msg;
+        this.version = this.msg.get_http_version ();
         this.msg.connect ("wrote-chunk", Lang.bind (this, this.wrote_chunk));
         this.msg.connect ("finished", ()=>{
             //debug ("ContentStream " + this.num + " finished");
@@ -59,7 +59,7 @@ var FileStream = new Lang.Class({
         this.size = finfo.get_size ();
         this.range = this.size - 1;
         this.date = new Date (finfo.get_attribute_uint64 (Gio.FILE_ATTRIBUTE_TIME_MODIFIED)*1000).toUTCString();
-        this.num = count.toString();
+        this.num = request.num.toString();
         this.stream = null;
         this.offset = 0;
         this.uploaded = 0;
@@ -166,15 +166,15 @@ var FileStream = new Lang.Class({
 
 var PipeStream = new Lang.Class({
     Name: 'PipeStream',
-    _init: function (server, message, args, name, mime, count) {
+    _init: function (server, request, args, name, mime) {
         //debug (args);
         this.BUFFER = 1048576;
         this.b = [];
         this.bsize = 0;
         this.offset = 0;
         this.server = server;
-        this.msg = message;
-        this.version = message.get_http_version ();
+        this.msg = request.msg;
+        this.version = this.msg.get_http_version ();
         this.msg.connect ("wrote-chunk", Lang.bind (this, this.wrote_chunk));
         this.msg.connect ("finished", ()=>{
             //debug ("PipeStream " + this.num + " finished");
@@ -201,7 +201,7 @@ var PipeStream = new Lang.Class({
         this.name = name;
         this.mime = mime;
         this.date = new Date().toUTCString();
-        this.num = count.toString();
+        this.num = request.num.toString();
         this.stream = null;
         this.wrotes = 0;
         this.reads = 0;

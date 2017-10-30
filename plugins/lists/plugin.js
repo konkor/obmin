@@ -84,24 +84,25 @@ var Plugin = new Lang.Class ({
         return s;
     },
 
-    response: function (server, msg, path, query, client, num) {
+    response: function (request) {
         let file, r, recursive = false;
-        if (path == '/') return this.root_handler (server, msg);
-        [file, r] = this.obmin.get_file (path);
-        if (!file) [file, r] = this.get_file (GLib.uri_unescape_string (path, null));
+        var query = request.query;
+        if (request.path == '/') return this.root_handler (request);
+        [file, r] = this.obmin.get_file (request.path);
+        if (!file) [file, r] = this.get_file (GLib.uri_unescape_string (request.path, null));
         if (!file) return false;
         if (query && query.recursive && query.recursive == 1) recursive = true;
         if (query && query.list) {
-            if (query.list == "urls") this.get_list (server, msg, file, r, "urls", recursive);
-            else if (query.list == "pls") this.get_list (server, msg, file, r, "pls", recursive);
-            else if (query.list == "m3u") this.get_list (server, msg, file, r, "m3u", recursive);
+            if (query.list == "urls") this.get_list (request, file, r, "urls", recursive);
+            else if (query.list == "pls") this.get_list (request, file, r, "pls", recursive);
+            else if (query.list == "m3u") this.get_list (request, file, r, "m3u", recursive);
         }
         return true;
     },
 
-    get_list: function (server, msg, dir, rec_attr, ext, recursive) {
+    get_list: function (request, dir, rec_attr, ext, recursive) {
         let list = "", ref = "", idx = 1, mime = "text/plain", ac = "/:_-()"; //ac = "/:_-();@&=+$";
-        msg.request_headers.foreach ( (n, v) => {
+        request.msg.request_headers.foreach ( (n, v) => {
             if (n.toLowerCase() == "referer") ref = GLib.uri_unescape_string (v, null);
         });
         var files = this.obmin.list_dir ({path: dir.get_path (), recursive: rec_attr}, recursive);
@@ -135,7 +136,7 @@ var Plugin = new Lang.Class ({
             mime = "audio/x-scpls";
             list = "[playlist]\nNumberOfEntries=" + (idx -1) + "\n" + list;
         } else if (ext == "m3u") mime = "audio/x-mpegurl";
-        this.obmin.send_text (server, msg, list, mime, dir.get_basename () + "." + ext, true);
+        this.obmin.send_data (request.msg, list, mime, dir.get_basename () + "." + ext, true);
         files = [];
     },
 
