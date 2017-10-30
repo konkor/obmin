@@ -22,18 +22,16 @@
 const Lang = imports.lang;
 const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
-const Soup = imports.gi.Soup;
 const GObject = imports.gi.GObject;
 
 const APPDIR = get_appdir ();
 imports.searchPath.unshift (APPDIR);
 const Base = imports.plugins.base;
-const Stream = imports.common.stream;
 
 var LOG_DOMAIN = "tar";
 
 var METADATA = {
-    name: "gzip@konkor",
+    name: "gzip",
     uuid: "bd269ad77d725c4e8fa19ecd59e5dd68",
     summary: "GZIP File Compressor",
     tooltip: "Compress files to an archive...",
@@ -114,15 +112,7 @@ var Plugin = new Lang.Class ({
         args.push (path.get_basename());
         //args.push (".");
         //if (!recursive || !rec_attr) args.push ("--exclude=\'*/*\'");
-        let st = new Stream.PipeStream (server, msg, args, archive, mime, num);
-        this.obmin.ready (-1);
-        msg.connect ("finished", Lang.bind (this, (o)=> {
-            debug ("pipe finished " + st.num);
-            this.obmin.ready (1);
-            this.obmin.upload (st.offset);
-            st = null;
-        }));
-        return true;
+        return this.obmin.send_pipe_async (server, msg, args, archive, mime, num);
     }
 });
 

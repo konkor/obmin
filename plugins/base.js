@@ -117,9 +117,8 @@ var Plugin = new Lang.Class ({
     },
 
     root_handler: function (server, msg) {
-        msg.set_status (302);
-        msg.response_headers.append ("Location", "/");
-        server.unpause_message (msg);
+        if (!this.obmin) return false;
+        this.obmin.redirect (server, msg, "/");
         return true;
     },
 

@@ -139,7 +139,7 @@ var Plugin = new Lang.Class ({
         var args = [this.gst,"--quiet","filesrc","location=\""+file.get_path()+"\"","!"];
         if (mime_audio.indexOf(finfo.get_content_type ())>-1) return this.get_audio ();
         var f = this.discover ({path:file.get_path(), mime:finfo.get_content_type()});
-        if (f.support == 1) return this.native (server, msg, file, finfo, client, num);
+        if (f.support == 1) return this.obmin.send_file_async (server, msg, file, finfo, num);
         var c = this.get_container (f);
         if (!c) c = containers.quicktime;
         if (f.container && f.container == "matroska") {
@@ -182,15 +182,7 @@ var Plugin = new Lang.Class ({
             }
         }
         ["!","queue","!","mux."].forEach (s=>{args.push(s)});
-        let st = new Stream.PipeStream (server, msg, args, file.get_basename()+c[4], c[1], num);
-        this.obmin.ready (-1);
-        msg.connect ("finished", Lang.bind (this, (o)=> {
-            debug ("gst finished %s:%d".format(st.num,st.offset));
-            this.obmin.ready (1);
-            this.obmin.upload (st.offset);
-            st = null;
-        }));
-        return true;
+        return this.obmin.send_pipe_async (server, msg, args, file.get_basename()+c[4], c[1], num);
     },
 
     get_container: function (f) {
@@ -203,22 +195,10 @@ var Plugin = new Lang.Class ({
         return c;
     },
 
-    native: function (server, msg, file, finfo, client, num) {
-        let st = new Stream.FileStream (server, msg, file, finfo, num);
-        this.obmin.ready (-1);
-        msg.connect ("finished", Lang.bind (this, (o)=> {
-            debug ("audio gst end %s:%d".format(st.num,st.uploaded));
-            this.obmin.ready (1);
-            this.obmin.upload (st.uploaded);
-            st = null;
-        }));
-        return true;
-    },
-
     get_audio: function (server, msg, file, finfo, client, num) {
         //var f = this.discover ({path:file.get_path(), mime:finfo.get_content_type()});
         //TODO process audio
-        return this.native (server, msg, file, finfo, client, num);
+        return this.obmin.send_file_async (server, msg, file, finfo, num);
     }
 });
 

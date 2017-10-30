@@ -143,7 +143,7 @@ const ObminServer = new Lang.Class({
                     plugins.set (plug.puid, plug);
                 }
             } catch (e) {
-                error (e.message);
+                error (e);
             }
         }
         for (let p of plugins.values()) debug ("plugin: " + p.name);
@@ -159,7 +159,7 @@ const ObminServer = new Lang.Class({
     },
 
     _default_handler: function (server, msg, path, query, client) {
-        let self = server, drop = false, num;
+        let drop = false, num;
         counter.access++;
         num = counter.access;
         //info ("Request (" + counter.access + ") " + client.get_host () + " HTTP/1." + msg.get_http_version () + " " + msg.method + " " + path );
@@ -175,7 +175,7 @@ const ObminServer = new Lang.Class({
             }
             plug_events.set (query.plug, Mainloop.timeout_add (P_TIMEOUT, Lang.bind (this, function () {
                 plug_events.set (query.plug, 0);
-                if (!plugins.get (query.plug).response (self, msg, path, query, client, num)) {
+                if (!plugins.get (query.plug).response (server, msg, path, query, client, num)) {
                     debug ("plugin not responding: " + query.plug);
                     this.not_found (server, msg);
                 }
@@ -184,7 +184,7 @@ const ObminServer = new Lang.Class({
                 this.update_stats ();
                 return false;
             })));
-            self.pause_message (msg);
+            server.pause_message (msg);
             this.update_stats ();
             return;
         }
@@ -200,19 +200,18 @@ const ObminServer = new Lang.Class({
                 msg.response_headers.append ("Server", "Obmin");
                 msg.set_response ("text/html", Soup.MemoryUse.COPY, this._root_handler (server, msg));
                 msg.set_status (200);
-                self.unpause_message (msg);
+                server.unpause_message (msg);
                 counter.ready++;
                 this.update_stats ();
-            } else this._send_content (self, msg, path, query, client, num);
+            } else this._send_content (server, msg, path, query, client, num);
 
             return false;
         }));
-        self.pause_message (msg);
+        server.pause_message (msg);
         this.update_stats ();
     },
 
     _send_content: function (server, msg, path, query, client, num) {
-        let self = server;
         let file, r, finfo;
         [file, r] = this.get_file (path);
         if (!file) [file, r] = this.get_file (GLib.uri_unescape_string (path, null));
@@ -220,11 +219,11 @@ const ObminServer = new Lang.Class({
             finfo = file.query_info (ATTRIBUTES, 0, null);
             if (finfo.get_file_type () == 2) {
                 if (mode > 0)
-                    if (this._send_content (self, msg, path + 'index.html', num, query) || (mode == 2)) return true;
+                    if (this._send_content (server, msg, path + 'index.html', num, query) || (mode == 2)) return true;
                 msg.response_headers.append ("Server", "Obmin");
-                msg.set_response ("text/html", Soup.MemoryUse.COPY, this.get_dir (self, msg, file, r, path));
+                msg.set_response ("text/html", Soup.MemoryUse.COPY, this.get_dir (server, msg, file, r, path));
                 msg.set_status (200);
-                self.unpause_message (msg);
+                server.unpause_message (msg);
             } else {
                 if (!this.is_remote (finfo) && !finfo.get_attribute_boolean (Gio.FILE_ATTRIBUTE_ACCESS_CAN_READ)) {
                     debug ("not found: " + finfo.get_name ());
@@ -245,34 +244,24 @@ const ObminServer = new Lang.Class({
                         error (e.message);
                         this.not_found (server, msg);
                     }
-                    self.unpause_message (msg);
-                } else {
-                    let st = new Stream.FileStream (self, msg, file, finfo, num);
-                    msg.connect ("finished", (o)=> {
-                        debug ("st finished" + st);
-                        counter.ready++;
-                        this.upload (st.uploaded);
-                        st = null;
-                        System.gc();
-                    });
-                    counter.ready--;
-                }
+                    server.unpause_message (msg);
+                } else this.send_file_async (server, msg, file, finfo, num);
             }
         } else if (path == '/favicon.ico') {
             msg.set_status (200);
             msg.response_headers.append ("Server", "Obmin");
             msg.set_response ("image/vnd.microsoft.icon", Soup.MemoryUse.COPY, GLib.file_get_contents (APPDIR + "/data/www/favicon.ico")[1]);
-            self.unpause_message (msg);
+            server.unpause_message (msg);
         } else if (path.endsWith ('style.css')) {
             msg.set_status (200);
             msg.response_headers.append ("Server", "Obmin");
             msg.set_response ("text/css", Soup.MemoryUse.COPY, GLib.file_get_contents (theme + "style.css")[1]);
-            self.unpause_message (msg);
+            server.unpause_message (msg);
         } else if (path.endsWith ('home.png')) {
             msg.set_status (200);
             msg.response_headers.append ("Server", "Obmin");
             msg.set_response ("image/png", Soup.MemoryUse.COPY, GLib.file_get_contents (theme + "home.png")[1]);
-            self.unpause_message (msg);
+            server.unpause_message (msg);
         } else if (path.endsWith ('index.html') && (mode == 1)) {
             return false;
         } else {
@@ -286,9 +275,79 @@ const ObminServer = new Lang.Class({
 
     not_found: function (server, msg) {
         msg.set_response ("text/html", Soup.MemoryUse.COPY, "<html><head><title>404</title></head><body><h1>404</h1></body></html>");
-        msg.set_status (404);
         msg.response_headers.append ("Server", "Obmin");
+        msg.set_status (404);
         server.unpause_message (msg);
+        return true;
+    },
+
+    redirect: function (server, msg, path) {
+        path = path || "/";
+        msg.set_status (302);
+        msg.response_headers.append ("Location", path);
+        server.unpause_message (msg);
+        return true;
+    },
+
+    send_text: function (server, msg, text, mime, filename, attachment) {
+        mime = mime || "text/html";
+        filename = filename?("filename=\"" + filename + "\";"):"";
+        if (attachment) filename = "attachment;" + filename;
+        if (filename) msg.response_headers.append ("Content-Disposition", filename);
+        //msg.response_headers.set_content_type (mime, null);
+        msg.response_headers.append ("Server", "Obmin");
+        msg.set_response (mime, 2, text);
+        msg.set_status (200);
+        server.unpause_message (msg);
+        return true;
+    },
+
+    send_file: function (server, msg, path) {
+        if (!path) return this.not_found (server, msg);
+        var f = Gio.File.new_for_path (path);
+        if (!f.query_exists (null)) this.not_found (server, msg);
+        var finfo = f.query_info ("standard::*", 0, null);
+        if (finfo.get_size () < 65536) {
+            try {
+                msg.set_response (finfo.get_content_type (), Soup.MemoryUse.COPY, f.load_contents (null)[1]);
+                msg.response_headers.append ("Server", "Obmin");
+                msg.response_headers.append ("Content-Disposition", "filename=\"" + finfo.get_name () + "\"");
+                msg.response_headers.set_content_length (finfo.get_size ());
+                msg.set_status (200);
+            } catch (e) {
+                error (e.message);
+                return this.not_found (server, msg);
+            }
+            server.unpause_message (msg);
+        } else this.send_file_async (server, msg, f, finfo, num);
+        return true;
+    },
+
+    send_file_async: function (server, msg, file, finfo, num) {
+        if (!file) return this.not_found (server, msg);
+        finfo = finfo || file.query_info ("standard::*", 0, null);
+        let st = new Stream.FileStream (server, msg, file, finfo, num);
+        msg.connect ("finished", (o)=> {
+            debug ("file stream finished:" + st.num);
+            counter.ready++;
+            this.upload (st.uploaded);
+            st = null;
+            System.gc();
+        });
+        counter.ready--;
+        return true;
+    },
+
+    send_pipe_async: function (server, msg, args, name, mime, num) {
+        let st = new Stream.PipeStream (server, msg, args, name, mime, num);
+        counter.ready--;
+        msg.connect ("finished", Lang.bind (this, (o)=> {
+            debug ("pipe finished %s:%d".format(st.num,st.offset));
+            counter.ready++;
+            this.upload (st.offset);
+            st = null;
+        }));
+        return true;
     },
 
     update_stats: function () {
@@ -364,7 +423,7 @@ const ObminServer = new Lang.Class({
     },
 
     get_dir: function (server, msg, dir, r, path) {
-        let self = server, slash, size, d = new Date(0), ds, link, i = 0, item = "";
+        let slash, size, d = new Date(0), ds, link, i = 0, item = "";
         files = [];
         if (dir) files = this.list_dir ({path: dir.get_path (), recursive: r});
         else sources.forEach (s => {

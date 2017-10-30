@@ -27,7 +27,6 @@ const GdkPixbuf = imports.gi.GdkPixbuf;
 const APPDIR = get_appdir ();
 imports.searchPath.unshift (APPDIR);
 const Base = imports.plugins.base;
-const Stream = imports.common.stream;
 
 var LOG_DOMAIN = "slideshow";
 
@@ -104,20 +103,12 @@ var Plugin = new Lang.Class ({
         if (this.dcraw && mime_raw.indexOf (finfo.get_content_type ()) > -1)
             return this.get_raw (server, msg, file, finfo, num);
         try {
-        if (finfo.get_size () < 512000) {
-            msg.set_response (finfo.get_content_type (), 2, file.load_contents (null)[1]);
-            msg.set_status (200);
-            msg.response_headers.append ("Server", "Obmin");
-            server.unpause_message (msg);
-            return true
-        }
+        if (finfo.get_size () < 128000)
+            return this.obmin.send_text (server, msg, file.load_contents (null)[1], "image/jpeg");
         var pb = GdkPixbuf.Pixbuf.new_from_file_at_scale (file.get_path(), 2000, 2000, true).apply_embedded_orientation();
         let [res, buf] = pb.save_to_bufferv ("jpeg", [], []);
         if (!res) return false;
-        msg.set_response ("image/jpeg", 2, buf);
-        msg.set_status (200);
-        msg.response_headers.append ("Server", "Obmin");
-        server.unpause_message (msg);
+        this.obmin.send_text (server, msg, buf, "image/jpeg");
         } catch (e) {
             error (e);
             return false;
@@ -128,15 +119,7 @@ var Plugin = new Lang.Class ({
     get_raw: function (server, msg, file, finfo, num) {
         let archive = file.get_basename() + ".thumb.jpg";
         let args = [this.dcraw,"-e","-c",file.get_path()];
-        let st = new Stream.PipeStream (server, msg, args, archive, "image/jpeg", num);
-        this.obmin.ready (-1);
-        msg.connect ("finished", Lang.bind (this, (o)=> {
-            debug ("raw finished %s:%d".format(st.num,st.offset));
-            this.obmin.ready (1);
-            this.obmin.upload (st.offset);
-            st = null;
-        }));
-        return true;
+        return this.obmin.send_pipe_async (server, msg, args, archive, "image/jpeg", num);
     },
 
     get_show: function (server, msg, dir, rec_attr, auto) {
@@ -286,21 +269,13 @@ var Plugin = new Lang.Class ({
 "}"+
 "</script></body></html>";
 
-        msg.response_headers.append ("Server", "Obmin");
-        msg.set_response ("text/html", 2, html);
-        msg.set_status (200);
-        server.unpause_message (msg);
         files = [];
-        return true;
+        return this.obmin.send_text (server, msg, html);
     },
 
     none: function (server, msg) {
-        msg.set_response ("text/html", 2,
-        "<html><head><title>Not found</title></head>" +
+        return this.obmin.send_text (server, msg, "<html><head><title>Not found</title></head>" +
         "<body style=\"color:#fff;background-color:#333\"><h1>No images found</h1></body></html>");
-        msg.set_status (200);
-        server.unpause_message (msg);
-        return true;
     }
 });
 

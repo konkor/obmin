@@ -46,7 +46,7 @@ var MEDIA = [
 ];
 
 var METADATA = {
-    name: "filelists@konkor",
+    name: "filelists",
     uuid: "f7d92e608a582d0fe0313bb959e3d51f",
     summary: "Various file lists generator",
     tooltip: "Shows various menu buttons for URLS, PLS, M3U...",
@@ -100,7 +100,7 @@ var Plugin = new Lang.Class ({
     },
 
     get_list: function (server, msg, dir, rec_attr, ext, recursive) {
-        let list = "", ref = "", idx = 1, ac = "/:_-()"; //ac = "/:_-();@&=+$";
+        let list = "", ref = "", idx = 1, mime = "text/plain", ac = "/:_-()"; //ac = "/:_-();@&=+$";
         msg.request_headers.foreach ( (n, v) => {
             if (n.toLowerCase() == "referer") ref = GLib.uri_unescape_string (v, null);
         });
@@ -132,14 +132,10 @@ var Plugin = new Lang.Class ({
             }
         });
         if (ext == "pls") {
-            msg.response_headers.set_content_type ("audio/x-scpls", null);
+            mime = "audio/x-scpls";
             list = "[playlist]\nNumberOfEntries=" + (idx -1) + "\n" + list;
-        } else if (ext == "m3u") msg.response_headers.set_content_type ("audio/x-mpegurl", null);
-        msg.response_headers.append ("Server", "Obmin");
-        msg.response_headers.append ("Content-Disposition", "attachment; filename=\"" + dir.get_basename () + "." + ext + "\";");
-        msg.set_response ("text/plain", 2, list);
-        msg.set_status (200);
-        server.unpause_message (msg);
+        } else if (ext == "m3u") mime = "audio/x-mpegurl";
+        this.obmin.send_text (server, msg, list, mime, dir.get_basename () + "." + ext, true);
         files = [];
     },
 
