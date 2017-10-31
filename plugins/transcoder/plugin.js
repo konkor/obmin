@@ -34,8 +34,8 @@ var LOG_DOMAIN = "gst";
 var METADATA = {
     name: "Media Transcoder",
     uuid: "d33096fb1a680b6709e01fea59f31bb1",
-    summary: "Real-time Encoding Media Files To The Web Supported Formats",
-    tooltip: "Online Media Encoder",
+    summary: "Real-time Media File's Encoding To Web Supported Format",
+    tooltip: "The plugin converts various media formats to WEBM/ISO Video Format\n(gstreamer1.0-* packages required)",
     schema: "obmin.plugin.konkor.gstreamer",
     author: "konkor",
     url: "https://github.com/konkor/obmin/",
@@ -63,8 +63,8 @@ var profiles = [
 ["WEBM High", "WEBM container (1080p high 256kbit)"]
 ];
 var style = {
-container:"width:97%;padding:4px;margin:8px auto 12px auto;display:table;border:1px solid;border-color: #a4aaaa;border-radius:4px;vertical-align: middle",
-button:"display:table-cell;width:100%",
+container:"padding:4px;margin:0px auto 4px auto;display:table;border:0;border-color: #a4aaaa;border-radius:4px;vertical-align: middle",
+button:"display:table-cell;border-radius:8px;padding:8px;margin:8px;font-size:16px",
 rbutton:"display:table-cell;float:right;font-size:1.2em"
 }
 
@@ -83,7 +83,7 @@ var Plugin = new Lang.Class ({
     link: function (file, div) {
         var l = div, href = " href=\"" + file.name + "?plug=d33096fb1a680b6709e01fea59f31bb1\"";
         if (mime.indexOf(file.mime)==-1) return div;
-        l += "<a"+href+" title=\"Watch Online (beta)\"><div style=\""+style.container+"\"><div style=\""+style.button+"\">WATCH ONLINE</div><a"+href+" download style=\""+style.rbutton+"\" title=\"Download\">⬇</a></div></a>";
+        l += "<div class=\"content\" style=\""+style.container+"\"><a class=\"path\""+href+" style=\""+style.button+"\" title=\"Auto Profile\">WATCH ONLINE</a><a"+href+" style=\""+style.button+"\" title=\"Low Profile\">LOW</a><a"+href+" style=\""+style.button+"\" title=\"Normal Profile\">NORMAL</a><a"+href+" style=\""+style.button+"\" title=\"High Profile\">HIGH</a></div>";
         return l;
     },
 

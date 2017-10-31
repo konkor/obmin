@@ -99,15 +99,15 @@ var ObminWidget = new Lang.Class({
         label = new Gtk.Label ({label: _("General")});
         this.notebook.set_tab_label (this.general, label);
 
-        this.behavior = new PageBehavior ();
-        this.notebook.add (this.behavior);
-        label = new Gtk.Label ({label: _("Behavior")});
-        this.notebook.set_tab_label (this.behavior, label);
+        this.network = new PageNetwork ();
+        this.notebook.add (this.network);
+        label = new Gtk.Label ({label: _("Network")});
+        this.notebook.set_tab_label (this.network, label);
 
-        this.display = new PageDisplay ();
-        this.notebook.add (this.display);
-        label = new Gtk.Label ({label: _("Display")});
-        this.notebook.set_tab_label (this.display, label);
+        this.content = new PageContent ();
+        this.notebook.add (this.content);
+        label = new Gtk.Label ({label: _("Content")});
+        this.notebook.set_tab_label (this.content, label);
 
         this.notify = new PageNotify ();
         this.notebook.add (this.notify);
@@ -328,7 +328,7 @@ const PageGeneral = new Lang.Class({
         this.theme_gui = new Gtk.ComboBoxText ();
         this.theme_gui.append_text (_("system default"));
         id = 0, i = 1;
-        this.themes ("/data/themes", "/obmin.css").forEach (s => {
+        themes ("/data/themes", "/obmin.css").forEach (s => {
             this.theme_gui.append_text (s);
             if (s == theme_gui) id = i;
             i++;
@@ -341,25 +341,74 @@ const PageGeneral = new Lang.Class({
         }));
         hbox.pack_end (this.theme_gui, false, false, 0);
 
-        this.add (new Gtk.Label ({label: _("<b>Network</b>"), use_markup:true, xalign:0, margin_top:16}));
-        hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
-        this.pack_start (hbox, false, false, 0);
-        hbox.add (new Gtk.Label ({label: _("Listening Port")}));
-        this.port = Gtk.SpinButton.new_with_range (1, 65535, 1);
-        this.port.value = port;
-        this.port.connect ('value_changed', Lang.bind (this, ()=>{
-            port = this.port.value;
-            settings.set_int (PORT_KEY, port);
-        }));
-        hbox.pack_end (this.port, false, false, 0);
+        this.add (new Gtk.Label ({label: _("<b>Server Mode</b>"), use_markup:true, xalign:0, margin_top:8, margin_bottom:8}));
+        this.file_server = Gtk.RadioButton.new_with_label_from_widget (null, _("File Server"));
+        this.file_server.tooltip_text = "default mode: 0";
+        this.pack_start (this.file_server, false, false, 0);
+        let label = new Gtk.Label ({
+            label: "<i>"+_("Show the folder's list on requests.")+"</i>",
+            use_markup:true, xalign:0, margin_left:24, margin_bottom:12});
+        label.wrap = true;
+        this.add (label);
 
-        this.add (new Gtk.Label ({label: _("<b>Content</b>"), use_markup:true, xalign:0, margin_top:12}));
-        hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
+        this.mix_server = Gtk.RadioButton.new_with_label_from_widget (this.file_server, _("WEB/File Server"));
+        this.mix_server.tooltip_text = "mode: 1";
+        this.pack_start (this.mix_server, false, false, 0);
+        label = new Gtk.Label ({
+            label: "<i>"+_("Look for \'index.html\' first if it is not exist show the folder's list.")+"</i>",
+            use_markup:true, xalign:0, margin_left:24, margin_bottom:12});
+        label.wrap = true;
+        this.add (label);
+
+        this.web_server = Gtk.RadioButton.new_with_label_from_widget (this.file_server, _("WEB Server"));
+        this.web_server.tooltip_text = "mode: 1";
+        this.pack_start (this.web_server, false, false, 0);
+        label = new Gtk.Label ({
+            label: "<i>"+_("Look for \'index.html\' and direct links only if it is not exist show error \'404.html\'.")+"</i>",
+            use_markup:true, xalign:0, margin_left:24, margin_bottom:12});
+        label.wrap = true;
+        this.add (label);
+
+        if (mode == 1) this.mix_server.active = true;
+        else if (mode == 2) this.web_server.active = true;
+
+        this.file_server.connect ('toggled', Lang.bind (this, ()=>{
+            if (this.file_server.active) settings.set_int (MODE_KEY, 0);
+        }));
+        this.mix_server.connect ('toggled', Lang.bind (this, ()=>{
+            if (this.mix_server.active) settings.set_int (MODE_KEY, 1);
+        }));
+        this.web_server.connect ('toggled', Lang.bind (this, ()=>{
+            if (this.web_server.active) settings.set_int (MODE_KEY, 2);
+        }));
+
+        this.add (new Gtk.Label ({label: _("<b>Server Extensions</b>"), use_markup:true, xalign:0, margin_top:8, margin_bottom:8}));
+        this.manager = new Gtk.Button ({label: _("Local Extensions...")});
+        this.manager.tooltip_text = "OBMIN " + _("Extension Manager");
+        this.add (this.manager);
+        this.manager.connect ('clicked', Lang.bind (this, ()=>{
+            GLib.spawn_command_line_async (EXTENSIONDIR + '/obmin-extensions');
+        }));
+
+        this.show_all ();
+    }
+});
+
+const PageContent = new Lang.Class({
+    Name: 'PageContent',
+    Extends: Gtk.Box,
+
+    _init: function () {
+        this.parent ({orientation:Gtk.Orientation.VERTICAL, margin:6, spacing:8});
+        this.border_width = 6;
+
+        this.add (new Gtk.Label ({label: _("<b>WEB Interface</b>"), use_markup:true, xalign:0, margin_top:12}));
+        let hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
         this.pack_start (hbox, false, false, 0);
         hbox.add (new Gtk.Label ({label: _("Theme")}));
         this.theme = new Gtk.ComboBoxText ();
-        id = 0, i = 0;
-        this.themes ("/data/www/themes", "/style.css").forEach (s => {
+        let id = 0, i = 0;
+        themes ("/data/www/themes", "/style.css").forEach (s => {
             this.theme.append_text (s);
             if (s == theme) id = i;
             i++;
@@ -371,32 +420,7 @@ const PageGeneral = new Lang.Class({
         }));
         hbox.pack_end (this.theme, false, false, 0);
 
-        this.show_all ();
-    },
-
-    themes: function (folder, style) {
-        let list = [], finfo;
-        let dir = Gio.File.new_for_path (EXTENSIONDIR + folder);
-        if (!dir.query_exists (null)) return list;
-        var e = dir.enumerate_children ("*", Gio.FileQueryInfoFlags.NONE, null);
-        while ((finfo = e.next_file (null)) != null) {
-            if (finfo.get_file_type () != Gio.FileType.DIRECTORY) continue;
-            if (!Gio.File.new_for_path(dir.get_path() + "/" + finfo.get_name() + style).query_exists (null))
-                continue;
-            list.push (finfo.get_name ());
-        }
-        return list;
-    }
-});
-
-const PageDisplay = new Lang.Class({
-    Name: 'PageDisplay',
-    Extends: Gtk.Box,
-
-    _init: function () {
-        this.parent ({orientation:Gtk.Orientation.VERTICAL, margin:6, spacing:8});
-        this.border_width = 6;
-
+        this.add (new Gtk.Label ({label: _("<b>File Filters</b>"), use_markup:true, xalign:0, margin_top:12}));
         this.mounts = Gtk.CheckButton.new_with_label (_("Show mount points"));
         this.add (this.mounts);
         this.mounts.active = mounts;
@@ -429,8 +453,8 @@ const PageDisplay = new Lang.Class({
             settings.set_boolean (BACKUPS_KEY, backups);
         }));
 
-        let hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
-        this.pack_start (hbox, false, false, 0);
+        //let hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
+        //this.pack_start (hbox, false, false, 0);
 
         this.show_all ();
     }
@@ -540,54 +564,43 @@ const PageSupport = new Lang.Class({
     }
 });
 
-const PageBehavior = new Lang.Class({
-    Name: 'PageBehavior',
+const PageNetwork = new Lang.Class({
+    Name: 'PageNetwork',
     Extends: Gtk.Box,
 
     _init: function () {
         this.parent ({orientation:Gtk.Orientation.VERTICAL, margin:6});
         this.border_width = 6;
 
-        this.file_server = Gtk.RadioButton.new_with_label_from_widget (null, _("File Server"));
-        this.pack_start (this.file_server, false, false, 0);
-        let label = new Gtk.Label ({
-            label: "<i>"+_("Show the folder's list on requests.")+"</i>",
-            use_markup:true, xalign:0, margin_left:24, margin_bottom:12});
-        label.wrap = true;
-        this.add (label);
-
-        this.mix_server = Gtk.RadioButton.new_with_label_from_widget (this.file_server, _("WEB/File Server"));
-        this.pack_start (this.mix_server, false, false, 0);
-        label = new Gtk.Label ({
-            label: "<i>"+_("Look for \'index.html\' first if it is not exist show the folder's list.")+"</i>",
-            use_markup:true, xalign:0, margin_left:24, margin_bottom:12});
-        label.wrap = true;
-        this.add (label);
-
-        this.web_server = Gtk.RadioButton.new_with_label_from_widget (this.file_server, _("WEB Server"));
-        this.pack_start (this.web_server, false, false, 0);
-        label = new Gtk.Label ({
-            label: "<i>"+_("Look for \'index.html\' and direct links only if it is not exist show error \'404.html\'.")+"</i>",
-            use_markup:true, xalign:0, margin_left:24, margin_bottom:12});
-        label.wrap = true;
-        this.add (label);
-
-        if (mode == 1) this.mix_server.active = true;
-        else if (mode == 2) this.web_server.active = true;
-
-        this.file_server.connect ('toggled', Lang.bind (this, ()=>{
-            if (this.file_server.active) settings.set_int (MODE_KEY, 0);
+        this.add (new Gtk.Label ({label: _("<b>Network Interface</b>"), use_markup:true, xalign:0, margin_top:12}));
+        let hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
+        this.pack_start (hbox, false, false, 0);
+        hbox.add (new Gtk.Label ({label: _("Listening Port")}));
+        this.port = Gtk.SpinButton.new_with_range (1, 65535, 1);
+        this.port.value = port;
+        this.port.connect ('value_changed', Lang.bind (this, ()=>{
+            port = this.port.value;
+            settings.set_int (PORT_KEY, port);
         }));
-        this.mix_server.connect ('toggled', Lang.bind (this, ()=>{
-            if (this.mix_server.active) settings.set_int (MODE_KEY, 1);
-        }));
-        this.web_server.connect ('toggled', Lang.bind (this, ()=>{
-            if (this.web_server.active) settings.set_int (MODE_KEY, 2);
-        }));
+        hbox.pack_end (this.port, false, false, 0);
 
         this.show_all ();
     }
 });
+
+function themes (folder, style) {
+    let list = [], finfo;
+    let dir = Gio.File.new_for_path (EXTENSIONDIR + folder);
+    if (!dir.query_exists (null)) return list;
+    var e = dir.enumerate_children ("*", Gio.FileQueryInfoFlags.NONE, null);
+    while ((finfo = e.next_file (null)) != null) {
+        if (finfo.get_file_type () != Gio.FileType.DIRECTORY) continue;
+        if (!Gio.File.new_for_path(dir.get_path() + "/" + finfo.get_name() + style).query_exists (null))
+            continue;
+        list.push (finfo.get_name ());
+    }
+    return list;
+}
 
 function getCurrentFile () {
     let stack = (new Error()).stack;

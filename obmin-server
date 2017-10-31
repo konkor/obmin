@@ -65,6 +65,7 @@ const THEME_KEY = 'theme';
 const MODE_KEY = 'server-mode';
 const PORT_KEY = 'port';
 const DEBUG_KEY = 'debug';
+const ENABLED_KEY = "enabled-extensions";
 const SETTINGS_ID = 'org.gnome.shell.extensions.obmin';
 const LOG_DOMAIN = 'server';
 
@@ -784,6 +785,12 @@ function load_settings () {
         srcs = settings.get_string (SOURCES_KEY);
         if (srcs.length > 0) check_sources (JSON.parse (srcs));
         else sources.push ({path: GLib.get_home_dir (), recursive: true});
+    }
+    if (config.plugins)
+        enabled_plugs = config.plugins;
+    else {
+        srcs = settings.get_string (ENABLED_KEY);
+        if (srcs.length > 0) enabled_plugs = JSON.parse (srcs);
     }
     if (config.stats_monitor) stats_monitor = config.stats_monitor;
     else {

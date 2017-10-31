@@ -147,5 +147,11 @@
       <description>(enable - default/disable)</description>
     </key>
 
+    <key type="s" name="enabled-extensions">
+        <default>'[\"f7d92e608a582d0fe0313bb959e3d51f\",\"bd269ad77d725c4e8fa19ecd59e5dd68\",\"6a3c0b97ba5450736bc9ebad59eb27ff\"]'</default>
+        <summary>Enabled Extensions</summary>
+        <description>Enabled Extensions UUIDs</description>
+    </key>
+
   </schema>
 </schemalist>

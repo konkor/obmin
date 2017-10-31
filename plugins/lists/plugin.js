@@ -46,10 +46,10 @@ var MEDIA = [
 ];
 
 var METADATA = {
-    name: "filelists",
+    name: "File Lists",
     uuid: "f7d92e608a582d0fe0313bb959e3d51f",
     summary: "Various file lists generator",
-    tooltip: "Shows various menu buttons for URLS, PLS, M3U...",
+    tooltip: "Generating various file/play lists like URLS, PLS, M3U\n(+ for recursive subdirs)",
     schema: "obmin.plugins.konkor.filelists",
     author: "konkor",
     url: "https://github.com/konkor/obmin/",

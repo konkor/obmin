@@ -31,10 +31,10 @@ const Base = imports.plugins.base;
 var LOG_DOMAIN = "slideshow";
 
 var METADATA = {
-    name: "slideshow",
+    name: "Slideshow",
     uuid: "6a3c0b97ba5450736bc9ebad59eb27ff",
-    summary: "Slideshow Viewer",
-    tooltip: "Slideshow Viewer",
+    summary: "Slideshow viewer for many image formats",
+    tooltip: "Slideshow viewer for many image formats\nincluding RAW (dcraw package required)",
     schema: "obmin.plugin.konkor.slideshow",
     author: "konkor",
     url: "https://github.com/konkor/obmin/",

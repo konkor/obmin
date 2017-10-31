@@ -31,11 +31,11 @@ const Base = imports.plugins.base;
 var LOG_DOMAIN = "tar";
 
 var METADATA = {
-    name: "gzip",
+    name: "Compressor",
     uuid: "bd269ad77d725c4e8fa19ecd59e5dd68",
-    summary: "GZIP File Compressor",
-    tooltip: "Compress files to an archive...",
-    schema: "obmin.plugins.konkor.gzip",
+    summary: "Default file compressor",
+    tooltip: "Compressing folders in the selected archive format",
+    schema: "obmin.plugins.konkor.compressor",
     author: "konkor",
     url: "https://github.com/konkor/obmin/",
     version: 1,
