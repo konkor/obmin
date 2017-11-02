@@ -51,7 +51,7 @@ let startup = false;
 let support = 0;
 let port = 8088;
 let DEBUGGING = 1;
-let status = 5;
+let status = 30;
 let journal = true;
 let stats_monitor = true;
 let stats = {access:0, ready:0, upload:0};
@@ -61,7 +61,7 @@ let status_event = 0;
 let update_event = 0;
 let infobar_event = 0;
 let settings = null;
-let server = false;
+let server = 0;
 let cssp = null;
 
 let window = null;
@@ -138,11 +138,14 @@ const ObminCenter = new Lang.Class ({
     check_status: function () {
         let run = false;
         let res = GLib.spawn_command_line_sync ("ps -A");
-        let o;
+        let o, n;
         if (res[0]) o = res[1].toString().split("\n");
+        res = null;
         for (let i = 0; i < o.length; i++) {
             if (o[i].indexOf ("obmin-server") > -1) {
-                run = true;
+                n = parseInt (o[i].trim().split(" ")[0]);
+                if (Number.isInteger(n) && n > 0) run = n;
+                o = null;
                 break;
             }
         }

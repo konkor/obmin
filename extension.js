@@ -53,13 +53,11 @@ let startup = false;
 let support = 0;
 let port = 8088;
 let DEBUG = 1;
-let status = 5;
 let stats_monitor = true;
 let stats = {};
 
-let status_event = 0;
 let update_event = 0;
-let server = false;
+let server = 0;
 
 const ObminIndicator = new Lang.Class({
     Name: 'ObminIndicator',
@@ -89,7 +87,6 @@ const ObminIndicator = new Lang.Class({
         _box.add_actor(this.statusIcon);
         this.actor.add_actor (_box);
 
-        GLib.spawn_command_line_async ("chmod +x " + EXTENSIONDIR + "/obmin-server")
         startup = this.settings.get_boolean (STARTUP_KEY);
         support = this.settings.get_int (SUPPORT_KEY);
         port = this.settings.get_int (PORT_KEY);
@@ -108,10 +105,6 @@ const ObminIndicator = new Lang.Class({
         }
 
         this.menu.connect ('open-state-changed', Lang.bind (this, this.on_menu_state_changed));
-        if (status > 0) status_event = GLib.timeout_add_seconds (0, status, Lang.bind (this, function () {
-            this.check_status ();
-            return true;
-        }));
         if (stats_monitor)
             this.settings.connect ("changed::" + STATS_DATA_KEY, Lang.bind (this, function() {
             stats = JSON.parse (this.settings.get_string (STATS_DATA_KEY));
@@ -214,7 +207,6 @@ const ObminIndicator = new Lang.Class({
         server = state;
         if (state) {
             if (GLib.spawn_command_line_async (EXTENSIONDIR + "/obmin-server")) {
-                //this.statusLabel.text = "ON";
                 this.icon_on ();
             } else {
                 server = false;
@@ -223,24 +215,24 @@ const ObminIndicator = new Lang.Class({
             }
         } else {
             GLib.spawn_command_line_async ("killall obmin-server");
-            //this.statusLabel.text = "OFF";
             this.icon_off ();
         }
     },
 
     get server_enabled () {
         let res = GLib.spawn_command_line_sync ("ps -A");
-        let o;
+        let o, n;
         if (res[0]) o = res[1].toString().split("\n");
         for (let i = 0; i < o.length; i++) {
-            if (o[i].indexOf ("obmin-server") > -1) return true;
+            if (o[i].indexOf ("obmin-server") > -1) {
+                n = parseInt (o[i].trim().split(" ")[0]);
+                if (Number.isInteger(n) && n > 0) return n;
+            }
         }
-        return false;
+        return 0;
     },
 
     remove_events: function () {
-        if (status_event) GLib.Source.remove (status_event);
-        status_event = 0;
         if (update_event) GLib.Source.remove (update_event);
         update_event = 0;
     }

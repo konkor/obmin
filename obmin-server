@@ -113,6 +113,7 @@ const ObminServer = new Lang.Class({
     Extends: Soup.Server,
 
     _init: function () {
+        GLib.set_prgname ("obmin-server");
         this.parent ();
         settings.set_string (STATS_DATA_KEY, JSON.stringify (counter));
         this.plugs_init ();
