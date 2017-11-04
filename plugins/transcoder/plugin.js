@@ -111,6 +111,9 @@ var Plugin = new Lang.Class ({
                 if (info.indexOf("h.264") > -1) info = "h.264";
                 else if (info.indexOf("mpeg-2 video") > -1) info = "mpeg-2 video";
                 else if (info.indexOf("mpeg-4 video") > -1) info = "mpeg-4 video";
+                else if (info.indexOf("mpeg-4 version 3") > -1) info = "mpeg-4 version 3";
+                else if (info.indexOf("mpeg-4 version 2") > -1) info = "mpeg-4 version 2";
+                else if (info.indexOf("mpeg-4 version 1") > -1) info = "mpeg-4 version 1";
                 video.push (info);return;
             }
         });
@@ -148,9 +151,10 @@ var Plugin = new Lang.Class ({
         if (mime_audio.indexOf(finfo.get_content_type ())>-1) return this.get_audio (request, file, finfo);
         var f = this.discover ({path:file.get_path(), mime:finfo.get_content_type()});
         if (f.support == 1) return this.obmin.send_file_async (request, file, finfo);
-        var c = this.get_container (f);
-        if (!c) c = containers[0];
-        if (f.container && f.container == "matroska") {
+        //var c = this.get_container (f);
+        //if (!c) c = containers[0];
+        c = containers[0];
+        if (f.container && (f.container == "matroska" || f.container == "webm")) {
             args.push ("matroskademux");
         } else if (f.container && f.container == "quicktime") {
             args.push ("qtdemux");
@@ -158,6 +162,8 @@ var Plugin = new Lang.Class ({
             args.push ("tsdemux");
         } else if (f.container && f.container == "audio video interleave (avi)") {
             args.push ("avidemux");
+        } else if (f.container && f.container == "ogg") {
+            args.push ("oggdemux");
         }
         debug (f.container);
         ["name=\"d\"","d.","!"].forEach (s=>{args.push(s)});
@@ -168,29 +174,45 @@ var Plugin = new Lang.Class ({
                     ["mpeg2dec"].forEach (s=>{args.push(s)});
                 else if (f.video[0] == "mpeg-4 video")
                     ["avdec_mpeg4"].forEach (s=>{args.push(s)});
+                else if (f.video[0] == "theora")
+                    ["theoradec"].forEach (s=>{args.push(s)});
+                else if (f.video[0] == "vp8")
+                    ["vp8dec"].forEach (s=>{args.push(s)});
+                else if (f.video[0] == "vp9")
+                    ["vp9dec"].forEach (s=>{args.push(s)});
+                else if (f.video[0] == "mpeg-4 version 3")
+                    ["avdec_msmpeg4"].forEach (s=>{args.push(s)});
+                else if (f.video[0] == "mpeg-4 version 2")
+                    ["avdec_msmpeg4v2"].forEach (s=>{args.push(s)});
+                else if (f.video[0] == "mpeg-4 version 1")
+                    ["avdec_msmpeg4v1"].forEach (s=>{args.push(s)});
                 //["!","x264enc","pass=quant","quantizer=26","speed-preset=1"].forEach (s=>{args.push(s)});
-                ["!","x264enc","pass=cbr","bitrate=4000","speed-preset=1"].forEach (s=>{args.push(s)});
+                //["!","x264enc","pass=cbr","bitrate=4000","speed-preset=1"].forEach (s=>{args.push(s)});
+                ["!","x264enc","speed-preset=2","!","video/x-h264,profile=baseline"].forEach (s=>{args.push(s)});
             }
         ["!","queue","!"].forEach (s=>{args.push(s)});
         if (c[0] == "quicktime") {
-            ["mp4mux","streamable=true","fragment-duration=4"].forEach (s=>{args.push(s)});
+            ["mp4mux","streamable=true","fragment-duration=8"].forEach (s=>{args.push(s)});
         }
-        ["name=mux","!","filesink","location=/dev/stdout","d.","!"].forEach (s=>{args.push(s)});
+        ["name=mux","!","filesink","location=/dev/stdout","d."].forEach (s=>{args.push(s)});
         if (f.audio.length>0) {
-            if (f.audio[0] == "mpeg-4 aac") args.push ("aacparse");
+            if (f.audio[0] == "mpeg-4 aac") args.push ("!","aacparse");
             else {
             if (f.audio[0] == "ac-3 (atsc a/52)")
-                ["ac3parse","!","a52dec","drc=true","mode=10"].forEach (s=>{args.push(s)});
+                ["!","ac3parse","!","a52dec","drc=true","mode=10"].forEach (s=>{args.push(s)});
             else if (f.audio[0] == "e-ac-3 (atsc a/52b)")
-                ["ac3parse","!","avdec_eac3"].forEach (s=>{args.push(s)});
+                ["!","ac3parse","!","avdec_eac3"].forEach (s=>{args.push(s)});
             else if (f.audio[0] == "dts")
-                ["dcaparse","!","dtsdec"].forEach (s=>{args.push(s)});
+                ["!","dcaparse","!","dtsdec"].forEach (s=>{args.push(s)});
             else if (f.audio[0] == "mpeg-1 layer 3 (mp3)")
-                ["mpegaudioparse","!","mpg123audiodec"].forEach (s=>{args.push(s)});
+                ["!","mpegaudioparse","!","mpg123audiodec"].forEach (s=>{args.push(s)});
+            else if (f.audio[0] == "vorbis")
+                ["!","vorbisparse","!","vorbisdec"].forEach (s=>{args.push(s)});
             ["!","audioconvert","!","audio/x-raw,channels=2","!","voaacenc","bitrate=192000"].forEach (s=>{args.push(s)});
             }
+            ["!","queue",].forEach (s=>{args.push(s)});
         }
-        ["!","queue","!","mux."].forEach (s=>{args.push(s)});
+        ["!","mux."].forEach (s=>{args.push(s)});
         debug (args);
         return this.obmin.send_pipe_async (request, args, file.get_basename()+c[4], c[1]);
     },
