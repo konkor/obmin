@@ -168,7 +168,7 @@ const ObminCenter = new Lang.Class ({
         } catch (e) {
             error (e.message);
         }
-        window.set_default_size (1024, 640);
+        window.set_default_size (800, 512);
         cssp = get_css_provider ();
         this.hb = new Gtk.HeaderBar ();
         this.hb.set_show_close_button (false);

@@ -48,10 +48,11 @@ var web_mime = "video/mp4;video/webm";
 var mime = "video/mp4;video/3gpp;video/3gpp2;video/dv;video/mp2t;video/mpeg;video/ogg;video/quicktime;video/vivo;video/webm;video/x-avi;video/x-flv;video/x-matroska;video/x-matroska-3d;video/x-mng;video/x-msvideo;video/x-nsv;video/x-ogm+ogg;video/x-theora+ogg;video/x-vnd.rn-realvideo";
 var mime_audio = ";application/ogg;audio/x-vorbis+ogg;audio/ac3;audio/basic;audio/x-flac;audio/mp4;audio/mpeg;audio/x-mpeg;audio/x-ms-asx;audio/x-pn-realaudio;audio/flac";
 
-var containers = {
-quicktime: ["quicktime","video/mp4","h.264","mpeg-4 aac",".mp4"],
-webm: ["webm","video/webm","vp8","vorbis",".webm"]
-};
+var containers = [
+["quicktime","video/mp4","h.264","mpeg-4 aac",".mp4"],
+["webm","video/webm","vp8","vorbis",".webm"],
+["webm","video/webm","vp9","vorbis",".webm"]
+];
 
 var profiles = [
 ["Auto", "Automatic encoding (remuxing if it possible)"],
@@ -99,22 +100,29 @@ var Plugin = new Lang.Class ({
     parse_info: function (f, info) {
         let i, container = "", video = [], audio = [], text = [];
         info.forEach (s=>{
+            var info;
             i = s.indexOf("container:");
             if (i > -1) {container = s.substring (i+10).trim().toLowerCase();return;}
             i = s.indexOf("audio:");
             if (i > -1) {audio.push (s.substring (i+6).trim().toLowerCase());return;}
             i = s.indexOf("video:");
-            if (i > -1) {video.push (s.substring (i+6).trim().toLowerCase());return;}
+            if (i > -1) {
+                info = s.substring (i+6).trim().toLowerCase();
+                if (info.indexOf("h.264") > -1) info = "h.264";
+                else if (info.indexOf("mpeg-2 video") > -1) info = "mpeg-2 video";
+                else if (info.indexOf("mpeg-4 video") > -1) info = "mpeg-4 video";
+                video.push (info);return;
+            }
         });
         f.container = container;
         f.video = video;
         f.audio = audio;
         if (container && (video.length > 0 || audio.length > 0)) {
-            var c = containers[container];
-            if (c) {
-                f.support = 1;
-                video.forEach(s=>{if (s != c[2])f.support = 0;});
-                audio.forEach(s=>{if (s != c[3])f.support = 0;});
+            for (i = 0; i < containers.length; i++) {
+                if (f.container == containers[i][0]) f.support = 1;
+                video.forEach(s=>{if (s != containers[i][2])f.support = 0;});
+                audio.forEach(s=>{if (s != containers[i][3])f.support = 0;});
+                if (f.support == 1) break;
             }
         }
         print (f.mime, container,video,audio,f.support);
@@ -141,7 +149,7 @@ var Plugin = new Lang.Class ({
         var f = this.discover ({path:file.get_path(), mime:finfo.get_content_type()});
         if (f.support == 1) return this.obmin.send_file_async (request, file, finfo);
         var c = this.get_container (f);
-        if (!c) c = containers.quicktime;
+        if (!c) c = containers[0];
         if (f.container && f.container == "matroska") {
             args.push ("matroskademux");
         } else if (f.container && f.container == "quicktime") {
@@ -160,11 +168,12 @@ var Plugin = new Lang.Class ({
                     ["mpeg2dec"].forEach (s=>{args.push(s)});
                 else if (f.video[0] == "mpeg-4 video")
                     ["avdec_mpeg4"].forEach (s=>{args.push(s)});
-                ["!","x264enc","quantizer=28","speed-preset=1"].forEach (s=>{args.push(s)});
+                //["!","x264enc","pass=quant","quantizer=26","speed-preset=1"].forEach (s=>{args.push(s)});
+                ["!","x264enc","pass=cbr","bitrate=4000","speed-preset=1"].forEach (s=>{args.push(s)});
             }
         ["!","queue","!"].forEach (s=>{args.push(s)});
         if (c[0] == "quicktime") {
-            ["mp4mux","streamable=true","fragment-duration=8"].forEach (s=>{args.push(s)});
+            ["mp4mux","streamable=true","fragment-duration=4"].forEach (s=>{args.push(s)});
         }
         ["name=mux","!","filesink","location=/dev/stdout","d.","!"].forEach (s=>{args.push(s)});
         if (f.audio.length>0) {
@@ -182,14 +191,15 @@ var Plugin = new Lang.Class ({
             }
         }
         ["!","queue","!","mux."].forEach (s=>{args.push(s)});
+        debug (args);
         return this.obmin.send_pipe_async (request, args, file.get_basename()+c[4], c[1]);
     },
 
     get_container: function (f) {
         var c = null;
-        for (var p in containers)
-            if ((f.video.length>0 && p[2]==f.video[0]) || (f.audio.length>0 && p[3]==f.audio[0])){
-                c = p;
+        for (var i = 0; i < containers.length; i++)
+            if ((f.video.length>0 && containers[i][2]==f.video[0]) || (f.audio.length>0 && containers[i][3]==f.audio[0])){
+                c = containers[i];
                 break;
             }
         return c;
