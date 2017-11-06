@@ -147,13 +147,13 @@ var Plugin = new Lang.Class ({
     },
 
     get_media: function (request, file, finfo) {
-        var args = [this.gst,"--quiet","filesrc","location=\""+file.get_path()+"\"","!"];
+        var args = [this.gst,"--quiet","filesrc","location=\""+file.get_path()+"\"","!"], raw = false;
         if (mime_audio.indexOf(finfo.get_content_type ())>-1) return this.get_audio (request, file, finfo);
         var f = this.discover ({path:file.get_path(), mime:finfo.get_content_type()});
         if (f.support == 1) return this.obmin.send_file_async (request, file, finfo);
         //var c = this.get_container (f);
         //if (!c) c = containers[0];
-        c = containers[0];
+        var c = containers[0];
         if (f.container && (f.container == "matroska" || f.container == "webm")) {
             args.push ("matroskademux");
         } else if (f.container && f.container == "quicktime") {
@@ -164,16 +164,20 @@ var Plugin = new Lang.Class ({
             args.push ("avidemux");
         } else if (f.container && f.container == "ogg") {
             args.push ("oggdemux");
+        }else {
+            raw = true;
+            args.push ("decodebin");
         }
-        debug (f.container);
-        ["name=\"d\"","d.","!"].forEach (s=>{args.push(s)});
+        ["name=\"d\"","d."].forEach (s=>{args.push(s)});
+        if (!raw) args.push("!");
         if (f.video.length>0)
-            if (f.video[0] == "h.264") args.push ("h264parse");
+            if (!raw && (f.video[0] == "h.264")) args.push ("h264parse");
             else {
+                if (!raw) {
                 if (f.video[0] == "mpeg-2 video")
                     ["mpeg2dec"].forEach (s=>{args.push(s)});
                 else if (f.video[0] == "mpeg-4 video")
-                    ["avdec_mpeg4"].forEach (s=>{args.push(s)});
+                    ["avdec_mpeg4","max-threads=1"].forEach (s=>{args.push(s)});
                 else if (f.video[0] == "theora")
                     ["theoradec"].forEach (s=>{args.push(s)});
                 else if (f.video[0] == "vp8")
@@ -186,18 +190,21 @@ var Plugin = new Lang.Class ({
                     ["avdec_msmpeg4v2"].forEach (s=>{args.push(s)});
                 else if (f.video[0] == "mpeg-4 version 1")
                     ["avdec_msmpeg4v1"].forEach (s=>{args.push(s)});
+                }
                 //["!","x264enc","pass=quant","quantizer=26","speed-preset=1"].forEach (s=>{args.push(s)});
                 //["!","x264enc","pass=cbr","bitrate=4000","speed-preset=1"].forEach (s=>{args.push(s)});
-                ["!","x264enc","speed-preset=2","!","video/x-h264,profile=baseline"].forEach (s=>{args.push(s)});
+                //["!","x264enc","speed-preset=2","!","video/x-h264,profile=main"].forEach (s=>{args.push(s)});
+                ["!","x264enc","bitrate=4000","speed-preset=2","bframes=2","cabac=true","dct8x8=true"].forEach (s=>{args.push(s)});
             }
         ["!","queue","!"].forEach (s=>{args.push(s)});
         if (c[0] == "quicktime") {
-            ["mp4mux","streamable=true","fragment-duration=8"].forEach (s=>{args.push(s)});
+            ["mp4mux","streamable=true","fragment-duration=10"].forEach (s=>{args.push(s)});
         }
         ["name=mux","!","filesink","location=/dev/stdout","d."].forEach (s=>{args.push(s)});
         if (f.audio.length>0) {
-            if (f.audio[0] == "mpeg-4 aac") args.push ("!","aacparse");
+            if (!raw && (f.audio[0] == "mpeg-4 aac")) args.push ("!","aacparse");
             else {
+            if (!raw) {
             if (f.audio[0] == "ac-3 (atsc a/52)")
                 ["!","ac3parse","!","a52dec","drc=true","mode=10"].forEach (s=>{args.push(s)});
             else if (f.audio[0] == "e-ac-3 (atsc a/52b)")
@@ -208,12 +215,15 @@ var Plugin = new Lang.Class ({
                 ["!","mpegaudioparse","!","mpg123audiodec"].forEach (s=>{args.push(s)});
             else if (f.audio[0] == "vorbis")
                 ["!","vorbisparse","!","vorbisdec"].forEach (s=>{args.push(s)});
+            }
             ["!","audioconvert","!","audio/x-raw,channels=2","!","voaacenc","bitrate=192000"].forEach (s=>{args.push(s)});
             }
             ["!","queue",].forEach (s=>{args.push(s)});
         }
         ["!","mux."].forEach (s=>{args.push(s)});
-        debug (args);
+        var dstr = "";
+        args.forEach (s=>{dstr += " " + s});
+        //debug (dstr.trim());
         return this.obmin.send_pipe_async (request, args, file.get_basename()+c[4], c[1]);
     },
 
