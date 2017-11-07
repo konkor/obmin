@@ -166,8 +166,9 @@ var FileStream = new Lang.Class({
 
 var PipeStream = new Lang.Class({
     Name: 'PipeStream',
-    _init: function (server, request, args, name, mime) {
+    _init: function (server, request, args, name, mime, dir) {
         //debug (args);
+        dir = dir || "/";
         this.BUFFER = 1048576;
         this.b = [];
         this.bsize = 0;
@@ -218,9 +219,9 @@ var PipeStream = new Lang.Class({
 
         try{
             let exit, pid, stdin_fd, stderr_fd;
-            [exit, pid, stdin_fd, this.stdout_fd, stderr_fd] = GLib.spawn_async_with_pipes ("/",
+            [exit, pid, stdin_fd, this.stdout_fd, stderr_fd] = GLib.spawn_async_with_pipes (dir,
                                             args,
-                                            GLib.get_environ(),
+                                            null,
                                             GLib.SpawnFlags.DO_NOT_REAP_CHILD,
                                             null);
             this.stdout = new Gio.UnixInputStream ({fd: this.stdout_fd, close_fd: true});

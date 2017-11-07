@@ -328,8 +328,8 @@ const ObminServer = new Lang.Class({
         return true;
     },
 
-    send_pipe_async: function (request, args, name, mime) {
-        let st = new Stream.PipeStream (this, request, args, name, mime);
+    send_pipe_async: function (request, args, name, mime, dir) {
+        let st = new Stream.PipeStream (this, request, args, name, mime, dir);
         counter.ready--;
         request.msg.connect ("finished", Lang.bind (this, (o)=> {
             debug ("pipe finished %s:%d".format(st.num,st.offset));

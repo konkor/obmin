@@ -1,0 +1,5 @@
+#!/usr/bin/gjs
+
+const Gio = imports.gi.Gio;
+
+print (Gio.dbus_generate_guid ());

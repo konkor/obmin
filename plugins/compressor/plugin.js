@@ -46,9 +46,10 @@ var METADATA = {
 var LISTS = [
 {query:"tar", title: "Flat Folder With Tar", label: "TAR+"},
 {query:"gz", title: "Compress Folder With GZip", label: "GZIP+"},
-{query:"bz", title: "Compress Folder With BZip2", label: "BZ2+"},
-{query:"xz", title: "Compress Folder With XZ", label: "XZ+"},
+{query:"xz", title: "Compress Folder With XZ", label: "XZ+"}
 ];
+var bz2_item = {query:"bz", title: "Compress Folder With BZip2", label: "BZ2+"};
+var zip_item  = {query:"zip", title: "Compress Folder With ZIP", label: "ZIP+"};
 
 var Plugin = new Lang.Class ({
     Name: 'GzipPlugin',
@@ -56,6 +57,9 @@ var Plugin = new Lang.Class ({
 
     _init: function (obmin) {
         this.parent (obmin, METADATA);
+        this.zip = GLib.find_program_in_path ("zip");
+        if (this.zip) LISTS.push (zip_item);
+        else LISTS.push (bz2_item);
     },
 
     menu_item: function (class_name) {
@@ -81,38 +85,42 @@ var Plugin = new Lang.Class ({
 
     get_tar: function (request, dir, rec_attr, recursive) {
         var finfo = dir.query_info ("standart::*", 0, null), path, ext = request.query.format;
-        let mime, archive = dir.get_basename(), args = [];
+        let mime, archive = dir.get_basename(), args = [], workdir;
         let tar = GLib.find_program_in_path("tar");
         debug ("tar", tar);
         if (!tar) return false;
-        args.push (tar);
         if (finfo.get_is_symlink ())
             path = Gio.File.new_for_path (finfo.get_symlink_target ());
         else path = dir;
-        if (!this.obmin.check_backup) args.push ("--exclude-backups");
-        args.push ("-C"); args.push (path.get_parent().get_path ());
+        //if (!this.obmin.check_backup) args.push ("--exclude-backups");
+        //args.push ("-C"); args.push (path.get_parent().get_path ());
+        workdir = path.get_parent().get_path ();
         if (ext == "tar") {
-            args.push ("-cf");
+            args = [tar,"-cf","-"];
             archive += ".tar";
             mime = "application/x-tar";
         } else if (ext == "gz") {
-            args.push ("-zcf");
+            args = [tar,"-zcf","-"];
             archive += ".tar.gz";
             mime = "application/x-compressed-tar";
         } else if (ext == "bz") {
-            args.push ("-jcf");
+            args = [tar,"-jcf","-"];
             archive += ".tar.bz2";
             mime = "application/x-bzib-compressed-tar";
         } else if (ext == "xz") {
-            args.push ("-Jcf");
+            args = [tar,"-Jcf","-"];
             archive += ".tar.xz";
             mime = "application/x-xz-compressed-tar";
+        } else if (this.zip && (ext == "zip")) {
+            args = [this.zip,"-","-r","-q"];
+            archive += ".zip";
+            mime = "application/zip";
         } else return false;
-        args.push ("-");
         args.push (path.get_basename());
-        //args.push (".");
+        if ((ext != "zip") && (!this.obmin.check_backup)) args.push ("--exclude-backups");
         //if (!recursive || !rec_attr) args.push ("--exclude=\'*/*\'");
-        return this.obmin.send_pipe_async (request, args, archive, mime);
+        debug (args);
+        return this.obmin.send_pipe_async (request, args, archive, mime, workdir);
     }
 });
 
