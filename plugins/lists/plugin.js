@@ -1,5 +1,5 @@
 /*
- * Obmin - Simple File Sharing Server For GNOME Desktop
+ * Obmin - Simple File Sharing Server For GNU/Linux Desktop
  *
  * Copyright (C) 2017 Kostiantyn Korienkov <kapa76@gmail.com>
  *

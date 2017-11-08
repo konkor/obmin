@@ -5,6 +5,7 @@ nobase_plug_DATA = base.js \
     compressor/plugin.js \
     slideshow/plugin.js \
     transcoder/plugin.js \
+    camera/plugin.js \
     $(NULL)
 
 EXTRA_DIST = \
