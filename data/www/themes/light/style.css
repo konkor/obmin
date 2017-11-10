@@ -1,12 +1,13 @@
 /* Obmin style */
 body {background: #f0f0f0;font-family:roboto,sans;font-size: 1.0em; margin: 0px;}
-a,a:visited,a:focus {text-decoration:none;color: #f0f0f0;}
-a:hover,a:active {color: #0c3955;}
+a {text-decoration:none}
 .home {height:32px;display:inline-block; margin: 0px 6px 0px 8px}
 .path {background:#0c99d5;color:#f0f0f0;margin:1px auto 1px auto;padding:8px 0px;font-size:1.4em;border-bottom:1px solid #ccc;box-shadow:0 2px 2px rgba(0,0,0,.3);display:table;vertical-align: middle;width:100%}
+.path a,.path a:visited,.path a:focus {color: #f0f0f0;}
+.path a:hover,.path a:active {color: #0c3955;}
 .nmenu-button {padding:8px 16px;width:auto;height:100%;border:none;outline:none;display:table-cell;float:right}
 .panel {background:#0c99d5;display:table;vertical-align: middle;min-width:100%;width:100%;text-align:left;padding:12px 0px;transition:0.6s ease}
-.panel a:hover {color:#0c3955}
+.panel a, .pbtn {color:#f0f0f0}.panel a:hover, .pbtn:hover, .pbtn:focus, .pbtn:active {color:#0c3955}
 .contents {width: 97%; margin: 0px auto 0px auto;}
 .content {color:#0c3955;padding: 4px; margin: 2px auto 2px auto;border: 0px solid;border-bottom-width: 2px;}
 .content:hover, .content:focus, .content:active {background-color: #0c99d5;color: #f0f0f0;}

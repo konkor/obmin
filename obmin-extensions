@@ -50,8 +50,3 @@ function get_appdir () {
     throw "Obmin installation not found...";
     return s;
 }
-
-var uuid = ARGV[0]?ARGV[0]:null;
-
-let app = new Extensions.ObminExtensions (uuid);
-app.run (ARGV);

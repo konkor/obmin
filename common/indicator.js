@@ -393,5 +393,5 @@ Convenience.initTranslations ();
 
 settings = Convenience.getSettings ();
 
-//let app = new ObminIndicator ();
-//app.application.run (ARGV);
+let app = new ObminIndicator ();
+app.application.run (ARGV);

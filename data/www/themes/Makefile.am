@@ -19,9 +19,15 @@ light_DATA= \
     light/home.png \
     light/style.css
 
+mintdir=$(datadir)/gnome-shell/extensions/obmin@konkor/data/www/themes/mint
+mint_DATA= \
+    mint/home.png \
+    mint/style.css
+
 EXTRA_DIST = \
         $(classic_DATA) \
         $(dark_DATA) \
         $(light_DATA) \
+        $(mint_DATA) \
         $(def_DATA)
 

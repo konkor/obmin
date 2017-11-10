@@ -55,7 +55,8 @@ var Plugin = new Lang.Class ({
 //        "alsasrc","!","audioconvert","!","audio/x-raw,channels=2","!",
 //        "vorbisenc","bitrate=80000","!","queue","!","mux."];
         var args = [this.launch,"--quiet","v4l2src","!","decodebin","!","videoconvert","!",
-        "vp8enc","target-bitrate=256000","keyframe-max-dist=60","max_quantizer=13","cpu-used=2","!",
+        "vp8enc","cpu-used=0","threads=1","end-usage=2","undershoot=95","keyframe-max-dist=240",
+        "dropframe-threshold=70","deadline=500","min_quantizer=10","cq-level=21","!",
         "queue","!","webmmux","streamable=true","name=mux","!","filesink","location=/dev/stdout"];
         var dstr = "";
         args.forEach (s=>{dstr += " " + s});

@@ -233,7 +233,7 @@ function error (msg) {
 
 settings = Convenience.getSettings ();
 
-//var uuid = ARGV[0]?ARGV[0]:null;
+var uuid = ARGV[0]?ARGV[0]:null;
 
-//let app = new ObminExtensions (uuid);
-//app.run (ARGV);
+let app = new ObminExtensions (uuid);
+app.run (ARGV);

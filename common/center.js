@@ -1181,3 +1181,8 @@ function debug (msg) {
 function error (msg) {
     Convenience.error ("center", msg);
 }
+
+Gtk.IconTheme.get_default().add_resource_path("data/icons");
+
+let app = new ObminCenter ();
+app.application.run (ARGV);

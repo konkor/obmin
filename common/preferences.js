@@ -83,3 +83,6 @@ function get_appdir () {
     throw "Obmin installation not found...";
     return s;
 }
+
+let app = new Preferences ();
+app.application.run (ARGV);

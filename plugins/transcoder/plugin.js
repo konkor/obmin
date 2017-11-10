@@ -47,25 +47,43 @@ var METADATA = {
 var web_mime = "video/mp4;video/webm";
 var mime = "video/mp4;video/3gpp;video/3gpp2;video/dv;video/mp2t;video/mpeg;video/ogg;video/quicktime;video/vivo;video/webm;video/x-avi;video/x-flv;video/x-matroska;video/x-matroska-3d;video/x-mng;video/x-msvideo;video/x-nsv;video/x-ogm+ogg;video/x-theora+ogg;video/x-vnd.rn-realvideo";
 var mime_audio = ";application/ogg;audio/x-vorbis+ogg;audio/ac3;audio/basic;audio/x-flac;audio/mp4;audio/mpeg;audio/x-mpeg;audio/x-ms-asx;audio/x-pn-realaudio;audio/flac";
-
+var threads = Math.round (GLib.get_num_processors()/2) - 1;
+if (threads < 1) threads = 1;
 var containers = [
 ["quicktime","video/mp4","h.264","mpeg-4 aac",".mp4"],
 ["webm","video/webm","vp8","vorbis",".webm"],
 ["webm","video/webm","vp9","vorbis",".webm"]
 ];
-
 var profiles = [
 ["Auto", "Automatic encoding (remuxing if it possible)"],
-["ISO Low", "ISO H.264 container (480p baseline 128kbit)"],
-["ISO Normal", "ISO H.264 container (720p main 160kbit)"],
-["ISO High", "ISO H.264 container (1080p high 320kbit)"],
-["WEBM Low", "WEBM container (480p low 96kbit)"],
-["WEBM Normal", "WEBM container (720p main 160kbit)"],
-["WEBM High", "WEBM container (1080p high 256kbit)"]
+["ISO Low", "ISO H.264 Low (0.1 MB/s 128kbit)"],
+["ISO Normal", "ISO H.264 (0.5 MB/s 160kbit)"],
+["ISO High", "ISO H.264 (1.0 MB/s 192kbit)"],
+["WEBM Low", "WEBM (Quality level 35)"],
+["WEBM Normal", "WEBM (Quality level 28)"],
+["WEBM High", "WEBM (Quality level 21)"]
+];
+var profile_video = [
+["!","x264enc","bitrate=4000","speed-preset=2","bframes=2","cabac=true","dct8x8=true"],
+["!","x264enc","bitrate=960","speed-preset=2","bframes=2","cabac=true","dct8x8=true"],
+["!","x264enc","bitrate=3600","speed-preset=2","bframes=2","cabac=true","dct8x8=true"],
+["!","x264enc","bitrate=7600","speed-preset=2","bframes=2","cabac=true","dct8x8=true"],
+["!","vp8enc","cpu-used=0","threads="+threads,"end-usage=2","undershoot=95","keyframe-max-dist=360","dropframe-threshold=70","deadline=1000","min_quantizer=13","cq-level=35"],
+["!","vp8enc","cpu-used=0","threads="+threads,"end-usage=2","undershoot=95","keyframe-max-dist=360","dropframe-threshold=70","deadline=1000","min_quantizer=10","cq-level=28"],
+["!","vp8enc","cpu-used=0","threads="+threads,"end-usage=2","undershoot=95","keyframe-max-dist=360","dropframe-threshold=70","deadline=1000","min_quantizer=8","cq-level=21"],
+];
+var profile_audio = [
+["!","audioconvert","!","audio/x-raw,channels=2","!","voaacenc","bitrate=192000"],
+["!","audioconvert","!","audio/x-raw,channels=2","!","voaacenc","bitrate=128000"],
+["!","audioconvert","!","audio/x-raw,channels=2","!","voaacenc","bitrate=160000"],
+["!","audioconvert","!","audio/x-raw,channels=2","!","voaacenc","bitrate=192000"],
+["!","audioconvert","!","audio/x-raw,channels=2","!","vorbisenc","quality=0.8"],
+["!","audioconvert","!","audio/x-raw,channels=2","!","vorbisenc","quality=0.8"],
+["!","audioconvert","!","audio/x-raw,channels=2","!","vorbisenc","quality=0.8"],
 ];
 var style = {
 container:"padding:4px;margin:0px auto 4px auto;display:table;border:0;border-color: #a4aaaa;border-radius:4px;vertical-align: middle",
-button:"display:table-cell;border-radius:8px;padding:8px;margin:8px;font-size:16px",
+button:"display:table-cell;border-radius:8px;padding:4px;margin:8px;font-size:14px",
 rbutton:"display:table-cell;float:right;font-size:1.2em"
 }
 
@@ -82,9 +100,15 @@ var Plugin = new Lang.Class ({
     },
 
     link: function (file, div) {
-        var l = div, href = " href=\"" + file.name + "?plug=d33096fb1a680b6709e01fea59f31bb1\"";
+        var l = div, href = " href=\"" + file.name + "?plug=d33096fb1a680b6709e01fea59f31bb1";
         if (mime.indexOf(file.mime)==-1) return div;
-        l += "<div class=\"content\" style=\""+style.container+"\"><a class=\"path\""+href+" style=\""+style.button+"\" title=\"Auto Profile\">WATCH ONLINE</a><a"+href+" style=\""+style.button+"\" title=\"Low Profile\">LOW</a><a"+href+" style=\""+style.button+"\" title=\"Normal Profile\">NORMAL</a><a"+href+" style=\""+style.button+"\" title=\"High Profile\">HIGH</a></div>";
+        l += "<div class=\"content\" style=\""+style.container+"\">"+
+        "<a class=\"path\""+href+"\" style=\""+style.button+"\" title=\"Auto Profile (Remux/ISO Normal)\">WATCH ONLINE</a>";
+        for (let i = 1; i < profiles.length; i++) {
+            l += "<a class=\"pbtn\""+href+"&profile="+i+"\" style=\""+style.button+"\" title=\""+
+            profiles[i][1] + "\">" + profiles[i][0] + "</a>";
+        }
+        l += "</div>";
         return l;
     },
 
@@ -128,7 +152,7 @@ var Plugin = new Lang.Class ({
                 if (f.support == 1) break;
             }
         }
-        print (f.mime, container,video,audio,f.support);
+        //debug (f.mime, container,video,audio,f.support);
         return f;
     },
 
@@ -148,12 +172,16 @@ var Plugin = new Lang.Class ({
 
     get_media: function (request, file, finfo) {
         var args = [this.gst,"--quiet","filesrc","location=\""+file.get_path()+"\"","!"], raw = false;
+        var prf  = 0;
+        if (request.query && request.query.profile)
+            if (request.query.profile > 0 && request.query.profile < profiles.length)
+                prf = request.query.profile;
         if (mime_audio.indexOf(finfo.get_content_type ())>-1) return this.get_audio (request, file, finfo);
         var f = this.discover ({path:file.get_path(), mime:finfo.get_content_type()});
-        if (f.support == 1) return this.obmin.send_file_async (request, file, finfo);
+        if (f.support == 1 && prf == 0) return this.obmin.send_file_async (request, file, finfo);
         //var c = this.get_container (f);
         //if (!c) c = containers[0];
-        var c = containers[0];
+        var c = prf<4?containers[0]:containers[1];
         if (f.container && (f.container == "matroska" || f.container == "webm")) {
             args.push ("matroskademux");
         } else if (f.container && f.container == "quicktime") {
@@ -171,9 +199,8 @@ var Plugin = new Lang.Class ({
         ["name=\"d\"","d."].forEach (s=>{args.push(s)});
         if (!raw) args.push("!");
         if (f.video.length>0)
-            if (!raw && (f.video[0] == "h.264")) args.push ("h264parse");
-            else {
-                if (!raw) {
+            if (!raw && (f.video[0] == "h.264") && prf == 0) args.push ("h264parse");
+            else { if (!raw) {
                 if (f.video[0] == "mpeg-2 video")
                     ["mpeg2dec"].forEach (s=>{args.push(s)});
                 else if (f.video[0] == "mpeg-4 video")
@@ -190,19 +217,26 @@ var Plugin = new Lang.Class ({
                     ["avdec_msmpeg4v2"].forEach (s=>{args.push(s)});
                 else if (f.video[0] == "mpeg-4 version 1")
                     ["avdec_msmpeg4v1"].forEach (s=>{args.push(s)});
-                }
+                else if (f.video[0] == "h.264")
+                    ["avdec_h264","max-threads=2"].forEach (s=>{args.push(s)});
+                else {
+                    raw = true;
+                    args = [this.gst,"--quiet","filesrc","location=\""+file.get_path()+"\"","!","decodebin","name=\"d\"","d."];
+                }}
                 //["!","x264enc","pass=quant","quantizer=26","speed-preset=1"].forEach (s=>{args.push(s)});
                 //["!","x264enc","pass=cbr","bitrate=4000","speed-preset=1"].forEach (s=>{args.push(s)});
                 //["!","x264enc","speed-preset=2","!","video/x-h264,profile=main"].forEach (s=>{args.push(s)});
-                ["!","x264enc","bitrate=4000","speed-preset=2","bframes=2","cabac=true","dct8x8=true"].forEach (s=>{args.push(s)});
+                //["!","x264enc","bitrate=4000","speed-preset=2","bframes=2","cabac=true","dct8x8=true"].forEach (s=>{args.push(s)});
+                profile_video[prf].forEach (s=>{args.push(s)});
             }
         ["!","queue","!"].forEach (s=>{args.push(s)});
-        if (c[0] == "quicktime") {
+        if (c[0] == "quicktime")
             ["mp4mux","streamable=true","fragment-duration=10"].forEach (s=>{args.push(s)});
-        }
+        else
+            ["webmmux","streamable=true"].forEach (s=>{args.push(s)});
         ["name=mux","!","filesink","location=/dev/stdout","d."].forEach (s=>{args.push(s)});
         if (f.audio.length>0) {
-            if (!raw && (f.audio[0] == "mpeg-4 aac")) args.push ("!","aacparse");
+            if (!raw && (f.audio[0] == "mpeg-4 aac") && prf < 4) args.push ("!","aacparse");
             else {
             if (!raw) {
             if (f.audio[0] == "ac-3 (atsc a/52)")
@@ -215,8 +249,11 @@ var Plugin = new Lang.Class ({
                 ["!","mpegaudioparse","!","mpg123audiodec"].forEach (s=>{args.push(s)});
             else if (f.audio[0] == "vorbis")
                 ["!","vorbisparse","!","vorbisdec"].forEach (s=>{args.push(s)});
+            else if (f.audio[0] == "mpeg-4 aac")
+                ["!","aacparse","!","faad"].forEach (s=>{args.push(s)});
             }
-            ["!","audioconvert","!","audio/x-raw,channels=2","!","voaacenc","bitrate=192000"].forEach (s=>{args.push(s)});
+            //["!","audioconvert","!","audio/x-raw,channels=2","!","voaacenc","bitrate=192000"].forEach (s=>{args.push(s)});
+            profile_audio[prf].forEach (s=>{args.push(s)});
             }
             ["!","queue",].forEach (s=>{args.push(s)});
         }
