@@ -383,7 +383,7 @@ const PageGeneral = new Lang.Class({
         }));
 
         this.add (new Gtk.Label ({label: _("<b>Server Extensions</b>"), use_markup:true, xalign:0, margin_top:8, margin_bottom:8}));
-        this.manager = new Gtk.Button ({label: _("Local Extensions...")});
+        this.manager = new Gtk.Button ({label: _("Extensions...")});
         this.manager.tooltip_text = "OBMIN " + _("Extension Manager");
         this.add (this.manager);
         this.manager.connect ('clicked', Lang.bind (this, ()=>{
