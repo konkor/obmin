@@ -81,7 +81,6 @@ var ObminIndicator = new Lang.Class ({
 
     _onActivate: function (){
         this._window.hide ();
-        GLib.spawn_command_line_async (APPDIR + '/obmin-center');
     },
 
     _onStartup: function () {

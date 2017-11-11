@@ -139,12 +139,13 @@ var Plugin = new Lang.Class ({
 ".prev:hover, .next:hover {background-color:rgba(0,0,0,0.8);}"+
 ".text {font-size:16px;padding:8px 12px;position:absolute;bottom:24px;width:100%;text-align:center;}"+
 ".return {cursor:pointer;position:absolute;color:rgba(255,255,255,0.7);font-size:22px;padding:1em;top:0;display:block;text-decoration:none;margin:0;}"+
-".return:hover,.return:active,.speedbtn:hover,.speedbtn:active {color:#fff; background-color:rgba(0,0,0,0.8)}"+
+".return:hover,.return:active,.toolbtn:hover,.toolbtn:active {color:#fff; background-color:rgba(0,0,0,0.8)}"+
 ".numbertext {color:rgba(255,255,255,0.7);font-size:1em;padding:1em 1em;position:absolute;top:3.5em}"+
 ".album {font-size:18px;padding:0em 0.4em;vertical-align:middle}"+
-".text,.numbertext,.return,.speedbtn {text-shadow:1px 1px 1px #000}"+
-".toolbar {position:absolute;margin:0;top:0;right:0;text-align:right}"+
-".speedbtn {cursor:pointer;color:rgba(255,255,255,0.7);background-color:transparent;border:none;font-size:1em;padding:1em;outline:0;text-align:right;font-size:18px}"+
+".text,.numbertext,.return,.toolbtn {text-shadow:1px 1px 1px #000}"+
+".toolbar {color:rgba(255,255,255,0.7);position:absolute;margin:0;top:0;right:0;text-align:right}"+
+".toolbar a {color:rgba(255,255,255,0.7);text-decoration:none}"+
+".toolbtn {cursor:pointer;background-color:transparent;border:none;padding:1em;outline:0;font-size:18px;display:inline-block}"+
 ".speed-menu{display:block;position:relative;background-color:#f9f9f9;min-width:160px;overflow:auto;box-shadow:0px 8px 16px 0px rgba(255,255,255,0.4);font-size:16px;right:0}"+
 ".speed-menu a {cursor:pointer;color:black;padding:12px 16px;display:block;}"+
 ".speed-menu a:hover {background-color: #aaa}"+
@@ -169,9 +170,9 @@ var Plugin = new Lang.Class ({
         html += "<a class=\"return ctrl\" title=\"Back to the folder\" href=\".\">< <span class=\"album\">" +
             dir.get_basename () + "</span></a>";
         html += "<div class=\"numbertext ctrl\">1 / " + files.length + "</div>";
-        html += "<div class=\"toolbar ctrl\"><div class=\"speed\"><button class=\"speedbtn\" onclick=\"toggle_speed()\">Speed</button><div class=\"speed-menu\"><a onclick=\"set_speed(0)\">Manual</a>";
+        html += "<div class=\"toolbar ctrl\"><div class=\"toolbtn speedbtn\" onclick=\"toggle_speed()\">Speed</div><div class=\"speed-menu\"><a onclick=\"set_speed(0)\">Manual</a>";
         [4,8,12,20,30,60].forEach (p=>{html += "<a onclick=\"set_speed("+p+")\">"+p+" seconds</a>";});
-        html += "</div></div></div>";
+        html += "</div><a href=\"" + files[0].name.toString() + "\" class=\"toolbtn dl\" title=\"Download Original\" download>⇩</a></div>";
         for (let i = 0; i < mid; i++) {
             html += "<div class=\"mySlides\"><img src=\"" + files[i].name.toString() + "?plug=" + this.puid +
             "\"  class=\"myImages\" style=\"max-width:100%;max-height:100vh;width:auto;height:auto;\">"+
@@ -193,7 +194,9 @@ var Plugin = new Lang.Class ({
 "var texts = document.getElementsByClassName(\"text\");\n"+
 "var ctrls = document.getElementsByClassName(\"ctrl\");\n"+
 "var numtext = document.getElementsByClassName(\"numbertext\");\n"+
+"var speedbtn = document.getElementsByClassName(\"speedbtn\")[0];\n"+
 "var speed_menu = document.getElementsByClassName(\"speed-menu\")[0];\n"+
+"var dlbtn = document.getElementsByClassName(\"dl\")[0];\n"+
 "var onctrl = false;\n"+
 "if (mid > 0) for (let i = 1; i <= mid; i++)\n"+
 "    images[mid - i].src = pictures[pictures.length - i] + \"?plug=6a3c0b97ba5450736bc9ebad59eb27ff\";\n"+
@@ -241,6 +244,7 @@ var Plugin = new Lang.Class ({
 "    numtext[0].innerHTML = (picIndex+1).toString() + \" / \" + pictures.length;\n"+
 "    texts[i].innerHTML = pictures[bi];\n"+
 "    images[i].src = pictures[bi] + \"?plug=6a3c0b97ba5450736bc9ebad59eb27ff\";\n"+
+"    dlbtn.href = pictures[picIndex];\n"+
 "}\n"+
 "window.onmousemove = function(){show_ctrl()};"+
 "function show_ctrl(delay) {"+
@@ -262,6 +266,8 @@ var Plugin = new Lang.Class ({
 "}"+
 "function set_speed(val){"+
 "    delay=val*1000;"+
+"    speedbtn.innerHTML=\'Speed \';"+
+"    if (val) speedbtn.innerHTML+=val+\'(s)\';"+
 "    plusSlides(0);"+
 "    toggle_speed();"+
 "}"+

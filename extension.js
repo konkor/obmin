@@ -90,7 +90,6 @@ const ObminIndicator = new Lang.Class({
         startup = this.settings.get_boolean (STARTUP_KEY);
         support = this.settings.get_int (SUPPORT_KEY);
         port = this.settings.get_int (PORT_KEY);
-        status = this.settings.get_int (STATUS_KEY);
         DEBUG = this.settings.get_int (DEBUG_KEY);
 
         server = this.server_enabled;

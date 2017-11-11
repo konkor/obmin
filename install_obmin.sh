@@ -14,7 +14,7 @@ EXTENSION_PATH="$HOME/.local/share/gnome-shell/extensions";
 mkdir -p $EXTENSION_PATH;
 
 # Set URL to extension archive
-URL="https://github.com/konkor/obmin/archive/";
+URL="https://github.com/konkor/obmin/raw/";
 
 if [ $# -lt 1 ]
 then
@@ -22,7 +22,7 @@ then
 else
     BRANCH=$1
 fi
-URL=$URL$BRANCH'.zip'
+URL=$URL$BRANCH'/releases/obmin%40konkor.zip'
 
 # Extension UUID 
 EXTENSION_UUID="obmin@konkor";
@@ -45,7 +45,7 @@ EXTENSION_ENABLED=$(echo ${EXTENSION_LIST} | grep ${EXTENSION_UUID});
 
 if [ "$EXTENSION_ENABLED" = "" ]; then
   # Enable extension
-  if [ "$DESKTOP_SESSION" = "gnome" ]; then
+  if [ "$XDG_CURRENT_DESKTOP" = "GNOME" ] || [ "$XDG_CURRENT_DESKTOP" = "UBUNTU:GNOME" ]; then
     gsettings set org.gnome.shell enabled-extensions "[${EXTENSION_LIST},'${EXTENSION_UUID}']" 
   fi
   # Extension is now available
