@@ -56,7 +56,6 @@ const BACKUPS_KEY = 'backup-settings';
 const SOURCES_KEY = 'content-sources';
 const UUID_KEY = 'user-id';
 const JOURNAL_KEY = 'logs';
-const CONTEST_KEY = 'contest';
 const STATS_MONITOR_KEY = 'stats-monitor';
 const STATS_DATA_KEY = 'stats';
 const SUPPORT_KEY = 'support';
@@ -72,7 +71,6 @@ const html_head = "<head><meta charset=\"utf-8\"><title>Obmin - Simple File Shar
 const h_menu_btn = "<a class=\"nmenu-button\" href=\"javascript:void(0);\" onclick=\"toggle()\" title=\"Toggle Menu\">&#x2630;</a>";
 var html_menu = "<div id=\"navmenu\" class=\"nmenu hide\">";
 const h_menu = "<a href=\"https://github.com/konkor/obmin/wiki\" class=\"nmenu-item right\" onclick=\"toggle()\" title=\"About Obmin\">About ...</a>";
-const h_menu1 = "<a href=\"https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=WVAS5RXRMYVC4\" class=\"nmenu-item right\" onclick=\"toggle()\" title=\"Make donation to the project\">Donate ...</a>";
 const h_js = "<script>function toggle(id){id = (typeof id !== \'undefined\')?id:\'navmenu\'; var x=document.getElementById(id);if(x.className.indexOf(\"show\")==-1){x.className += \" show\";}else{x.className=x.className.replace(\" show\",\"\");}}function hide(id){if (!id) return; var x=document.getElementById(id);if(x.className.indexOf(\"hide\")==-1){x.className += \" hide\";}}</script>";
 
 let mounts = true;
@@ -155,7 +153,6 @@ var ObminServer = new Lang.Class({
         for (let p of plugins.values()) if (p.has (Plugs.PlugType.MENU_ITEM))
             html_menu += p.menu_item ("nmenu-item");
         html_menu += h_menu;
-        if (support < 2) html_menu += h_menu1;
         html_menu += "</div>";
     },
 
@@ -626,70 +623,7 @@ function get_appdir () {
     return s;
 }
 
-function locale_header () {
-    let l = GLib.get_language_names()[0];
-    if (l) {
-        if (l.length > 4) l = l.substring (0, 5).replace ('_','-') + ',' + l.substring (0, 2) + ";q=0.5";
-        else if (l.length > 1) l = l.substring (0, 2);
-        else l = "en";
-    } else l = "en";
-    return l;
-}
-
-function popularity () {
-    let dt = GLib.getenv ("XDG_CURRENT_DESKTOP").toUpperCase ();
-    if (!dt) dt = "";
-    dt = linux_kernel() + " " + dt;
-    Convenience.fetch (
-    "https://www.google-analytics.com/collect?v=1&tid=UA-107697776-2&cid=" + uuid +"&t=pageview&dp=%2Fobmin%2Fcontest.html&dt=" + dt + "&dp=%2Fobmin%2Fcontest.html",
-    "Mozilla/5.0 (X11; Linux " + dt +") Gecko/20100101 Firefox/52.0",
-    [["Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8"],
-     ["Upgrade-Insecure-Requests", "1"],
-     ["Accept-Encoding", "compress, gzip"],
-     ["Accept-Language", locale_header()]
-    ],
-    null
-    );
-}
-
 let cmd_out, info_out;
-
-function linux_kernel () {
-    let distro = "Linux ";
-    let f = Gio.File.new_for_path ('/etc/os-release');
-    if (f.query_exists (null)) {
-        let dis = new Gio.DataInputStream ({ base_stream: f.read (null) });
-        let line, model = "", s, i = 0;
-        try {
-        [line, ] = dis.read_line (null);
-        while (line != null) {
-            s = new String (line);
-            if (s.indexOf ("PRETTY_NAME=") > -1) {
-                model = s;
-                i++;
-            }
-            if (i > 0) break;
-            [line, ] = dis.read_line (null);
-        }
-        dis.close (null);
-        if (model) {
-            if (model.length > 11) model = model.substring (12).trim ();
-            model = model.replace (/\"/g, "");
-            model = model.replace (distro, "");
-            i = model.indexOf ('(');
-            if ((i > -1) && (model.length > (i+1))) {
-                model = model.slice(0,i) + model[i+1].toUpperCase() + model.slice(i+2);
-                model = model.replace (")", "");
-            }
-            distro = model;
-        }} catch (e) {error (e.message);}
-    }
-    cmd_out = GLib.spawn_command_line_sync ("uname -r");
-    if (cmd_out[1]) info_out = cmd_out[1].toString().split("\n")[0];
-    if (info_out) distro += " " + info_out;
-    return distro;
-}
-
 function get_info_string (cmd) {
     cmd_out = GLib.spawn_command_line_sync (cmd);
     print (cmd_out[0],cmd_out[1],cmd_out[2],cmd_out[3]);
@@ -770,8 +704,6 @@ function load_settings () {
         uuid = Gio.dbus_generate_guid ();
         settings.set_string (UUID_KEY, uuid);
     }
-    contest = settings.get_boolean (CONTEST_KEY);
-    if (contest) popularity ();
     if (config.theme) theme = APPDIR + "/data/www/themes/" + config.theme + "/";
     else {
         theme = APPDIR + "/data/www/themes/" + settings.get_string (THEME_KEY) + "/";

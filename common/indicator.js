@@ -203,19 +203,6 @@ var ObminIndicator = new Lang.Class ({
         }));
         }
 
-        if (support == 0) {
-        this.appmenu.append (new Gtk.SeparatorMenuItem ());
-        item = Gtk.ImageMenuItem.new_with_label (_("Donate..."));
-        item.image = Gtk.Image.new_from_file (APPDIR + "/data/icons/pp.svg");
-        item.always_show_image = true;
-        item.tooltip_text = _("Make a donation to the project");
-        item.connect ('activate', Lang.bind (this, function () {
-            let app = Gio.AppInfo.get_default_for_uri_scheme ("https");
-            app.launch_uris (["https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=WVAS5RXRMYVC4"], null);
-        }));
-        this.appmenu.append (item);
-        }
-
         this.appmenu.append (new Gtk.SeparatorMenuItem ());
         item = Gtk.MenuItem.new_with_label (_("Control Center..."));
         item.tooltip_text = _("Open Obmin Control Center");

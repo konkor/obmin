@@ -259,19 +259,6 @@ const PrefsMenuItem = new Lang.Class({
             this.emit ('activate');
         }));
         this.actor.add (new St.Label ({text: ' '}), { expand: true });
-        if (support == 0) {
-        this.support = new St.Button ({ child: new St.Icon ({
-            gicon:Gio.icon_new_for_string (EXTENSIONDIR + "/data/icons/pp.svg"),
-            style: 'icon-size: 18px;'
-        }), style_class: 'system-menu-action'});
-        this.actor.add (this.support, { expand: false, x_fill: false });
-        this.support.connect ('clicked', Lang.bind (this, function () {
-            let app = Gio.AppInfo.get_default_for_uri_scheme ("https");
-            app.launch_uris (["https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=WVAS5RXRMYVC4"], null);
-            this.emit ('activate');
-        }));
-        this.actor.add (new St.Label ({text: ' '}), { expand: true });
-        }
     }
 });
 
