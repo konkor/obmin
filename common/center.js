@@ -206,7 +206,7 @@ var ObminCenter = new Lang.Class ({
         vbox.add (this.infobox);
 
         this.stack = new Gtk.Stack ();
-        this.stack.transition_type = Gtk.StackTransitionType.SLIDE_LEFT_RIGHT;
+        this.stack.transition_type = Gtk.StackTransitionType.SLIDE_UP_DOWN;
         vbox.pack_start (this.stack, true, true, 0);
         this.statview = new Statistic ();
         this.stack.add_named (this.statview, "stats");

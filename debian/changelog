@@ -1,8 +1,24 @@
-obmin (13.0-1) UNRELEASED; urgency=medium
+obmin (14.0-1) UNRELEASED; urgency=medium
 
-  * Next development version
+  * Update fix for the loading Remembered settings on intel_pstate.
+  * Enable Gnome 3.28 supporting
 
- -- Kostiantyn K <kapa76@gmail.com>  Sun, 29 Oct 2017 17:47:00 +0100
+ -- Kostiantyn K <kapa76@gmail.com>  Wed, 28 Feb 2018 20:47:00 +0100
+
+obmin (13.0-1) RELEASED; urgency=medium
+
+  * Move binary/scripts to modules to fix possible issues standalone installed version and updates via gnome extensions.
+  * Update minor plugin API
+  * Update fix theme styling
+  * Add zip archives support to the Compressor extension
+  * Add download button to the Slideshow extension
+  * Add new Transcoder extension to realtime video content to WEB Browser supported formats (beta - not enabled by default)
+  * Add new Camera extension to stream V4L2 Device (beta - not enabled by default)
+  * Add OBMIN extension manager for extensions
+  * Updated preferences window layout
+  * Removed donation buttons from the applets and web ui
+
+ -- Kostiantyn K <kapa76@gmail.com>  Sun, 03 Dec 2017 17:47:00 +0100
 
 obmin (12.0-1) UNRELEASED; urgency=medium
 
