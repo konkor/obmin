@@ -167,3 +167,34 @@ function fetch (url, agent, headers, callback) {
     });
 }
 
+var CONFIG_PATH = GLib.get_user_config_dir() + "/obmin";
+
+function gen_certificate () {
+    if (!GLib.file_test (CONFIG_PATH, GLib.FileTest.IS_DIR))
+        GLib.mkdir_with_parents (CONFIG_PATH, 493);
+
+    let key = GLib.file_test (CONFIG_PATH + "/private.pem", GLib.FileTest.EXISTS);
+
+    let certificate = GLib.file_test (CONFIG_PATH + "/certificate.pem", GLib.FileTest.EXISTS);
+
+    if (!key || !certificate) {
+        let cmd = [
+            "openssl", "req", "-new", "-x509", "-sha256", "-newkey",
+            "rsa:2048", "-nodes", "-keyout", "private.pem", "-days", "3650",
+            "-out", "certificate.pem", "-subj",
+            "/CN=" + Gio.dbus_generate_guid ()
+        ];
+
+        let proc = GLib.spawn_sync(
+            CONFIG_PATH,
+            cmd,
+            null,
+            GLib.SpawnFlags.SEARCH_PATH,
+            null
+        );
+    }
+
+    GLib.spawn_command_line_async("chmod 0600 " + CONFIG_PATH + "/private.pem");
+    GLib.spawn_command_line_async("chmod 0600 " + CONFIG_PATH + "/certificate.pem");
+};
+

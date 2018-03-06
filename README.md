@@ -12,21 +12,26 @@ _The project is under development. So the project can have some issues and it's 
 * Easy setup just choose file(s) locations and click Obmin on.
 * Doesn't require ROOT privileges.
 * Doesn't require any special client side installation.
-* HTTP transfer protocol available everywhere Linux, OSX, Windows, Android, iOS so.
+* HTTP(S) transfer protocol available everywhere Linux, OSX, Windows, Android, iOS so.
+* Secure HTTPS connections.
 
 ## Enchanted Features
 * Multiple file sources supporting.
 * Content filters: symbolic links, backups, hidden files.
 * Port configuration.
+* TLS Certificate generating.
+* Logging of detailed server connections information.
+* Real-time monitor of incoming connections and traffic.
 * Content theming.
 * Various Linux Desktop Environments and distributions.
+* Obmin extensions like compressor, slideshow, playlist generator.
+* Real-time video streamer with build-in remuxing and encoding.
 
 ## Planned Features
-* Secure HTTPS connections.
-* HTTP authorization.
-* Detailed statistic about traffic, incoming connections so.
-* Embedded JavaScript applications for compressing, slideshow, music player, playlist/file lists generator, video player.
-* More
+* Project website (GitHub Pages).
+* Improve logging and monitors.
+* More useful extensions.
+* Online service to enhance obmin connectivity (need donations).
 
 ## Project [Wiki](https://github.com/konkor/obmin/wiki)
 

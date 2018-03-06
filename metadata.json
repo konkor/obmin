@@ -1,5 +1,5 @@
 {
-  "description": "One-Click File Sharing for your network.\nObmin is lightweight HTTP File Server for GNU/Linux systems.\n\nFeatures:\n⚫ Easy installation.\n⚫ Easy setup just choose file(s) locations and tune Obmin on.\n⚫ Doesn't require ROOT privileges.\n⚫ Doesn't require any special client side installation.\n⚫ HTTP transfer protocol available everywhere Linux, OSX, Windows, Android, iOS so.\n⚫ More ...\n\nFor more information and how-to see README.md",
+  "description": "One-Click File Sharing for your network.\nObmin is lightweight HTTP(S) File Server for GNU/Linux systems.\n\nFeatures:\n⚫ Easy installation.\n⚫ Easy setup just choose file(s) locations and tune Obmin on.\n⚫ Doesn't require ROOT privileges.\n⚫ Doesn't require any special client side installation.\n⚫ HTTP transfer protocol available everywhere Linux, OSX, Windows, Android, iOS so.\n⚫ More ...\n\nFor more information and how-to see README.md",
   "name": "Obmin",
   "settings-schema": "org.gnome.shell.extensions.obmin",
   "shell-version": [

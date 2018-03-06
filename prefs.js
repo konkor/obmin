@@ -24,6 +24,9 @@ const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
 const Gtk = imports.gi.Gtk;
 
+const HTTPS_KEY = 'https';
+const CERT_KEY = 'tls-certificate';
+const PKEY_KEY = 'private-key';
 const STARTUP_KEY = 'startup-settings';
 const LINKS_KEY = 'links-settings';
 const MOUNTS_KEY = 'mounts-settings';
@@ -46,14 +49,17 @@ const EXTENSIONDIR = getCurrentFile ()[1];
 imports.searchPath.unshift (EXTENSIONDIR);
 const Convenience = imports.convenience;
 
+let https = false;
+let cert = "";
+let pkey = "";
 let startup = false;
 let links = true;
 let mounts = true;
 let hiddens = false;
 let backups = false;
 let support = 0;
-let theme = '';
-let theme_gui = 'default';
+let theme = "";
+let theme_gui = "default";
 let mode = 0;
 let port = 8088;
 let DEBUG = 1;
@@ -71,6 +77,9 @@ var ObminWidget = new Lang.Class({
 
         DEBUG = settings.get_int (DEBUG_KEY);
         startup = settings.get_boolean (STARTUP_KEY);
+        https = settings.get_boolean (HTTPS_KEY);
+        cert = settings.get_string (CERT_KEY);
+        pkey = settings.get_string (PKEY_KEY);
         port = settings.get_int (PORT_KEY);
         mode = settings.get_int (MODE_KEY);
         support = settings.get_int (SUPPORT_KEY);
@@ -86,6 +95,9 @@ var ObminWidget = new Lang.Class({
         if (srcs.length > 0) sources = JSON.parse (srcs);
         //Gtk.Settings.get_default().set_property ("gtk-application-prefer-dark-theme", true);
         theme_gui = settings.get_string (THEME_GUI_KEY);
+        Convenience.gen_certificate ();
+        if (!cert) cert = GLib.get_user_config_dir() + "/obmin/certificate.pem";
+        if (!pkey) pkey = GLib.get_user_config_dir() + "/obmin/private.pem";
 
         this.notebook = new Gtk.Notebook ({expand:true});
 
@@ -581,10 +593,63 @@ const PageNetwork = new Lang.Class({
         this.port.connect ('value_changed', Lang.bind (this, ()=>{
             port = this.port.value;
             settings.set_int (PORT_KEY, port);
+            this.update_comment ();
         }));
         hbox.pack_end (this.port, false, false, 0);
+        this.comment = new Gtk.Label ({
+            label: "You can setup forwarding the port on your router.",
+            use_markup:true, xalign:0, margin_top:12
+        });
+        this.add (this.comment);
 
+        this.add (new Gtk.Label ({label: "<b>" + _("Secure HTTPS Protocol") + "</b>", use_markup:true, xalign:0, margin_top:12}));
+        this.cb_https = Gtk.CheckButton.new_with_label (_("Enable Secure HTTPS Connection"));
+        this.cb_https.tooltip_text = _("Use encrypted secure connection between host and server.");
+        this.cb_https.margin = 6;
+        this.add (this.cb_https);
+        this.cb_https.active = https;
+        this.cb_https.connect ('toggled', Lang.bind (this, ()=>{
+            https = this.cb_https.active;
+            settings.set_boolean (HTTPS_KEY, https);
+            this.update_comment ();
+        }));
+
+        hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
+        this.pack_start (hbox, false, false, 0);
+        hbox.add (new Gtk.Label ({label: _("TLS Certificate")}));
+        this.cert_chooser = new Gtk.FileChooserButton ({title:_("Select file"),
+                           action:Gtk.FileChooserAction.OPEN});
+        this.cert_chooser.set_filename (cert);
+        this.cert_chooser.tooltip_text = cert;
+        hbox.pack_end (this.cert_chooser, false, false, 0);
+        this.cert_chooser.connect ('file_set', Lang.bind (this, ()=>{
+            cert = this.cert_chooser.get_filename ();
+            this.cert_chooser.tooltip_text = cert;
+            settings.set_string (CERT_KEY, cert);
+        }));
+
+        hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
+        this.pack_start (hbox, false, false, 0);
+        hbox.add (new Gtk.Label ({label: _("Private Key")}));
+        this.pkey_chooser = new Gtk.FileChooserButton ({title:_("Select file"),
+                           action:Gtk.FileChooserAction.OPEN});
+        this.pkey_chooser.set_filename (pkey);
+        this.pkey_chooser.tooltip_text = pkey;
+        hbox.pack_end (this.pkey_chooser, false, false, 0);
+        this.pkey_chooser.connect ('file_set', Lang.bind (this, ()=>{
+            pkey = this.pkey_chooser.get_filename ();
+            this.pkey_chooser.tooltip_text = pkey;
+            settings.set_string (PKEY_KEY, pkey);
+        }));
+
+        this.update_comment ();
         this.show_all ();
+    },
+
+    update_comment: function () {
+        this.comment.label =
+            _("You can setup forwarding <b>%d</b> port on your router to <b>%d</b> or on the server side:\n").format (https?443:80, port) +
+            "<i>sudo iptables -t nat -A PREROUTING -p tcp --dport %d -j REDIRECT --to-port %d</i>".format (https?443:80, port);
     }
 });
 

@@ -153,5 +153,23 @@
         <description>Enabled Extensions UUIDs</description>
     </key>
 
+    <key type="b" name="https">
+      <default>false</default>
+      <summary>HTTPS</summary>
+      <description>Use secure HTTP connection (enable - default/disable)</description>
+    </key>
+
+    <key type="s" name="tls-certificate">
+      <default>''</default>
+      <summary>TLS Certificate</summary>
+      <description>Location of certificate.pem</description>
+    </key>
+
+    <key type="s" name="private-key">
+      <default>''</default>
+      <summary>Private Key</summary>
+      <description>Location of private.pem</description>
+    </key>
+
   </schema>
 </schemalist>

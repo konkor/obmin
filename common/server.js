@@ -35,6 +35,8 @@ const Plugs = imports.plugins.base;
 
 String.prototype.format = Convenience.Format.format;
 
+var CONFIG_PATH = GLib.get_user_config_dir() + "/obmin";
+
 const ATTRIBUTES = "standard," +
     Gio.FILE_ATTRIBUTE_TIME_MODIFIED + "," +
     Gio.FILE_ATTRIBUTE_UNIX_NLINK + "," +
@@ -49,6 +51,7 @@ const ATTRIBUTES = "standard," +
 //const ATTRIBUTES = "standard::*,access::*,mountable::*,time::*,unix::*,owner::*,selinux::*,thumbnail::*,id::filesystem,trash::orig-path,trash::deletion-date,metadata::*";
 const vfss = ["afp", "google-drive", "sftp", "webdav", "ftp", "nfs", "cifs"];
 
+const HTTPS_KEY = 'https';
 const LINKS_KEY = 'links-settings';
 const MOUNTS_KEY = 'mounts-settings';
 const HIDDENS_KEY = 'hidden-settings';
@@ -73,6 +76,7 @@ var html_menu = "<div id=\"navmenu\" class=\"nmenu hide\">";
 const h_menu = "<a href=\"https://github.com/konkor/obmin/wiki\" class=\"nmenu-item right\" onclick=\"toggle()\" title=\"About Obmin\">About ...</a>";
 const h_js = "<script>function toggle(id){id = (typeof id !== \'undefined\')?id:\'navmenu\'; var x=document.getElementById(id);if(x.className.indexOf(\"show\")==-1){x.className += \" show\";}else{x.className=x.className.replace(\" show\",\"\");}}function hide(id){if (!id) return; var x=document.getElementById(id);if(x.className.indexOf(\"hide\")==-1){x.className += \" hide\";}}</script>";
 
+let https = false;
 let mounts = true;
 let follow_links = true;
 let check_hidden = false;
@@ -111,13 +115,13 @@ var ObminServer = new Lang.Class({
 
     _init: function () {
         GLib.set_prgname ("obmin-server");
-        this.parent ();
+        this.parent ({tls_certificate:tls_cert});
         settings.set_string (STATS_DATA_KEY, JSON.stringify (counter));
         this.plugs_init ();
         this.add_handler (null, Lang.bind (this, this._default_handler));
         try {
-            this.listen_all (port, 0);
-            info ("Server started at ::1:" + port);
+            this.listen_all (port, https?Soup.ServerListenOptions.HTTPS:0);
+            info ("Server started at ::1:" + port + (this.is_https?" HTTPS":" HTTP"));
         } catch (err) {
             throw err;
         }
@@ -699,6 +703,8 @@ function load_settings () {
     support = settings.get_int (SUPPORT_KEY);
     if (config.logs) journal = config.logs;
     else journal = settings.get_boolean (JOURNAL_KEY);
+    if (config.https) https = config.https;
+    else https = settings.get_boolean (HTTPS_KEY);
     uuid = settings.get_string (UUID_KEY);
     if (!uuid) {
         uuid = Gio.dbus_generate_guid ();
@@ -739,6 +745,21 @@ function check_sources (list) {
     list.forEach (s => {if (GLib.file_test (s.path, GLib.FileTest.EXISTS)) sources.push (s);});
 }
 
+function get_certificate () {
+    let cert = settings.get_string ("tls-certificate");
+    let key = settings.get_string ("private-key");
+    debug ("Certificate" + cert + " " + key);
+    if (cert && key) {
+        return Gio.TlsCertificate.new_from_files (cert, key);
+    } else {
+        return Gio.TlsCertificate.new_from_files (
+            CONFIG_PATH + "/certificate.pem",
+            CONFIG_PATH + "/private.pem"
+        );
+    }
+    return null;
+};
+
 function get_excluded_locations () {
     excluded = [];
     excluded.push ("/dev");
@@ -748,8 +769,13 @@ function get_excluded_locations () {
 }
 
 let obmin;
+let tls_cert = null;
 if (load_settings ()) {
     if (journal) Convenience.InitLogger (LOG_DOMAIN);
+    if (https) {
+        Convenience.gen_certificate ();
+        tls_cert = get_certificate ();
+    }
 
     obmin = new ObminServer ();
     Mainloop.run ('obminMainloop');
