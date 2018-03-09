@@ -23,10 +23,14 @@ const Lang = imports.lang;
 const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
 const Gtk = imports.gi.Gtk;
+const Soup = imports.gi.Soup;
 
 const HTTPS_KEY = 'https';
 const CERT_KEY = 'tls-certificate';
 const PKEY_KEY = 'private-key';
+const AUTH_KEY = 'authentication';
+const USER_KEY = 'username';
+const PASS_KEY = 'password';
 const STARTUP_KEY = 'startup-settings';
 const LINKS_KEY = 'links-settings';
 const MOUNTS_KEY = 'mounts-settings';
@@ -52,6 +56,9 @@ const Convenience = imports.convenience;
 let https = false;
 let cert = "";
 let pkey = "";
+let auth = false;
+let user = "";
+let pass = "";
 let startup = false;
 let links = true;
 let mounts = true;
@@ -80,6 +87,9 @@ var ObminWidget = new Lang.Class({
         https = settings.get_boolean (HTTPS_KEY);
         cert = settings.get_string (CERT_KEY);
         pkey = settings.get_string (PKEY_KEY);
+        auth = settings.get_boolean (AUTH_KEY);
+        user = settings.get_string (USER_KEY);
+        pass = settings.get_string (PASS_KEY);
         port = settings.get_int (PORT_KEY);
         mode = settings.get_int (MODE_KEY);
         support = settings.get_int (SUPPORT_KEY);
@@ -583,9 +593,17 @@ const PageNetwork = new Lang.Class({
     _init: function () {
         this.parent ({orientation:Gtk.Orientation.VERTICAL, margin:6});
         this.border_width = 6;
+        this.invalid = [':','?',' '];
 
-        this.add (new Gtk.Label ({label: _("<b>Network Interface</b>"), use_markup:true, xalign:0, margin_top:12}));
         let hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
+        this.pack_start (hbox, false, false, 0);
+        hbox.add (new Gtk.Label ({label: _("<b>Network Interface</b>"), use_markup:true, xalign:0, margin_top:12}));
+        this.port_hint = Gtk.Image.new_from_icon_name ("gtk-dialog-question", 16);
+        //this.port_hint = new Gtk.Label ({label: "<b>?</b>", use_markup:true, xalign:1, margin:4})
+        this.port_hint.tooltip_text = "You can set up a port forwarding on your router.";
+        hbox.pack_end (this.port_hint, false, false, 0);
+
+        hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
         this.pack_start (hbox, false, false, 0);
         hbox.add (new Gtk.Label ({label: _("Listening Port")}));
         this.port = Gtk.SpinButton.new_with_range (1, 65535, 1);
@@ -596,16 +614,11 @@ const PageNetwork = new Lang.Class({
             this.update_comment ();
         }));
         hbox.pack_end (this.port, false, false, 0);
-        this.comment = new Gtk.Label ({
-            label: "You can setup forwarding the port on your router.",
-            use_markup:true, xalign:0, margin_top:12
-        });
-        this.add (this.comment);
 
-        this.add (new Gtk.Label ({label: "<b>" + _("Secure HTTPS Protocol") + "</b>", use_markup:true, xalign:0, margin_top:12}));
-        this.cb_https = Gtk.CheckButton.new_with_label (_("Enable Secure HTTPS Connection"));
-        this.cb_https.tooltip_text = _("Use encrypted secure connection between host and server.");
-        this.cb_https.margin = 6;
+        this.add (new Gtk.Label ({label: "<b>" + _("Secure HTTP Protocol") + "</b>", use_markup:true, xalign:0, margin_top:12}));
+        this.cb_https = Gtk.CheckButton.new_with_label (_("Enable Secure HTTPS Connections"));
+        this.cb_https.tooltip_text = _("Use encrypted secure connections between guests and the server.");
+        this.cb_https.margin = 8;
         this.add (this.cb_https);
         this.cb_https.active = https;
         this.cb_https.connect ('toggled', Lang.bind (this, ()=>{
@@ -642,14 +655,73 @@ const PageNetwork = new Lang.Class({
             settings.set_string (PKEY_KEY, pkey);
         }));
 
+        this.add (new Gtk.Label ({label: "<b>" + _("User Authentication") + "</b>", use_markup:true, xalign:0, margin_top:12}));
+        this.cb_auth = Gtk.CheckButton.new_with_label (_("Enable User Authentication"));
+        this.cb_auth.tooltip_text = _("Many standalone network devices and applications like media players don't support HTTPS connections and HTTP Authentication.");
+        this.cb_auth.margin = 8;
+        this.add (this.cb_auth);
+        this.cb_auth.active = auth;
+
+        hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
+        this.pack_start (hbox, false, false, 0);
+        hbox.add (new Gtk.Label ({label: _("Username")}));
+        this.user = new Gtk.Entry ();
+        this.user.set_text (user);
+        this.user.tooltip_text = _("Allowed characters a-z, A-Z, 0-9, _");
+        this.user.input_purpose = Gtk.InputPurpose.NAME;
+        this.user.sensitive = auth;
+        hbox.pack_start (this.user, true, true, 12);
+        this.user.connect ('changed', Lang.bind (this, ()=>{
+            this.user.text = this.validate_user (this.user.text);
+            if (user != this.user.text) {
+                user = this.user.text;
+                settings.set_string (USER_KEY, user);
+                settings.set_string (PASS_KEY, Soup.AuthDomainDigest.encode_password (user, Convenience.realm, pass));
+            }
+        }));
+        hbox.add (new Gtk.Label ({label: _("Password")}));
+        this.pass = new Gtk.Entry ();
+        this.pass.tooltip_text = _("Set up a new password.\nMake strong enough it.");
+        this.pass.input_purpose = Gtk.InputPurpose.PASSWORD;
+        this.pass.visibility = false;
+        this.pass.sensitive = auth;
+        this.pass.set_icon_from_icon_name (Gtk.EntryIconPosition.SECONDARY, "dialog-password-symbolic");
+        this.pass.connect ('icon-press', Lang.bind (this, (o, pos, e)=>{
+            if (pos == Gtk.EntryIconPosition.SECONDARY)
+                this.pass.visibility = !this.pass.visibility;
+        }));
+        this.pass.connect ('changed', Lang.bind (this, ()=>{
+            this.pass.text = this.pass.text.trim ();
+            if (pass != this.pass.text) {
+                pass = this.pass.text;
+                settings.set_string (PASS_KEY, Soup.AuthDomainDigest.encode_password (user, Convenience.realm, pass));
+            }
+        }));
+        hbox.pack_start (this.pass, true, true, 12);
+
+        this.cb_auth.connect ('toggled', Lang.bind (this, ()=>{
+            auth = this.cb_auth.active;
+            settings.set_boolean (AUTH_KEY, auth);
+            this.user.sensitive = auth;
+            this.pass.sensitive = auth;
+        }));
+
         this.update_comment ();
         this.show_all ();
     },
 
     update_comment: function () {
-        this.comment.label =
-            _("You can setup forwarding <b>%d</b> port on your router to <b>%d</b> or on the server side:\n").format (https?443:80, port) +
+        this.port_hint.tooltip_text =
+            _("You can set up a port forwarding from %d on your router to %d port, or just on the server side.\n").format (https?443:80, port) +
             "<i>sudo iptables -t nat -A PREROUTING -p tcp --dport %d -j REDIRECT --to-port %d</i>".format (https?443:80, port);
+    },
+
+    validate_user: function (text) {
+        let s = text.trim ();
+        for (let c in this.invalid) {
+            s = s.replace (c, '');
+        }
+        return s;
     }
 });
 

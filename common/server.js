@@ -34,6 +34,7 @@ const Stream = imports.common.stream;
 const Plugs = imports.plugins.base;
 
 String.prototype.format = Convenience.Format.format;
+const md5 = Convenience.md5;
 
 var CONFIG_PATH = GLib.get_user_config_dir() + "/obmin";
 
@@ -52,6 +53,9 @@ const ATTRIBUTES = "standard," +
 const vfss = ["afp", "google-drive", "sftp", "webdav", "ftp", "nfs", "cifs"];
 
 const HTTPS_KEY = 'https';
+const AUTH_KEY = 'authentication';
+const USER_KEY = 'username';
+const PASS_KEY = 'password';
 const LINKS_KEY = 'links-settings';
 const MOUNTS_KEY = 'mounts-settings';
 const HIDDENS_KEY = 'hidden-settings';
@@ -109,6 +113,11 @@ let enabled_plugs = [
 var plugins = null;
 var plug_events = null;
 
+let authentication = false;
+let user = "test";
+let pass = "123456";
+let htdigest = "";
+
 var ObminServer = new Lang.Class({
     Name: 'ObminServer',
     Extends: Soup.Server,
@@ -121,10 +130,77 @@ var ObminServer = new Lang.Class({
         this.add_handler (null, Lang.bind (this, this._default_handler));
         try {
             this.listen_all (port, https?Soup.ServerListenOptions.HTTPS:0);
-            info ("Server started at ::1:" + port + (this.is_https?" HTTPS":" HTTP"));
+            info ("Server started at ::1:" + port + (https?" HTTPS":" HTTP"));
         } catch (err) {
             throw err;
         }
+        if (authentication) {
+            let auth = new Soup.AuthDomainDigest ({realm: Convenience.realm});
+            auth.add_path ("/");
+            auth.digest_set_auth_callback (this.digest_auth_callback);
+            auth.set_filter (this.filter_callback);
+            this.add_auth_domain (auth);
+        }
+    },
+
+    digest_auth_callback: function (domain, msg, username) {
+        if (user == username) return htdigest;
+        return null;
+    },
+
+    filter_callback: function (domain, msg) {
+        /*print (msg.uri.to_string(true), domain.accepts(msg));
+        msg.request_headers.foreach ( (n, v) => {
+            print (n + ": " + v);
+        });*/
+        if (!domain.accepts(msg)) return obmin.check_response (msg);
+        return true;
+    },
+
+    check_response: function (msg) {
+        let dig = {}, s = "", i = -1;
+        let auth = msg.request_headers.get_one ("Authorization");
+        debug ("fix digest", auth);
+        if (!auth) return true;
+        if (auth.indexOf ("Digest") != 0) return true;
+        auth = auth.substring (7);
+        i = auth.indexOf ("nonce=\"");
+        if (i == -1) return true;
+        s = auth.substring (i+7, auth.indexOf ("\", ", i + 7));
+        if (!s) return true;
+        dig.nonce = s;
+        i = auth.indexOf ("uri=\"");
+        if (i == -1) return true;
+        s = auth.substring (i+5, auth.indexOf ("\", ", i + 5));
+        if (!s) return true;
+        dig.uri = s;
+        i = auth.indexOf ("response=\"");
+        if (i == -1) return true;
+        s = auth.substring (i+10, auth.indexOf ("\", ", i + 10));
+        if (!s) return true;
+        dig.response = s;
+        i = auth.indexOf (", qop=auth, ");
+        if (i > -1)
+            dig.qop = "auth";
+        else if (auth.indexOf (", qop=auth-int, ") > -1)
+            dig.qop = "auth-int";
+        else return true;
+        i = auth.indexOf (", nc=");
+        if (i == -1) return true;
+        s = auth.substring (i+5, auth.indexOf (", ", i + 5));
+        if (!s) return true;
+        dig.nc = s;
+        i = auth.indexOf ("cnonce=\"");
+        if (i == -1) return true;
+        s = auth.substring (i+8, auth.indexOf ("\"", i + 8));
+        if (!s) return true;
+        dig.cnonce = s;
+
+        dig.ha2 = md5 ("%s:%s".format (msg.method.toUpperCase(), dig.uri));
+        s = md5 ("%s:%s:%s:%s:%s:%s".format (htdigest,dig.nonce,dig.nc,dig.cnonce,dig.qop,dig.ha2));
+        if (s == dig.response) return false;
+
+        return true;
     },
 
     plugs_init: function () {
@@ -705,6 +781,16 @@ function load_settings () {
     else journal = settings.get_boolean (JOURNAL_KEY);
     if (config.https) https = config.https;
     else https = settings.get_boolean (HTTPS_KEY);
+    if (config.authentication) authentication = config.authentication;
+    else authentication = settings.get_boolean (AUTH_KEY);
+    if (config.user) user = config.user;
+    else user = settings.get_string (USER_KEY);
+    if (config.password) {
+        pass = config.password;
+        config.htdigest = Soup.AuthDomainDigest.encode_password (user, Convenience.realm, pass);
+    }
+    if (config.htdigest) htdigest = config.htdigest;
+    else htdigest = settings.get_string (PASS_KEY);
     uuid = settings.get_string (UUID_KEY);
     if (!uuid) {
         uuid = Gio.dbus_generate_guid ();

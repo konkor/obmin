@@ -31,6 +31,8 @@ const Gettext = imports.gettext;
 var Format = imports.format;
 String.prototype.format = Format.format;
 
+var realm = "obmin access";
+
 function initTranslations (domain) {
     domain = domain || 'gnome-shell-extensions-obmin';
 
@@ -197,4 +199,10 @@ function gen_certificate () {
     GLib.spawn_command_line_async("chmod 0600 " + CONFIG_PATH + "/private.pem");
     GLib.spawn_command_line_async("chmod 0600 " + CONFIG_PATH + "/certificate.pem");
 };
+
+function md5 (text) {
+    let checksum = new GLib.Checksum (GLib.ChecksumType.MD5);
+    checksum.update (text);
+    return checksum.get_string ();
+}
 

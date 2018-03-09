@@ -171,5 +171,23 @@
       <description>Location of private.pem</description>
     </key>
 
+    <key type="b" name="authentication">
+      <default>false</default>
+      <summary>Authentication</summary>
+      <description>HTTP authentication (enable - default/disable)</description>
+    </key>
+
+    <key type="s" name="username">
+      <default>'obmin'</default>
+      <summary>Username</summary>
+      <description>User's name</description>
+    </key>
+
+    <key type="s" name="password">
+      <default>'obmin'</default>
+      <summary>Password</summary>
+      <description>User's Password</description>
+    </key>
+
   </schema>
 </schemalist>
