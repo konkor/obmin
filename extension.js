@@ -30,6 +30,7 @@ const PopupMenu = imports.ui.popupMenu;
 const Util = imports.misc.util;
 const Lang = imports.lang;
 
+const HTTPS_KEY = 'https';
 const STARTUP_KEY = 'startup-settings';
 const STATS_MONITOR_KEY = 'stats-monitor';
 const STATS_DATA_KEY = 'stats';
@@ -49,6 +50,7 @@ const CLIPBOARD_TYPE = St.ClipboardType.CLIPBOARD;
 const Gettext = imports.gettext.domain('gnome-shell-extensions-obmin');
 const _ = Gettext.gettext;
 
+let https = false;
 let startup = false;
 let support = 0;
 let port = 8088;
@@ -87,6 +89,7 @@ const ObminIndicator = new Lang.Class({
         _box.add_actor(this.statusIcon);
         this.actor.add_actor (_box);
 
+        https = this.settings.get_boolean (HTTPS_KEY);
         startup = this.settings.get_boolean (STARTUP_KEY);
         support = this.settings.get_int (SUPPORT_KEY);
         port = this.settings.get_int (PORT_KEY);
@@ -292,7 +295,7 @@ const LocalItem = new Lang.Class ({
     },
 
     activate: function (event) {
-        Clipboard.set_text (CLIPBOARD_TYPE, "http://" + this.info.text);
+        Clipboard.set_text (CLIPBOARD_TYPE, "http" + https?"s":"" + "://" + this.info.text);
         show_notify (_("Local IP address copied to clipboard."));
         this.emit ('activate', event);
     },
@@ -318,7 +321,7 @@ const PublicItem = new Lang.Class ({
     },
 
     activate: function (event) {
-        Clipboard.set_text (CLIPBOARD_TYPE, "http://" + this.info.text);
+        Clipboard.set_text (CLIPBOARD_TYPE, "http" + https?"s":"" + "://" + this.info.text);
         show_notify (_("Public IP address copied to clipboard."));
         this.emit ('activate', event);
     },

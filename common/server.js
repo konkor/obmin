@@ -1,7 +1,7 @@
 /*
  * Obmin - Simple File Sharing Server
  *
- * Copyright (C) 2017 Kostiantyn Korienkov <kapa76@gmail.com>
+ * Copyright (C) 2017-2018 Kostiantyn Korienkov <kapa76@gmail.com>
  *
  * This file is part of Obmin File Server.
  *
