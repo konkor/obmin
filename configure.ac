@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT(obmin, 15.0)
+AC_INIT(obmin, m4_esyscmd(cat VERSION | tr -d '\012'))
 
 AC_CONFIG_HEADERS([config.h])
 
@@ -34,4 +34,11 @@ data/www/themes/Makefile
 data/themes/Makefile
 schemas/Makefile
 po/Makefile.in
+metadata.json
 ])
+
+echo "
+
+                    ${PACKAGE} ${VERSION}
+                    ============
+"

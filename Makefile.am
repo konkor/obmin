@@ -37,7 +37,7 @@ dist_doc_DATA = \
 	README.md \
 	config_sample.json
 
-EXTRA_DIST = $(js_DATA)
+EXTRA_DIST = $(js_DATA) metadata.json.in
 
 uninstall-local:
 	-rm -r $(jsdir)

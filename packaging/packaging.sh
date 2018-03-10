@@ -1,7 +1,8 @@
 #!/bin/bash
 
-VERSION="15.0"
+VERSION=$(cat ../VERSION)
 
+echo Version: $VERSION
 rm -rf debs
 mkdir debs
 cd debs
