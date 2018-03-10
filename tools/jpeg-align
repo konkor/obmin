@@ -1,0 +1,115 @@
+#!/usr/bin/gjs
+/*
+ * Copyright (C) 2017 Kostiantyn Korienkov <kapa76@gmail.com>
+ *
+ * This file is part of OBMIN Server.
+ *
+ * Obmin is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Obmin is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+ * See the GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+const Gio = imports.gi.Gio;
+const GLib = imports.gi.GLib;
+const GdkPixbuf = imports.gi.GdkPixbuf;
+const Lang = imports.lang;
+
+const txt = "USAGE: [SOURCE.JPG >] jpegalign [IN_FILE] --width NUMBER --height NUMBER --upscale [OUT_FILE | > OUTPUT.JPG]";
+
+let stdin, stdout;
+let input_file, output_file, width, height, upscale = false;
+let i, s;
+
+const JpegAlign = new Lang.Class ({
+    Name: 'JpegAlign',
+    Extends: Gio.Application,
+
+    _init: function () {
+        GLib.set_prgname ("jpeg-align");
+        this.parent ({
+            application_id: "org.konkor.jpegalign",
+            flags: Gio.ApplicationFlags.HANDLES_OPEN | Gio.ApplicationFlags.HANDLES_COMMAND_LINE
+        });
+        GLib.set_application_name ("Jpeg Align");
+        this.pb = null;
+        this.connect ('command-line', Lang.bind (this, (app,cmd)=>{
+            stdin = cmd.get_stdin ();
+            if (stdin) this.pb = GdkPixbuf.Pixbuf.new_from_stream (stdin, null);
+            if (this.pb) {
+                if (input_file) output_file = input_file;
+                this.activate ();
+            }
+            /*let data = [];
+            let buf = stdin.read_bytes (65536, null);
+            if (buf) print ("readed",buf.get_size());
+            while (buf && buf.get_size() > 0) {
+                data = data.concat (buf.get_data());
+                buf = stdin.read_bytes (65536, null);
+            }
+            print ("data", typeof data[0]);*/
+        }));
+    },
+
+    vfunc_startup: function() {
+        this.parent();
+    },
+
+    vfunc_activate: function() {
+        let w = this.pb.width, h = this.pb.height, hs = 1, vs = 1;
+        if (width) hs = width / w;
+        if (height) vs = height / h;
+        if (vs < hs) hs = vs;
+        if ((!upscale && hs > 1) || (hs == 1))
+            this.pb.apply_embedded_orientation().savev ("/dev/stdout", "jpeg", [], []);
+        else this.pb.scale_simple (w*hs, h*hs, GdkPixbuf.InterpType.HYPER).apply_embedded_orientation ().savev ("/dev/stdout", "jpeg", [], []);
+    },
+
+    vfunc_open: function (files) {
+        this.activate();
+
+        let time = Utils.getTpEventTime();
+        let uris = files.map(function(f) { return f.get_uri(); });
+        print (uris);
+        //TODO
+    }
+});
+
+for (i = 0; i < ARGV.length; i++) {
+    s = ARGV[i];
+    if ((s == "-h") || (s == "--help")) {
+        print (txt);
+        throw "";
+    } else if (s == "--width") {
+        i++;
+        try {
+            width = parseInt (ARGV[i]);
+            if (!Number.isInteger (width)) throw "Wrong width value...";
+        } catch (e) {
+            throw e;
+        }
+    } else if (s == "--height") {
+        i++;
+        try {
+            height = parseInt (ARGV[i]);
+            if (!Number.isInteger (height)) throw "Wrong height value...";
+        } catch (e) {
+            throw e;
+        }
+    } else if (s == "--upscale") {
+        upscale = true;
+    } else if (input_file) {
+        output_file = s;
+    } else input_file = s;
+}
+
+let app = new JpegAlign ();
+app.run (ARGV);
