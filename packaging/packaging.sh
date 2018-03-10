@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION=$(cat ../VERSION)
+VERSION=$(cat VERSION)
 
 echo Version: $VERSION
 rm -rf debs

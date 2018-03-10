@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT(obmin, m4_esyscmd(cat VERSION | tr -d '\012'))
+AC_INIT(obmin, 15)
 
 AC_CONFIG_HEADERS([config.h])
 
@@ -22,6 +22,9 @@ IT_PROG_INTLTOOL()
 
 AC_PATH_PROG([DESKTOP_FILE_VALIDATE], [desktop-file-validate], [/bin/true])
 
+dnl Packaging version
+echo "${VERSION}" > packaging/VERSION
+
 AC_OUTPUT([
 Makefile
 common/Makefile
@@ -40,5 +43,5 @@ metadata.json
 echo "
 
                     ${PACKAGE} ${VERSION}
-                    ============
+                    =========
 "
