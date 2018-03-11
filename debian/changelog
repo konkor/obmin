@@ -1,15 +1,21 @@
-obmin (15-1) UNRELEASED; urgency=low
+obmin (16-1) unstable; urgency=low
+
+  * Next development release
+
+ -- konkor <kapa76@gmail.com>  Sun, 11 Mar 2018 12:29:00 +0100
+
+obmin (15-1) unstable; urgency=low
 
   * Add secure https protocol supporting
 
- -- Kostiantyn K <kapa76@gmail.com>  Tue, 06 Mar 2018 19:07:00 +0100
+ -- konkor <kapa76@gmail.com>  Tue, 06 Mar 2018 19:07:00 +0100
 
 obmin (14.0-1) unstable; urgency=low
 
   * Update fix for the loading Remembered settings on intel_pstate.
   * Enable Gnome 3.28 supporting
 
- -- Kostiantyn K <kapa76@gmail.com>  Wed, 28 Feb 2018 20:47:00 +0100
+ -- konkor <kapa76@gmail.com>  Wed, 28 Feb 2018 20:47:00 +0100
 
 obmin (13.0-1) unstable; urgency=medium
 
@@ -24,7 +30,7 @@ obmin (13.0-1) unstable; urgency=medium
   * Updated preferences window layout
   * Removed donation buttons from the applets and web ui
 
- -- Kostiantyn K <kapa76@gmail.com>  Sun, 03 Dec 2017 17:47:00 +0100
+ -- konkor <kapa76@gmail.com>  Sun, 03 Dec 2017 17:47:00 +0100
 
 obmin (12.0-1) UNRELEASED; urgency=medium
 
@@ -34,7 +40,7 @@ obmin (12.0-1) UNRELEASED; urgency=medium
   * Add Chromium supporting for obmin extensions
   * Fix the content padding
 
- -- Kostiantyn K <kapa76@gmail.com>  Thu, 26 Oct 2017 00:13:23 +0100
+ -- konkor <kapa76@gmail.com>  Thu, 26 Oct 2017 00:13:23 +0100
 
 obmin (11.0-1) UNRELEASED; urgency=medium
 
@@ -43,7 +49,7 @@ obmin (11.0-1) UNRELEASED; urgency=medium
   * New extension for making archives from content folders
   * Various minor fixes and improvements
 
- -- Kostiantyn K <kapa76@gmail.com>  Fri, 20 Oct 2017 14:45:00 +0300
+ -- konkor <kapa76@gmail.com>  Fri, 20 Oct 2017 14:45:00 +0300
 
 obmin (10.0-1) UNRELEASED; urgency=medium
 
@@ -51,7 +57,7 @@ obmin (10.0-1) UNRELEASED; urgency=medium
   * Update theming
   * Minor fixes and updates
 
- -- Kostiantyn K <kapa76@gmail.com>  Sat, 14 Oct 2017 21:57:00 +0300
+ -- konkor <kapa76@gmail.com>  Sat, 14 Oct 2017 21:57:00 +0300
 
 obmin (9.0-1) UNRELEASED; urgency=medium
 
@@ -59,7 +65,7 @@ obmin (9.0-1) UNRELEASED; urgency=medium
   * Update brazilian portuguese locale, pt_BR
   * Update assets and documentation
 
- -- Kostiantyn K <kapa76@gmail.com>  Thu, 12 Sep 2017 18:30:00 +0300
+ -- konkor <kapa76@gmail.com>  Thu, 12 Sep 2017 18:30:00 +0300
 
 obmin (8.0-1) UNRELEASED; urgency=medium
 
@@ -71,21 +77,21 @@ obmin (8.0-1) UNRELEASED; urgency=medium
   * Improved stability and performance
   * Minor Fixes
 
- -- Kostiantyn K <kapa76@gmail.com>  Sat, 16 Sep 2017 11:45:00 +0300
+ -- konkor <kapa76@gmail.com>  Sat, 16 Sep 2017 11:45:00 +0300
 
 obmin (7.0-1) UNRELEASED; urgency=medium
 
   * Add internal counters for requests, responds and uploaded data
   * Update URI playlist escaping
 
- -- Kostiantyn K <kapa76@gmail.com>  Mon, 4 Sep 2017 16:48:00 +0300
+ -- konkor <kapa76@gmail.com>  Mon, 4 Sep 2017 16:48:00 +0300
 
 obmin (6.0-1) UNRELEASED; urgency=medium
 
   * Add file and playlist
   * Update ES6 standards
 
- -- Kostiantyn K <kapa76@gmail.com>  Mon, 4 Sep 2017 16:48:00 +0300
+ -- konkor <kapa76@gmail.com>  Mon, 4 Sep 2017 16:48:00 +0300
 
 obmin (5.0-1) UNRELEASED; urgency=medium
 
@@ -93,7 +99,7 @@ obmin (5.0-1) UNRELEASED; urgency=medium
   * Fix mount points filter
   * Update docs
 
- -- Kostiantyn K <kapa76@gmail.com>  Mon, 4 Sep 2017 16:48:00 +0300
+ -- konkor <kapa76@gmail.com>  Mon, 4 Sep 2017 16:48:00 +0300
 
 obmin (4.0-1) UNRELEASED; urgency=medium
 
@@ -101,7 +107,7 @@ obmin (4.0-1) UNRELEASED; urgency=medium
   * Update UI, documentations
   * Fix minnor issues
 
- -- Kostiantyn K <kapa76@gmail.com>  Mon, 4 Sep 2017 16:48:00 +0300
+ -- konkor <kapa76@gmail.com>  Mon, 4 Sep 2017 16:48:00 +0300
 
 obmin (3.0-1) UNRELEASED; urgency=medium
 
@@ -109,16 +115,16 @@ obmin (3.0-1) UNRELEASED; urgency=medium
   * Add full translation supporting
   * Add german translation
 
- -- Kostiantyn K <kapa76@gmail.com>  Wed, 29 Aug 2017 22:29:00 +0300
+ -- konkor <kapa76@gmail.com>  Wed, 29 Aug 2017 22:29:00 +0300
  
 obmin (2.0-1) UNRELEASED; urgency=medium
 
   * Add bins obmin-server and obmin-preferences
 
- -- Kostiantyn K <kapa76@gmail.com>  Tue, 29 Aug 2017 11:45:25 +0300
+ -- konkor <kapa76@gmail.com>  Tue, 29 Aug 2017 11:45:25 +0300
 
 obmin (1.0-1) UNRELEASED; urgency=medium
 
   * Initial release
 
- -- Kostiantyn K <kapa76@gmail.com>  Mon, 28 Aug 2017 13:45:25 +0300
+ -- konkor <kapa76@gmail.com>  Mon, 28 Aug 2017 13:45:25 +0300
