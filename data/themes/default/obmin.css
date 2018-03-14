@@ -22,12 +22,13 @@
   background-image: none;
   background-color: @obmin_base_color;
 }
-.sb-button:checked, .sb-button:hover {
+.sb-button:checked {
   color: @obmin_base_color;
   background-color: @obmin_bg_color;
-}
-.sb-button:checked {
   font-weight: bold;
+}
+.sb-button:hover {
+  background-color: shade(@obmin_bg_color, 0.73);
 }
 .hb-space {
   background-color: @obmin_base_color;
