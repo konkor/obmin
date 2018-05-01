@@ -369,8 +369,13 @@ const Sidebar = new Lang.Class({
         this.run_button  = new RunButton ();
         box.pack_start (this.run_button, false, false, 0);
 
-        this.local_item = new LocalItem ();
-        this.add (this.local_item);
+        var l = get_info_string ("hostname -I").trim ().split (" ");
+        l.forEach ((ip)=>{
+            let local_item = new LocalItem (ip);
+            this.add (local_item);
+        });
+        //this.local_item = new LocalItem ();
+        //this.add (this.local_item);
         this.public_item = new PublicItem ();
         this.add (this.public_item);
 
@@ -489,18 +494,13 @@ const LocalItem = new Lang.Class ({
     Name: 'LocalItem',
     Extends: InfoItem,
 
-    _init: function () {
-        this.parent (_("Local IP"), _("Local Network IP Address"), this.ip);
+    _init: function (address) {
+        address = address || "127.0.0.1";
+        this.parent (_("Local IP"), _("Local Network IP Address"), address);
     },
 
-    get ip () {
-        let l = get_info_string ("hostname -I").split (" ");
-        if (l[0]) if (l[0].length > 6) return l[0] + ":" + port;
-        return "127.0.0.1:" + port;
-    },
-
-    update: function () {
-        this.update_info (this.ip);
+    update: function (address) {
+        this.update_info (address);
     }
 });
 

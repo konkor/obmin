@@ -35,6 +35,7 @@ const Convenience = imports.convenience;
 
 //const Clipboard = Gtk.Clipboard.get_default(Gdk.Display.get_default());
 
+const HTTPS_KEY = 'https';
 const DEBUG_KEY = 'debug';
 const STARTUP_KEY = 'startup-settings';
 const STATS_MONITOR_KEY = 'stats-monitor';
@@ -43,6 +44,7 @@ const SUPPORT_KEY = 'support';
 const PORT_KEY = 'port';
 const STATUS_KEY = 'status';
 
+let https = false;
 let startup = false;
 let support = 0;
 let port = 8088;
@@ -61,6 +63,7 @@ var ObminIndicator = new Lang.Class ({
     Name: 'ObminIndicator',
 
     _init: function () {
+        https = settings.get_boolean (HTTPS_KEY);
         DEBUG = settings.get_int (DEBUG_KEY);
         startup = settings.get_boolean (STARTUP_KEY);
         support = settings.get_int (SUPPORT_KEY);
@@ -279,20 +282,26 @@ const LocalItem = new Lang.Class ({
     Extends: Gtk.MenuItem,
 
     _init: function () {
-        this.prefix = "<b>" + _("Local IP") + "</b> ";
-        this.parent ({label:this.prefix + this.ip});
-        this.tooltip_text = _("Local Network IP Address");
+        this.prefix = "<b>" + _("Local IP Address") + "</b> ";
+        this.parent ({label:this.prefix});
+        this.get_child().set_markup (this.prefix);
+        this.tooltip_text = _("Local Network IP Addresses");
     },
 
-    get ip () {
-        let l = get_info_string ("hostname -I").split (" ");
-        if (l[0]) if (l[0].length > 6) return l[0] + ":" + port;
-        return "127.0.0.1:" + port;
+    update_ips: function () {
+        let l = get_info_string ("hostname -I").trim ().split (" ");
+        var scheme = "http://";
+        if (https) scheme = "https://";
+        this.submenu = new Gtk.Menu ();
+        l.forEach ((s)=>{
+            let item = Gtk.MenuItem.new_with_label (scheme + s + ":" + port);
+            this.submenu.append (item);
+        });
+        this.submenu.show_all ();
     },
 
     update: function () {
-        //this.set_label (this.prefix + this.ip);
-        this.get_child().set_markup (this.prefix + this.ip);
+        this.update_ips ();
     }
 });
 

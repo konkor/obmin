@@ -288,26 +288,30 @@ const InfoMenuItem = new Lang.Class ({
 
 const LocalItem = new Lang.Class ({
     Name: 'LocalItem',
-    Extends: InfoMenuItem,
+    Extends: PopupMenu.PopupSubMenuMenuItem,
 
     _init: function () {
-        this.parent (_("Local IP"), this.ip, true, 'obmin-ip-item', 'obmin-ip-label');
+        this.parent (_("Local IP Address"), false);
+        this.update_ips ();
     },
 
-    activate: function (event) {
-        Clipboard.set_text (CLIPBOARD_TYPE, "http" + https?"s":"" + "://" + this.info.text);
-        show_notify (_("Local IP address copied to clipboard."));
-        this.emit ('activate', event);
-    },
-
-    get ip () {
-        let l = get_info_string ("hostname -I").split (" ");
-        if (l[0]) if (l[0].length > 6) return l[0] + ":" + port;
-        return "127.0.0.1:" + port;
+    update_ips: function () {
+        let l = get_info_string ("hostname -I").trim ().split (" ");
+        this.menu.removeAll ();
+        l.forEach ((s)=>{
+            let item = new PopupMenu.PopupMenuItem (s + ":" + port);
+            this.menu.addMenuItem (item);
+            item.connect ('activate', Lang.bind (this, function (o) {
+                var scheme = "http://";
+                if (https) scheme = "https://";
+                Clipboard.set_text (CLIPBOARD_TYPE, scheme + o.label.text);
+                show_notify (_("Local IP address copied to clipboard."));
+            }));
+        });
     },
 
     update: function () {
-        this.set_text (this.ip);
+        this.update_ips ();
     }
 });
 
