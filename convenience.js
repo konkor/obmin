@@ -206,3 +206,20 @@ function md5 (text) {
     return checksum.get_string ();
 }
 
+function get_ip_addresses () {
+    let addresses = [];
+    var cmd_output = GLib.spawn_command_line_sync ('ip addr show');
+    if (!cmd_output[0]) return ['127.0.0.1'];
+    var list = cmd_output[1].toString ().split ('\n');
+    list.forEach ((s)=>{
+        let ar;
+        if ((s.indexOf ('inet') > -1) && (s.indexOf ('scope global') > -1)) {
+            ar = s.trim ().split (' ');
+            if (ar[1].indexOf ('/') > -1)
+                addresses.push (ar[1].substr (0, ar[1].indexOf ('/')));
+        }
+    });
+    if (addresses.length == 0) addresses.push ('127.0.0.1');
+    return addresses;
+}
+

@@ -282,14 +282,14 @@ const LocalItem = new Lang.Class ({
     Extends: Gtk.MenuItem,
 
     _init: function () {
-        this.prefix = "<b>" + _("Local IP Address") + "</b> ";
+        this.prefix = "<b>" + _("Local IP") + "</b> ";
         this.parent ({label:this.prefix});
         this.get_child().set_markup (this.prefix);
         this.tooltip_text = _("Local Network IP Addresses");
     },
 
     update_ips: function () {
-        let l = get_info_string ("hostname -I").trim ().split (" ");
+        let l = Convenience.get_ip_addresses ();
         var scheme = "http://";
         if (https) scheme = "https://";
         this.submenu = new Gtk.Menu ();
@@ -297,6 +297,7 @@ const LocalItem = new Lang.Class ({
             let item = Gtk.MenuItem.new_with_label (scheme + s + ":" + port);
             this.submenu.append (item);
         });
+        this.get_child().set_markup (this.prefix + l[0]);
         this.submenu.show_all ();
     },
 

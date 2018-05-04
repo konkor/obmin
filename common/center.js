@@ -369,13 +369,11 @@ const Sidebar = new Lang.Class({
         this.run_button  = new RunButton ();
         box.pack_start (this.run_button, false, false, 0);
 
-        var l = get_info_string ("hostname -I").trim ().split (" ");
+        var l = Convenience.get_ip_addresses ();
         l.forEach ((ip)=>{
             let local_item = new LocalItem (ip);
             this.add (local_item);
         });
-        //this.local_item = new LocalItem ();
-        //this.add (this.local_item);
         this.public_item = new PublicItem ();
         this.add (this.public_item);
 

@@ -292,11 +292,14 @@ const LocalItem = new Lang.Class ({
 
     _init: function () {
         this.parent (_("Local IP Address"), false);
+        this.info = new St.Label ({text: ' ', reactive:true, can_focus: true, track_hover: true });
+        this.info.align = St.Align.END;
+        this.actor.add_child (this.info);
         this.update_ips ();
     },
 
     update_ips: function () {
-        let l = get_info_string ("hostname -I").trim ().split (" ");
+        let l = Convenience.get_ip_addresses ();
         this.menu.removeAll ();
         l.forEach ((s)=>{
             let item = new PopupMenu.PopupMenuItem (s + ":" + port);
@@ -308,6 +311,7 @@ const LocalItem = new Lang.Class ({
                 show_notify (_("Local IP address copied to clipboard."));
             }));
         });
+        this.info.set_text (l[0]);
     },
 
     update: function () {
@@ -320,7 +324,7 @@ const PublicItem = new Lang.Class ({
     Extends: InfoMenuItem,
 
     _init: function () {
-        this.parent (_("Public IP"), "", true, 'obmin-ip-item', 'obmin-ip-label');
+        this.parent (_("Public IP Address"), "", true, 'obmin-ip-item', 'obmin-ip-label');
         this._ip = "";
     },
 
