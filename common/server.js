@@ -38,6 +38,22 @@ const md5 = Convenience.md5;
 
 var CONFIG_PATH = GLib.get_user_config_dir() + "/obmin";
 
+const OBJECT_PATH = '/org/konkor/obmin/server';
+const ObminServerIface = '<node> \
+<interface name="org.konkor.obmin.server"> \
+<property name="UUID" type="s" access="read"/> \
+<property name="Counter" type="s" access="read"/> \
+<signal name="CounterChanged"> \
+  <arg name="counters" type="s"/> \
+</signal> \
+<signal name="Loading" /> \
+<signal name="Closing"> \
+  <arg name="server" type="s"/> \
+</signal> \
+</interface> \
+</node>';
+const ObminServerInfo  = Gio.DBusInterfaceInfo.new_for_xml (ObminServerIface);
+
 const ATTRIBUTES = "standard," +
     Gio.FILE_ATTRIBUTE_TIME_MODIFIED + "," +
     Gio.FILE_ATTRIBUTE_UNIX_NLINK + "," +
@@ -103,7 +119,6 @@ let sources = [];
 let excluded = [];
 var counter = {access:0, ready:0, upload:0};
 
-//TODO PLUG MANAGER
 let enabled_plugs = [
 "f7d92e608a582d0fe0313bb959e3d51f",
 "bd269ad77d725c4e8fa19ecd59e5dd68",
@@ -125,7 +140,7 @@ var ObminServer = new Lang.Class({
     _init: function () {
         GLib.set_prgname ("obmin-server");
         this.parent ({tls_certificate:tls_cert});
-        settings.set_string (STATS_DATA_KEY, JSON.stringify (counter));
+        //settings.set_string (STATS_DATA_KEY, JSON.stringify (counter));
         this.plugs_init ();
         this.add_handler (null, Lang.bind (this, this._default_handler));
         try {
@@ -134,6 +149,9 @@ var ObminServer = new Lang.Class({
         } catch (err) {
             throw err;
         }
+        this.dbus = Gio.DBusExportedObject.wrapJSObject (ObminServerInfo, this);
+        this.dbus.export (Gio.DBus.session, OBJECT_PATH);
+        this.update_stats ();
         if (authentication) {
             let auth = new Soup.AuthDomainDigest ({realm: Convenience.realm});
             auth.add_path ("/");
@@ -417,8 +435,9 @@ var ObminServer = new Lang.Class({
     },
 
     update_stats: function () {
-        if (!stats_monitor) return;
-        settings.set_string (STATS_DATA_KEY, JSON.stringify (counter));
+        //if (!stats_monitor) return;
+        //settings.set_string (STATS_DATA_KEY, JSON.stringify (counter));
+        this.dbus.emit_signal ("CounterChanged", new GLib.Variant ("(s)", [JSON.stringify (counter)]));
     },
 
     get_file: function (path) {
