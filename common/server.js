@@ -38,22 +38,6 @@ const md5 = Convenience.md5;
 
 var CONFIG_PATH = GLib.get_user_config_dir() + "/obmin";
 
-const OBJECT_PATH = '/org/konkor/obmin/server';
-const ObminServerIface = '<node> \
-<interface name="org.konkor.obmin.server"> \
-<property name="UUID" type="s" access="read"/> \
-<property name="Counter" type="s" access="read"/> \
-<signal name="CounterChanged"> \
-  <arg name="counters" type="s"/> \
-</signal> \
-<signal name="Loading" /> \
-<signal name="Closing"> \
-  <arg name="server" type="s"/> \
-</signal> \
-</interface> \
-</node>';
-const ObminServerInfo  = Gio.DBusInterfaceInfo.new_for_xml (ObminServerIface);
-
 const ATTRIBUTES = "standard," +
     Gio.FILE_ATTRIBUTE_TIME_MODIFIED + "," +
     Gio.FILE_ATTRIBUTE_UNIX_NLINK + "," +
@@ -149,6 +133,7 @@ var ObminServer = new Lang.Class({
         } catch (err) {
             throw err;
         }
+        dbus_init ();
         this.dbus = Gio.DBusExportedObject.wrapJSObject (ObminServerInfo, this);
         this.dbus.export (Gio.DBus.session, OBJECT_PATH);
         this.update_stats ();
@@ -871,6 +856,29 @@ function get_excluded_locations () {
     excluded.push ("/proc");
     excluded.push ("/sys");
     excluded.push ("/selinux");
+}
+
+let OBJECT_PATH;
+let ObminServerIface;
+let ObminServerInfo;
+
+function dbus_init () {
+    OBJECT_PATH = '/org/konkor/obmin/server/_' + port;
+    ObminServerIface = '<node> \
+<interface name="org.konkor.obmin.server._' + port + '"> \
+<property name="UUID" type="s" access="read"/> \
+<property name="Counter" type="s" access="read"/> \
+<signal name="CounterChanged"> \
+  <arg name="counters" type="s"/> \
+</signal> \
+<signal name="Loading" /> \
+<signal name="Closing"> \
+  <arg name="server" type="s"/> \
+</signal> \
+</interface> \
+</node>';
+    ObminServerInfo  = Gio.DBusInterfaceInfo.new_for_xml (ObminServerIface);
+    //print (OBJECT_PATH, ObminServerIface);
 }
 
 let obmin;
