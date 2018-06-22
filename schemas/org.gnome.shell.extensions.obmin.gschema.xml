@@ -123,12 +123,6 @@
       <description>(enable - default/disable)</description>
     </key>
 
-    <key type="s" name="stats">
-        <default>'{"access":0,"ready":0,"upload":0}'</default>
-        <summary>Data</summary>
-        <description>Server stats data</description>
-    </key>
-
     <key type="s" name="theme-gui">
         <default>'default'</default>
         <summary>GUI theme</summary>

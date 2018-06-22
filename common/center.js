@@ -40,7 +40,6 @@ const DEBUG_KEY = 'debug';
 const STARTUP_KEY = 'startup-settings';
 const STATS_MONITOR_KEY = 'stats-monitor';
 const THEME_GUI_KEY = 'theme-gui';
-const STATS_DATA_KEY = 'stats';
 const SUPPORT_KEY = 'support';
 const JOURNAL_KEY = 'logs';
 const PORT_KEY = 'port';
@@ -83,8 +82,6 @@ var ObminCenter = new Lang.Class ({
         support = settings.get_int (SUPPORT_KEY);
         status = settings.get_int (STATUS_KEY);
         stats_monitor = settings.get_boolean (STATS_MONITOR_KEY);
-        let s = settings.get_string (STATS_DATA_KEY);
-        if (s && (s !="{}")) stats = JSON.parse (s);
         theme_gui = APPDIR + "/data/themes/" + settings.get_string (THEME_GUI_KEY) + "/obmin.css";
 
         server = this.server_enabled;
@@ -110,13 +107,20 @@ var ObminCenter = new Lang.Class ({
 
     _onActivate: function () {
         window.show_all ();
-        //this.show_info ("Started...");
-        settings.connect ("changed::" + STATS_DATA_KEY, Lang.bind (this, function() {
-            stats = JSON.parse (settings.get_string (STATS_DATA_KEY));
-            if (update_event) GLib.Source.remove (update_event);
-            update_event = GLib.timeout_add (0, 50, Lang.bind (this, this.update_stats ));
-        }));
+        this.dbus = Gio.bus_get_sync (Gio.BusType.SESSION, null);
+        if (this.dbus)
+            this.dbus.call('org.freedesktop.DBus', '/', "org.freedesktop.DBus", "AddMatch",
+                GLib.Variant.new('(s)', ["type=\'signal\'"]), null, Gio.DBusCallFlags.NONE, -1, null, Lang.bind (this, function() {
+                    this._signalCC = this.dbus.signal_subscribe(null, "org.konkor.obmin.server", "CounterChanged",
+                    '/org/konkor/obmin/server', null, Gio.DBusSignalFlags.NO_MATCH_RULE, Lang.bind (this, this.on_counter_changed));
+            }));
         window.present ();
+    },
+
+    on_counter_changed: function (conn, sender, object, iface, signal, param, user_data) {
+        stats = JSON.parse (param.get_child_value(0).get_string()[0]);
+        if (update_event) GLib.Source.remove (update_event);
+        update_event = GLib.timeout_add (0, 50, Lang.bind (this, this.update_stats ));
     },
 
     _onStartup: function () {

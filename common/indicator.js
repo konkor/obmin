@@ -39,7 +39,6 @@ const HTTPS_KEY = 'https';
 const DEBUG_KEY = 'debug';
 const STARTUP_KEY = 'startup-settings';
 const STATS_MONITOR_KEY = 'stats-monitor';
-const STATS_DATA_KEY = 'stats';
 const SUPPORT_KEY = 'support';
 const PORT_KEY = 'port';
 const STATUS_KEY = 'status';

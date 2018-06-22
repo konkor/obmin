@@ -75,6 +75,7 @@ let journal = true;
 
 let settings = null;
 let sources = [];
+let unlocked = false;
 
 var ObminWidget = new Lang.Class({
     Name: 'ObminWidget',
@@ -656,11 +657,24 @@ const PageNetwork = new Lang.Class({
         }));
 
         this.add (new Gtk.Label ({label: "<b>" + _("User Authentication") + "</b>", use_markup:true, xalign:0, margin_top:12}));
+        hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
+        this.pack_start (hbox, false, false, 0);
         this.cb_auth = Gtk.CheckButton.new_with_label (_("Enable User Authentication"));
         this.cb_auth.tooltip_text = _("Many standalone network devices and applications like media players don't support HTTPS connections and HTTP Authentication.");
         this.cb_auth.margin = 8;
-        this.add (this.cb_auth);
+        hbox.add (this.cb_auth);
         this.cb_auth.active = auth;
+        //this.cb_auth.sensitive = unlocked;
+
+        /*this.unlock = new Gtk.Button ({label: _("Unlock")});
+        this.unlock.tooltip_text = "OBMIN " + _("Extension Manager");
+        hbox.pack_end (this.unlock, false, false, 0);
+        this.unlock.connect ('clicked', Lang.bind (this, ()=>{
+            let dlg = new UnlockDialog (this.get_toplevel(), user, auth);
+            let res = dlg.run ();
+            dlg.destroy ();
+            Gtk.Settings.get_default().gtk_application_prefer_dark_theme = !Gtk.Settings.get_default().gtk_application_prefer_dark_theme;
+        }));*/
 
         hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
         this.pack_start (hbox, false, false, 0);
@@ -722,6 +736,31 @@ const PageNetwork = new Lang.Class({
             s = s.replace (c, '');
         }
         return s;
+    }
+});
+
+const UnlockDialog = new Lang.Class({
+    Name: 'UnlockDialog',
+    Extends: Gtk.Dialog,
+
+    _init: function (parent_window, username, token) {
+        this.parent ();
+        this.set_transient_for (parent_window);
+        Gtk.Settings.get_default().gtk_application_prefer_dark_theme = !Gtk.Settings.get_default().gtk_application_prefer_dark_theme;
+		//this.title = "OBMIN";
+
+        this.add_button ("_Cancel", Gtk.ResponseType.CANCEL);
+		this.add_button ("_Authenticate", Gtk.ResponseType.ACCEPT);
+		this.set_default_size (512, 140);
+		let content = this.get_content_area ();
+		content.border_width = 24;
+		content.spacing = 8;
+
+        content.add (new Gtk.Label ({label: "<b>" + _("Authentication Required") + "</b>", use_markup:true, xalign:0}));
+        content.add (new Gtk.Label ({label: _("Authentication is required to change user data"), use_markup:true, xalign:0}));
+        content.add (new Gtk.Label ({label: "<b>" + username + "</b>", use_markup:true, xalign:0}));
+
+        this.show_all ();
     }
 });
 

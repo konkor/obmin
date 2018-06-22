@@ -33,7 +33,6 @@ const Lang = imports.lang;
 const HTTPS_KEY = 'https';
 const STARTUP_KEY = 'startup-settings';
 const STATS_MONITOR_KEY = 'stats-monitor';
-const STATS_DATA_KEY = 'stats';
 const SUPPORT_KEY = 'support';
 const PORT_KEY = 'port';
 const DEBUG_KEY = 'debug';
