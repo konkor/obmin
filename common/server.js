@@ -117,42 +117,6 @@ let user = "obmin";
 let pass = "123456";
 let htdigest = "";
 
-var ObminServerApplication = new Lang.Class ({
-    Name: 'ObminServerApplication',
-    Extends: Gio.Application,
-
-    _init: function (args) {
-        GLib.set_prgname ("obmin-server");
-        this.parent ({
-            application_id: "org.konkor.obmin.server",
-            flags: Gio.ApplicationFlags.NON_UNIQUE
-        });
-        GLib.set_application_name ("Obmin Server");
-        this.server = null;
-        this.connect("open", () => {
-            //this.remove_events ();
-        });
-    },
-
-    vfunc_startup: function() {
-        this.parent();
-        this.init ();
-        this.hold ();
-    },
-
-    vfunc_activate: function() {
-        /*this.connect("destroy", () => {
-            //this.remove_events ();
-        });*/
-    },
-
-    init: function() {
-        debug ("init");
-        this.server =  new ObminServer (this);
-    }
-
-});
-
 var ObminServer = new Lang.Class({
     Name: 'ObminServer',
     Extends: Soup.Server,
@@ -927,8 +891,6 @@ if (load_settings ()) {
 
     try {
         obmin = new ObminServer ();
-        //obmin = new ObminServerApplication (ARGV);
-        //obmin.run (ARGV);
     } catch (e) {
         throw (e.message);
     }
