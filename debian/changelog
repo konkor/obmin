@@ -1,8 +1,9 @@
 obmin (16-1) unstable; urgency=low
 
-  * Next development release
+  * Add HTTP Digest Authentication
+  * Add dbus server for messaging
 
- -- konkor <kapa76@gmail.com>  Sun, 11 Mar 2018 12:29:00 +0100
+ -- konkor <kapa76@gmail.com>  Fri, 22 Jun 2018 21:14:00 +0100
 
 obmin (15-1) unstable; urgency=low
 

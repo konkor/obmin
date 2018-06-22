@@ -695,7 +695,7 @@ const PageNetwork = new Lang.Class({
         }));
         hbox.add (new Gtk.Label ({label: _("Password")}));
         this.pass = new Gtk.Entry ();
-        this.pass.tooltip_text = _("Set up a new password.\nMake strong enough it.");
+        this.pass.tooltip_text = _("Set up a new password.\nMake it strong enough.");
         this.pass.input_purpose = Gtk.InputPurpose.PASSWORD;
         this.pass.visibility = false;
         this.pass.sensitive = auth;
