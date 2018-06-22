@@ -113,9 +113,45 @@ var plugins = null;
 var plug_events = null;
 
 let authentication = false;
-let user = "test";
+let user = "obmin";
 let pass = "123456";
 let htdigest = "";
+
+var ObminServerApplication = new Lang.Class ({
+    Name: 'ObminServerApplication',
+    Extends: Gio.Application,
+
+    _init: function (args) {
+        GLib.set_prgname ("obmin-server");
+        this.parent ({
+            application_id: "org.konkor.obmin.server",
+            flags: Gio.ApplicationFlags.NON_UNIQUE
+        });
+        GLib.set_application_name ("Obmin Server");
+        this.server = null;
+        this.connect("open", () => {
+            //this.remove_events ();
+        });
+    },
+
+    vfunc_startup: function() {
+        this.parent();
+        this.init ();
+        this.hold ();
+    },
+
+    vfunc_activate: function() {
+        /*this.connect("destroy", () => {
+            //this.remove_events ();
+        });*/
+    },
+
+    init: function() {
+        debug ("init");
+        this.server =  new ObminServer (this);
+    }
+
+});
 
 var ObminServer = new Lang.Class({
     Name: 'ObminServer',
@@ -124,7 +160,6 @@ var ObminServer = new Lang.Class({
     _init: function () {
         GLib.set_prgname ("obmin-server");
         this.parent ({tls_certificate:tls_cert});
-        //settings.set_string (STATS_DATA_KEY, JSON.stringify (counter));
         this.plugs_init ();
         this.add_handler (null, Lang.bind (this, this._default_handler));
         try {
@@ -133,7 +168,6 @@ var ObminServer = new Lang.Class({
         } catch (err) {
             throw err;
         }
-        dbus_init ();
         this.dbus = Gio.DBusExportedObject.wrapJSObject (ObminServerInfo, this);
         this.dbus.export (Gio.DBus.session, OBJECT_PATH);
         this.update_stats ();
@@ -765,6 +799,7 @@ function load_settings () {
             cfg = true;
         }
     }
+    debug (JSON.stringify(config));
     if (config.mounts) mounts = config.mounts;
     else mounts = settings.get_boolean (MOUNTS_KEY);
     get_excluded_locations ();
@@ -863,9 +898,9 @@ let ObminServerIface;
 let ObminServerInfo;
 
 function dbus_init () {
-    OBJECT_PATH = '/org/konkor/obmin/server/_' + port;
+    OBJECT_PATH = '/org/konkor/obmin/server';
     ObminServerIface = '<node> \
-<interface name="org.konkor.obmin.server._' + port + '"> \
+<interface name="org.konkor.obmin.server"> \
 <property name="UUID" type="s" access="read"/> \
 <property name="Counter" type="s" access="read"/> \
 <signal name="CounterChanged"> \
@@ -878,7 +913,6 @@ function dbus_init () {
 </interface> \
 </node>';
     ObminServerInfo  = Gio.DBusInterfaceInfo.new_for_xml (ObminServerIface);
-    //print (OBJECT_PATH, ObminServerIface);
 }
 
 let obmin;
@@ -889,7 +923,14 @@ if (load_settings ()) {
         Convenience.gen_certificate ();
         tls_cert = get_certificate ();
     }
+    dbus_init ();
 
-    obmin = new ObminServer ();
+    try {
+        obmin = new ObminServer ();
+        //obmin = new ObminServerApplication (ARGV);
+        //obmin.run (ARGV);
+    } catch (e) {
+        throw (e.message);
+    }
     Mainloop.run ('obminMainloop');
 }

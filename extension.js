@@ -102,19 +102,27 @@ const ObminIndicator = new Lang.Class({
 
         stats_monitor = this.settings.get_boolean (STATS_MONITOR_KEY);
         if (server) {
-            stats = JSON.parse (this.settings.get_string (STATS_DATA_KEY));
             this.update_stats ();
         }
 
         this.menu.connect ('open-state-changed', Lang.bind (this, this.on_menu_state_changed));
-        if (stats_monitor)
-            this.settings.connect ("changed::" + STATS_DATA_KEY, Lang.bind (this, function() {
-            stats = JSON.parse (this.settings.get_string (STATS_DATA_KEY));
-            if (this.menu.isOpen) {
-                if (update_event) GLib.Source.remove (update_event);
-                update_event = GLib.timeout_add (0, 250, Lang.bind (this, this.update_stats ));
-            } else this.update_icon ();
-        }));
+
+        this.dbus = Gio.bus_get_sync (Gio.BusType.SESSION, null);
+        if (stats_monitor && this.dbus)
+            this.dbus.call('org.freedesktop.DBus', '/', "org.freedesktop.DBus", "AddMatch",
+                GLib.Variant.new('(s)', ["type=\'signal\'"]), null, Gio.DBusCallFlags.NONE, -1, null, Lang.bind (this, function() {
+                    this._signalCC = this.dbus.signal_subscribe(null, "org.konkor.obmin.server", "CounterChanged",
+                    '/org/konkor/obmin/server', null, Gio.DBusSignalFlags.NO_MATCH_RULE, Lang.bind (this, this.on_counter_changed));
+            }));
+    },
+
+    on_counter_changed: function (conn, sender, object, iface, signal, param, user_data) {
+        //print ('on_counter_changed', param.get_child_value(0).get_string()[0]);
+        stats = JSON.parse (param.get_child_value(0).get_string()[0]);
+        if (this.menu.isOpen) {
+            if (update_event) GLib.Source.remove (update_event);
+            update_event = GLib.timeout_add (0, 250, Lang.bind (this, this.update_stats ));
+        } else this.update_icon ();
     },
 
     check_status: function () {
@@ -237,6 +245,8 @@ const ObminIndicator = new Lang.Class({
     remove_events: function () {
         if (update_event) GLib.Source.remove (update_event);
         update_event = 0;
+        if (this.dbus && this._signalCC) this.dbus.signal_unsubscribe (this._signalCC);
+        this._signalCC = 0;
     }
 });
 
