@@ -599,7 +599,7 @@ const PageNetwork = new Lang.Class({
         let hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
         this.pack_start (hbox, false, false, 0);
         hbox.add (new Gtk.Label ({label: _("<b>Network Interface</b>"), use_markup:true, xalign:0, margin_top:12}));
-        this.port_hint = Gtk.Image.new_from_icon_name ("gtk-dialog-question", 16);
+        this.port_hint = Gtk.Image.new_from_icon_name ("dialog-information-symbolic", Gtk.IconSize.BUTTON);
         //this.port_hint = new Gtk.Label ({label: "<b>?</b>", use_markup:true, xalign:1, margin:4})
         this.port_hint.tooltip_text = "You can set up a port forwarding on your router.";
         hbox.pack_end (this.port_hint, false, false, 0);
