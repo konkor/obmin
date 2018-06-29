@@ -319,7 +319,11 @@ const PublicItem = new Lang.Class ({
 
     _init: function () {
         this.prefix = "<b>" + _("Public IP") + "</b> ";
-        this.parent ({label:this.prefix});
+        if (desktop == "PANTHEON") {
+            this._ip = Convenience.fetch_sync ("http://ipecho.net/plain", null, null)[0];
+            this.parent ({label:_("Public IP") + " " + this._ip});
+        } else
+            this.parent ({label:this.prefix});
         this.tooltip_text = _("External Network IP Address");
         this._ip = "";
     },

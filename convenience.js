@@ -169,6 +169,33 @@ function fetch (url, agent, headers, callback) {
     });
 }
 
+function fetch_sync (url, agent, headers) {
+    agent = agent || "Obmin ver." + API_VERSION;
+
+    let responce = [];
+    let cancalable = new Gio.Cancellable();
+    let session = new Soup.SessionSync({ user_agent: agent });
+    let request = Soup.Message.new ("GET", url);
+    if (headers) headers.forEach (h=>{
+        request.request_headers.append (h[0], h[1]);
+    });
+    let timeout_id = GLib.timeout_add_seconds (0, 4, Lang.bind (this, function () {
+        if (cancelable) cancelable.cancel();
+    }));
+    let stream = session.send (request, cancalable);
+    GLib.Source.remove (timeout_id);
+    if (stream) {
+        let dis = new Gio.DataInputStream ({base_stream: stream});
+        let line = "";
+        while (line != null) {
+            [line,] = dis.read_line_utf8 (null);
+            if (line != null) responce.push (line);
+        }
+        dis.close (null);
+    }
+    return responce;
+}
+
 var CONFIG_PATH = GLib.get_user_config_dir() + "/obmin";
 
 function gen_certificate () {
