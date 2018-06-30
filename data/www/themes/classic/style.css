@@ -2,6 +2,7 @@
 body {background: #f0f0f0;color:#212121;font-family:roboto,sans;font-size: 0.9em; margin: 0px;}
 a {text-decoration:none}
 .home {height:24px;display:inline-block; margin: 4px 6px 0px 8px}
+.home:hover {-webkit-filter: brightness(0.7); filter: brightness(0.7);}
 .path {color: #f0f0f0;background-color: #323843; margin: 0px auto 0px auto; padding: .5em 0px;font-weight: bold;font-size: 1.2em;line-height:140%;display:table;vertical-align: middle;width:100%}
 .path a,.path a:visited,.path a:focus {color: #f0f0f0}
 .path a:hover,.path a:active {color: #0c99d5}
