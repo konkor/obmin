@@ -1057,7 +1057,7 @@ const LogStore = new Lang.Class({
     get_logs: function (period) {
         let list = [], finfo, fname, last_date = 0, d;
         let now = new Date(), fdate = new Date();
-        var log_path = GLib.get_user_data_dir () + "/obmin/";
+        var log_path = GLib.get_user_data_dir () + "/obmin/logs/";
         let dir = Gio.File.new_for_path (log_path);
         if (!dir.query_exists (null)) return list;
         var e = dir.enumerate_children ("*", Gio.FileQueryInfoFlags.NONE, null);

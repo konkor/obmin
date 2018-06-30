@@ -183,5 +183,11 @@
       <description>User's Password</description>
     </key>
 
+    <key type="i" name="logs-rotation">
+      <default>0</default>
+      <summary>Log rotation interval</summary>
+      <description>(0 - disable, months)</description>
+    </key>
+
   </schema>
 </schemalist>

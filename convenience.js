@@ -117,15 +117,15 @@ function InitLogger (source) {
     logger = new Logger (source);
 }
 
+let log_path = GLib.get_user_data_dir () + "/obmin/logs/";
 const Logger = new Lang.Class({
     Name: 'Logger',
 
     _init: function (source) {
         let filename;
         this.prefix = source?source:"";
-        this.path = GLib.get_user_data_dir () + "/obmin/";
-        if (!GLib.file_test (this.path, GLib.FileTest.EXISTS))
-            GLib.mkdir_with_parents (this.path, 484);
+        if (!GLib.file_test (log_path, GLib.FileTest.EXISTS))
+            GLib.mkdir_with_parents (log_path, 484);
         filename = this.new_filename;
         while (GLib.file_test (filename, GLib.FileTest.EXISTS))
             filename = this.new_filename;
@@ -137,6 +137,8 @@ const Logger = new Lang.Class({
         } catch (e) {
             log (e.message);
         }
+        if (!rotation) return;
+        GLib.timeout_add_seconds (0, 2, rotation_worker);
     },
 
     put: function (text) {
@@ -147,11 +149,31 @@ const Logger = new Lang.Class({
 
     get new_filename () {
         let d = new Date();
-        return "%s%s-%04d%02d%02d-%02d%02d%02d%03d.log".format(this.path, this.prefix,
+        return "%s%s-%04d%02d%02d-%02d%02d%02d%03d.log".format(log_path, this.prefix,
             d.getFullYear(),d.getMonth()+1,d.getDate(),
             d.getHours(),d.getMinutes(),d.getSeconds(),d.getMilliseconds());
     }
 });
+
+let rotation = getSettings().get_int ('logs-rotation');
+function rotation_worker () {
+    if (!rotation) return false;
+    let d = 0, now = new Date (), fname, finfo, count = 0;
+    let dir = Gio.File.new_for_path (log_path);
+    if (!dir.query_exists (null)) return false;
+    var e = dir.enumerate_children ("*", Gio.FileQueryInfoFlags.NONE, null);
+    while ((finfo = e.next_file (null)) != null) {
+        if (finfo.get_file_type () == Gio.FileType.DIRECTORY) continue;
+        fname = finfo.get_name ();
+        if (!fname.endsWith (".log")) continue;
+        d = now.valueOf() - finfo.get_attribute_uint64 (Gio.FILE_ATTRIBUTE_TIME_MODIFIED) * 1000;
+        if (d > 2592000000*rotation) {
+            if (Gio.File.new_for_path (log_path+fname).delete(null))
+                count++;
+        }
+    }
+    debug ("rotation_worker", "removed %d logs...".format (count));
+}
 
 function fetch (url, agent, headers, callback) {
     callback = callback || null;
@@ -181,6 +203,7 @@ function fetch_sync (url, agent, headers) {
     });
     let timeout_id = GLib.timeout_add_seconds (0, 4, Lang.bind (this, function () {
         if (cancelable) cancelable.cancel();
+        return false;
     }));
     let stream = session.send (request, cancalable);
     GLib.Source.remove (timeout_id);

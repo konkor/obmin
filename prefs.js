@@ -25,6 +25,7 @@ const Gio = imports.gi.Gio;
 const Gtk = imports.gi.Gtk;
 const Soup = imports.gi.Soup;
 
+const ROTATION_KEY = 'logs-rotation';
 const HTTPS_KEY = 'https';
 const CERT_KEY = 'tls-certificate';
 const PKEY_KEY = 'private-key';
@@ -53,6 +54,7 @@ const EXTENSIONDIR = getCurrentFile ()[1];
 imports.searchPath.unshift (EXTENSIONDIR);
 const Convenience = imports.convenience;
 
+let rotation = 0;
 let https = false;
 let cert = "";
 let pkey = "";
@@ -85,6 +87,7 @@ var ObminWidget = new Lang.Class({
 
         DEBUG = settings.get_int (DEBUG_KEY);
         startup = settings.get_boolean (STARTUP_KEY);
+        rotation = settings.get_int (ROTATION_KEY);
         https = settings.get_boolean (HTTPS_KEY);
         cert = settings.get_string (CERT_KEY);
         pkey = settings.get_string (PKEY_KEY);
@@ -505,6 +508,7 @@ const PageNotify = new Lang.Class({
             settings.set_int (DEBUG_KEY, DEBUG);
         }));
         hbox.pack_end (this.level, false, false, 0);
+
         this.cb_journal = Gtk.CheckButton.new_with_label (_("Enable local server logs"));
         this.cb_journal.tooltip_text = _("Use local logs for the server messages (default enabled).") +
             "\n" + _("If disabled it uses the systemd journal only.");
@@ -515,6 +519,23 @@ const PageNotify = new Lang.Class({
             journal = this.cb_journal.active;
             settings.set_boolean (JOURNAL_KEY, journal);
         }));
+        hbox = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:6});
+        this.pack_start (hbox, false, false, 0);
+        label = new Gtk.Label ({label: _("Logs rotation")});
+        label.tooltip_text = _("The time when old logs should delete.");
+        hbox.add (label);
+        this.rotation = new Gtk.ComboBoxText ();
+        this.rotation.append_text (_("DISABLED"));
+        this.rotation.append_text ( 1 + " " + _("month"));
+        for (let i=2; i<=12; i++) {
+            this.rotation.append_text ( i + " " + _("months"));
+        }
+        this.rotation.active = rotation;
+        this.rotation.connect ('changed', Lang.bind (this, ()=>{
+            rotation = this.rotation.active;
+            settings.set_int (ROTATION_KEY, rotation);
+        }));
+        hbox.pack_end (this.rotation, false, false, 0);
 
         this.add (new Gtk.Label ({label: "<b>" + _("Applet notifications") + "</b>", use_markup:true, xalign:0, margin_top:12}));
         this.cb_activity = Gtk.CheckButton.new_with_label (_("Activity Monitor"));
