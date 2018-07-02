@@ -811,7 +811,7 @@ function load_settings () {
     else {
         srcs = settings.get_string (SOURCES_KEY);
         if (srcs.length > 0) check_sources (JSON.parse (srcs));
-        else sources.push ({path: GLib.get_home_dir (), recursive: true});
+        else sources.push ({path: GLib.get_current_dir(), recursive: true});
     }
     if (config.plugins)
         enabled_plugs = config.plugins;

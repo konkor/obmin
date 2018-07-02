@@ -173,6 +173,7 @@ function rotation_worker () {
         }
     }
     debug ("rotation_worker", "removed %d logs...".format (count));
+    return false;
 }
 
 function fetch (url, agent, headers, callback) {
