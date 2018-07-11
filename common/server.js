@@ -241,11 +241,13 @@ var ObminServer = new Lang.Class({
         counter.access++;
         let drop = false, num = counter.access;
         let request = {msg:msg, path:path, query:query, client:client, num:counter.access};
-        //info ("Request (" + counter.access + ") " + client.get_host () + " HTTP/1." + msg.get_http_version () + " " + msg.method + " " + path );
-        info ("Request (%d) %d %s HTTP/1.%d %s %s".format (counter.access, port, client.get_host (), msg.get_http_version (), msg.method, path ));
-        msg.request_headers.foreach ( (n, v) => {
+        var host = msg.request_headers.get_one ("X-Forwarded-For");
+        if (!host) host = client.get_host ();
+        if (DEBUG_LVL > 1) msg.request_headers.foreach ( (n, v) => {
             debug (n + ": " + v);
         });
+        info ("Request (%d) %d %s HTTP/1.%d %s %s".format (counter.access, port, host, msg.get_http_version (), msg.method, path ));
+        //info ("Headers (%d) %s".format (counter.access, JSON.stringify (headers)));
         if (query && query.plug && plugins.has (query.plug)) {
             debug ("plug response " + plugins.get (query.plug).puid);
             if (plug_events.has (query.plug) && (plug_events.get (query.plug) != 0)) {
