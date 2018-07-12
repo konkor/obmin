@@ -11,3 +11,4 @@ tar xf obmin_$VERSION.orig.tar.xz
 cd obmin-$VERSION
 cp -r ../../../debian/ .
 debuild -us -uc
+cp -f ../obmin_$VERSION-1_all.deb ../../../releases/obmin_latest_all.deb
