@@ -20,6 +20,8 @@ script:
   - travis_retry bash -n install_obmin.sh
   - bash -n install_obmin.sh
   - echo "Testing building and packaging..."
+  - ./autogen.sh
+  - make
   - make release
 
 after_success:
