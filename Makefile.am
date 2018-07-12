@@ -55,3 +55,10 @@ zip-file: all
 	);
 	-rm -fR $(builddir)/_build
 
+release: zip-file
+	-cp -f $(builddir)/zip-files/$(EXTENSION_ID)@konkor.zip $(builddir)/releases/$(EXTENSION_ID)@konkor.zip
+	$(MAKE) dist; \
+	(cd "$(builddir)/packaging"; \
+	 ./packaging.sh \
+	);
+
