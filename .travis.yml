@@ -1,7 +1,7 @@
 os: linux
 dist: xenial
 language: c
-
+sudo: required
 
 branches:
   only:
