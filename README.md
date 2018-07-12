@@ -1,4 +1,7 @@
 # [OBMIN](https://extensions.gnome.org/extension/1254/obmin/)
+
+[![Build Status](https://travis-ci.com/konkor/obmin.svg?branch=master)](https://travis-ci.com/konkor/obmin)
+
 **One-Click** File Sharing Solution for your home network and even worldwide.
 -----
 _The project is looking for your [contribution and supporting](#contributions) to make it possible._
