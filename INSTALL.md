@@ -78,23 +78,41 @@ or for **devel** branch to example
  * or in the `gnome-tweak-tool`
 
 ### From the sources
-```
+```sh
 git clone git@github.com:konkor/obmin.git
 cd obmin
 ./autogen.sh
 make
+sudo make install
+```
+
+_Optionally, you can configure user local folder for installation. You can export `~/.local/bin` folder to .bashrc PATH_
+```sh
+./autogen.sh
+./configure --prefix=/home/USER/.local # REPLACE USER
+make
+make install # NO ROOT REQUIRED
+```
+
+_Additionally:_
+To make the extension package:
+```sh
 make zip-file
+# OUTPUT: ./zip-files/obmin@konkor.zip
 ```
+
 To make a distribution source package:
-```
+```sh
 make dist
 ```
+
 To make a deb package for the package manager:
-```
+```sh
 make dist
 cd packaging
 ./packaging.sh
 ```
+
 ### Sources and binary packages
 * [GitHub master branch](https://github.com/konkor/obmin/archive/master.zip)
 * [GitHub release branch](https://github.com/konkor/obmin/archive/release.zip)

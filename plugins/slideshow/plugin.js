@@ -315,6 +315,8 @@ function get_appdir () {
     if (GLib.file_test (s + "/obmin-server", GLib.FileTest.EXISTS)) return s;
     s = GLib.get_home_dir () + "/.local/share/gnome-shell/extensions/obmin@konkor";
     if (GLib.file_test (s + "/obmin-server", GLib.FileTest.EXISTS)) return s;
+    s = "/usr/local/share/gnome-shell/extensions/obmin@konkor";
+    if (GLib.file_test (s + "/prefs.js", GLib.FileTest.EXISTS)) return s;
     s = "/usr/share/gnome-shell/extensions/obmin@konkor";
     if (GLib.file_test (s + "/obmin-server", GLib.FileTest.EXISTS)) return s;
     throw "Obmin installation not found...";

@@ -4,8 +4,6 @@ AC_INIT(obmin, 17)
 
 AC_CONFIG_HEADERS([config.h])
 
-AC_PREFIX_DEFAULT(~/.local/share/gnome-shell/extensions)
-
 AM_INIT_AUTOMAKE([1.10 dist-xz no-dist-gzip foreign tar-ustar])
 
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
