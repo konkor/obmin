@@ -9,12 +9,11 @@ branches:
 
 before_install:
     - sudo apt-get -qq update
-    - sudo apt-get install gjs gir1.2-gtk-3.0 gir1.2-soup-2.4 psmisc gir1.2-appindicator3
+    - sudo apt-get -y install gjs gir1.2-gtk-3.0 gir1.2-soup-2.4 psmisc gir1.2-appindicator3
 
 install:
 
 before_script:
-  - env | sort
 
 script:
   - travis_retry bash -n install_obmin.sh
