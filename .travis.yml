@@ -17,7 +17,7 @@ before_script:
 
 script:
   - travis_retry bash -n install_obmin.sh
-  - bash -n ~/official-images/install_obmin.sh
+  - bash -n install_obmin.sh
 
 after_success:
 
