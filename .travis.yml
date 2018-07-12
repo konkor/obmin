@@ -9,7 +9,7 @@ branches:
 
 before_install:
     - sudo apt-get -qq update
-    - sudo apt-get -y install make automake autotools-dev build-essential devscripts debhelper dh-autoreconf gnome-common gnome-doc-utils docbook-xml libglib2.0-dev ubuntu-dev-tools
+    - sudo apt-get -y install make automake autotools-dev build-essential devscripts debhelper dh-autoreconf gnome-common gnome-doc-utils docbook-xml libglib2.0-dev ubuntu-dev-tools checkinstall
     - sudo apt-get -y install gjs gir1.2-gtk-3.0 gir1.2-soup-2.4 psmisc gir1.2-appindicator3
 
 install:
