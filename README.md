@@ -37,10 +37,10 @@ _The project is looking for your [contribution and supporting](#contributions) t
 * Online service to enhance obmin connectivity (need donations).
 
 ## Online Resources
-### [Project Site](https://obmin.github.io)
-### [Wiki](https://github.com/konkor/obmin/wiki)
-### [Docker](https://hub.docker.com/r/obmin/obmin/)
-### [Gnome](https://extensions.gnome.org/extension/1254/obmin/)
+* [Project Site](https://obmin.github.io)
+* [Wiki](https://github.com/konkor/obmin/wiki)
+* [Docker](https://hub.docker.com/r/obmin/obmin/)
+* [Gnome](https://extensions.gnome.org/extension/1254/obmin/)
 
 ## Contributions
 * Report [a bug](https://github.com/konkor/obmin/issues).
