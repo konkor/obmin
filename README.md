@@ -8,7 +8,7 @@
 <a href="https://obmin.github.io"><img src="/data/icons/obmin-run.png" alt="LOGO"></a>
 </p>
 
-## [OBMIN](https://obmin.github.io/) **One-Click** File Sharing Solution for your home network and worldwide.
+### [OBMIN](https://obmin.github.io/) **One-Click** File Sharing Solution for your home network and worldwide.
 -----
 
 <h2 align="center">Supporting OBMIN Server</h2>
