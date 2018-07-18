@@ -15,7 +15,7 @@
   border-image:none;
   font-size: 1.2em;
   padding:0.5em;
-  margin:0;
+  margin: 0;
   border:0;
   color: #afafaf;
   text-shadow:none;
@@ -46,19 +46,18 @@
   background-image: none;
   font-weight: bold;
   border-width: 0;
-  border-radius: 0;
   border-style:none;
   box-shadow:none;
   outline-width:0;
   border-image:none;
-  padding:0;
+  padding:0 8px 0 0;
   margin:0;
   border:0;
   text-shadow:none;
 }
 
 .titlebar {
-  padding:0;
+  padding:0 8px 0 0;
   margin:0;
 }
 .obmin-title {

@@ -174,7 +174,7 @@ var ObminCenter = new Lang.Class ({
         window.set_default_size (800, 512);
         cssp = get_css_provider ();
         this.hb = new Gtk.HeaderBar ();
-        this.hb.set_show_close_button (false);
+        this.hb.set_show_close_button (true);
         this.hb.get_style_context ().add_class ("hb");
         window.set_titlebar (this.hb);
         this.space = new HeaderSpace ();
@@ -374,9 +374,10 @@ const Sidebar = new Lang.Class({
         box.pack_start (this.run_button, false, false, 0);
 
         var l = Convenience.get_ip_addresses ();
+        if (l.length > 0) this.add (new LocalItem (l[0]));
         l.forEach ((ip)=>{
             let local_item = new LocalItem (ip);
-            this.add (local_item);
+            //this.add (local_item);
         });
         this.public_item = new PublicItem ();
         this.add (this.public_item);
@@ -397,8 +398,9 @@ const Sidebar = new Lang.Class({
 
         this.exit_button = new SidebarButton (_("Exit"), _("Close Control Center"));
         this.exit_button.margin_bottom = 16;
-        this.pack_end (this.exit_button, false, false, 0);
+        //this.pack_end (this.exit_button, false, false, 0);
         this.prefs_button = new SidebarButton (_("Settings"), _("Open Preferences"), "prefs");
+        this.prefs_button.margin_bottom = 16;
         this.pack_end (this.prefs_button, false, false, 0);
 
         this.stats_button.button.connect ('toggled', Lang.bind (this, this.on_toggle));
@@ -766,25 +768,26 @@ const HeaderSpace = new Lang.Class({
         this.parent ();
         this.get_style_context ().add_class ("hb-space");
         this.set_size_request (351, 32);
-        this.connect ('draw', Lang.bind(this, this.on_drawn));
+        //this.connect ('draw', Lang.bind(this, this.on_drawn));
     },
 
-    on_drawn: function (area, context) {
-        let cr = context;
-        let style = this.get_style_context ();
-        let [width, height] = [this.get_allocated_width (), this.get_allocated_height ()];
-        let color = style.get_background_color (0);
-        cr.rectangle (0, 0, width, height);
-        Gdk.cairo_set_source_rgba (cr, color);
-        cr.fill ();
+    vfunc_draw: function (cr) {
+        //let cr = context;
+        //let style = this.get_style_context ();
+        //let [width, height] = [this.get_allocated_width (), this.get_allocated_height ()];
+        //let color = style.get_background_color (0);
+        //cr.rectangle (0, 0, width, height);
+        Gdk.cairo_set_source_rgba (cr, this.get_style_context ().get_background_color (0));
+        cr.paint ();
+        //cr.fill ();
         cr.$dispose ();
-        return true;
+        //return true;
     },
 
     set width (val) {
         if (val != this.get_allocated_width ()) {
             this.set_size_request (val, 32);
-            this.queue_draw ();
+            //this.queue_draw ();
         }
     }
 });
