@@ -153,9 +153,10 @@ var ObminCenter = new Lang.Class ({
         if (run != server) {
             server = run;
             this.lock = true;
-            this.sidebar.run_button.set_active (server);
+            this.run_button.set_active (server);
             this.lock = false;
         }
+        this.hb.subtitle = server?_("server running"):_("server stopped");
     },
 
     _build: function () {
@@ -174,26 +175,16 @@ var ObminCenter = new Lang.Class ({
         this.hb.set_show_close_button (true);
         this.hb.get_style_context ().add_class ("hb");
         window.set_titlebar (this.hb);
-        //this.space = new HeaderSpace ();
-        //this.space.marging = 0;
-        //this.hb.pack_start (this.space);
-        //this.space.visible = false;
         this.hb.title = "OBMIN Control Center";
         this.hb.subtitle = "server running";
         if (cssp) {
             Gtk.StyleContext.add_provider_for_screen (
                 window.get_screen(), cssp, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
         }
-        /*this.run_button  = new Gtk.ToggleButton ();
-        this.run_button.image = Gtk.Image.new_from_icon_name ("system-shutdown-symbolic", Gtk.IconSize.DND);
-        this.run_button.xalign = 0;
-        this.run_button.tooltip_text = _("Enable/Disable Obmin Server");
-        this.run_button.get_style_context ().add_class ("sb-button");
+        this.run_button  = new RunButton ();
         this.hb.pack_end (this.run_button);
-        this.hb.pack_end (new Gtk.Label ({label: "OBMIN SERVER"}));*/
         Prefs.init ();
         this.prefs = new Prefs.ObminWidget ();
-        //window.add (this.w.notebook);
         this.application.add_window (window);
         this.box = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:0});
         window.add (this.box);
@@ -217,13 +208,10 @@ var ObminCenter = new Lang.Class ({
         this.stack.add_named (this.prefs.notebook, "prefs");
 
         this.sidebar.connect ('stack_update', Lang.bind (this, this.on_stack));
-        /*this.sidebar.connect ('size_allocate', Lang.bind(this, (o)=>{
-            if (this.space) this.space.width = o.get_allocated_width ();
-        }));*/
-        this.sidebar.run_button.connect ('toggled', Lang.bind (this, this.on_run));
-        this.sidebar.exit_button.button.connect ('clicked', Lang.bind (this, ()=>{
+        this.run_button.connect ('toggled', Lang.bind (this, this.on_run));
+        /*this.sidebar.exit_button.button.connect ('clicked', Lang.bind (this, ()=>{
             this.application.quit ();
-        }));
+        }));*/
     },
 
     update_stats: function () {
@@ -241,6 +229,7 @@ var ObminCenter = new Lang.Class ({
 
     on_run: function (o) {
         if (!this.lock) this._enable (o.active);
+        //this.hb.subtitle = o.active?_("server running"):_("server stopped");
     },
 
     on_stack: function (o, id) {
@@ -361,18 +350,8 @@ const Sidebar = new Lang.Class({
         this.parent ({orientation:Gtk.Orientation.VERTICAL, margin:0});
         let box = null;
 
-        box = new Gtk.Box ({orientation:Gtk.Orientation.HORIZONTAL, margin:32, spacing:24});
-        box.margin_top = 8;
-        this.pack_start (box, false, false, 0);
-
-        let label = new Gtk.Label ({label: "<b><big>OBMIN</big></b>", use_markup:true, xalign:0.75});
-        label.get_style_context ().add_class ("obmin-title");
-        box.pack_start (label, true, true, 0);
-        this.run_button  = new RunButton ();
-        box.pack_start (this.run_button, false, false, 0);
-
         var l = Convenience.get_ip_addresses ();
-        if (l.length > 0) this.add (new LocalItem (l[0]));
+        //if (l.length > 0) this.add (new LocalItem (l[0]));
         l.forEach ((ip)=>{
             let local_item = new LocalItem (ip);
             this.add (local_item);
@@ -437,9 +416,9 @@ const RunButton = new Lang.Class({
         this.parent ();
         this.ttext = _("Start Server");
         this.tooltip_text = this.ttext;
-        this.image = Gtk.Image.new_from_icon_name ("system-shutdown-symbolic", Gtk.IconSize.DND);
+        this.image = Gtk.Image.new_from_icon_name ("system-shutdown-symbolic", Gtk.IconSize.LARGE_TOOLBAR);
         this.xalign = 0;
-        this.get_style_context ().add_class ("sb-button");
+        this.get_style_context ().add_class ("suggested-action");
 
         this.connect ('toggled', Lang.bind (this, this.on_toggle));
 
@@ -458,8 +437,8 @@ const SidebarButton = new Lang.Class({
 
     _init: function (text, tooltip, id) {
         this.parent ({orientation:Gtk.Orientation.HORIZONTAL, margin:4, spacing:8});
-        this.margin_left = 64;
-        this.margin_right = 0;
+        this.margin_left = 32;
+        this.margin_right = 32;
 
         this.button = Gtk.ToggleButton.new_with_label (text);
         this.button.id = id;
@@ -755,38 +734,6 @@ const StatMonitor = new Lang.Class({
 
     add: function (val) {
         this.val = val;
-    }
-});
-
-const HeaderSpace = new Lang.Class({
-    Name: 'HeaderSpace',
-    Extends: Gtk.DrawingArea,
-
-    _init: function (text) {
-        this.parent ();
-        this.get_style_context ().add_class ("hb-space");
-        this.set_size_request (351, 32);
-        //this.connect ('draw', Lang.bind(this, this.on_drawn));
-    },
-
-    vfunc_draw: function (cr) {
-        //let cr = context;
-        //let style = this.get_style_context ();
-        //let [width, height] = [this.get_allocated_width (), this.get_allocated_height ()];
-        //let color = style.get_background_color (0);
-        //cr.rectangle (0, 0, width, height);
-        Gdk.cairo_set_source_rgba (cr, this.get_style_context ().get_background_color (0));
-        cr.paint ();
-        //cr.fill ();
-        cr.$dispose ();
-        //return true;
-    },
-
-    set width (val) {
-        if (val != this.get_allocated_width ()) {
-            this.set_size_request (val, 32);
-            //this.queue_draw ();
-        }
     }
 });
 
