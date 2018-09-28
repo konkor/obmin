@@ -91,13 +91,11 @@ var ObminCenter = new Lang.Class ({
         settings.connect ("changed::" + THEME_GUI_KEY, Lang.bind (this, function() {
             theme_gui = APPDIR + "/data/themes/" + settings.get_string (THEME_GUI_KEY) + "/obmin.css";
             if (cssp) {
-                this.space.visible = false;
                 Gtk.StyleContext.remove_provider_for_screen (window.get_screen(), cssp);
             }
             cssp = get_css_provider ();
             if (cssp) { Gtk.StyleContext.add_provider_for_screen (
                 window.get_screen(), cssp, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
-                this.space.visible = true;
             }
         }));
         settings.connect ("changed::" + JOURNAL_KEY, Lang.bind (this, function() {
@@ -162,7 +160,6 @@ var ObminCenter = new Lang.Class ({
 
     _build: function () {
         window = new Gtk.Window ();
-        this.space = null;
         window.title = "OBMIN";
         window.set_position (Gtk.WindowPosition.CENTER);
         window.set_icon_name ('obmin-off');
@@ -177,11 +174,12 @@ var ObminCenter = new Lang.Class ({
         this.hb.set_show_close_button (true);
         this.hb.get_style_context ().add_class ("hb");
         window.set_titlebar (this.hb);
-        this.space = new HeaderSpace ();
-        this.space.marging = 0;
-        this.hb.pack_start (this.space);
-        this.space.visible = false;
+        //this.space = new HeaderSpace ();
+        //this.space.marging = 0;
+        //this.hb.pack_start (this.space);
+        //this.space.visible = false;
         this.hb.title = "OBMIN Control Center";
+        this.hb.subtitle = "server running";
         if (cssp) {
             Gtk.StyleContext.add_provider_for_screen (
                 window.get_screen(), cssp, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
@@ -219,9 +217,9 @@ var ObminCenter = new Lang.Class ({
         this.stack.add_named (this.prefs.notebook, "prefs");
 
         this.sidebar.connect ('stack_update', Lang.bind (this, this.on_stack));
-        this.sidebar.connect ('size_allocate', Lang.bind(this, (o)=>{
+        /*this.sidebar.connect ('size_allocate', Lang.bind(this, (o)=>{
             if (this.space) this.space.width = o.get_allocated_width ();
-        }));
+        }));*/
         this.sidebar.run_button.connect ('toggled', Lang.bind (this, this.on_run));
         this.sidebar.exit_button.button.connect ('clicked', Lang.bind (this, ()=>{
             this.application.quit ();
@@ -377,7 +375,7 @@ const Sidebar = new Lang.Class({
         if (l.length > 0) this.add (new LocalItem (l[0]));
         l.forEach ((ip)=>{
             let local_item = new LocalItem (ip);
-            //this.add (local_item);
+            this.add (local_item);
         });
         this.public_item = new PublicItem ();
         this.add (this.public_item);

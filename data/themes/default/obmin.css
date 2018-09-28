@@ -3,8 +3,8 @@
 @define-color obmin_fg_color #cacaca;
 
 .sb {
-  color: #bfbfbf;
-  background-color: @obmin_base_color;
+  color: @obmin_base_color;
+  background-color: @obmin_bg_color;
   font-size: 1em;
 }
 .sb-button {
@@ -17,15 +17,19 @@
   padding:0.5em;
   margin: 0;
   border:0;
-  color: #afafaf;
   text-shadow:none;
   background-image: none;
-  background-color: @obmin_base_color;
+  background-color: @obmin_bg_color;
+}
+.sb-button * {
+  color: @obmin_base_color;
 }
 .sb-button:checked {
-  color: @obmin_base_color;
-  background-color: @obmin_bg_color;
+  color: #afafaf;
+  /*background-color: @obmin_base_color;*/
   font-weight: bold;
+  border-left: 6px solid alpha(#fff, 0.47);
+  background-color: alpha(#fff, 0.14);
 }
 .sb-button:hover {
   background-color: shade(@obmin_bg_color, 0.73);
@@ -41,7 +45,7 @@
   font-size: 1.8em;
 }
 .hb, .hb GtkLabel, .hb label {
-  color: @obmin_bg_color;
+  color: @obmin_base_color;
   background-color: @obmin_bg_color;
   background-image: none;
   font-weight: bold;
@@ -50,15 +54,23 @@
   box-shadow:none;
   outline-width:0;
   border-image:none;
-  padding:0 8px 0 0;
-  margin:0;
   border:0;
   text-shadow:none;
 }
-
+.hb {
+  padding:0 8px 0 0;
+  margin: 0;
+}
+.hb GtkButton, .hb button {
+  color: @obmin_base_color;
+  background-color: @obmin_bg_color;
+}
+.hb GtkButton:hover, .hb button:hover {
+  background-image: none;
+  background-color: shade(@obmin_bg_color, 0.93);
+}
 .titlebar {
   padding:0 8px 0 0;
-  margin:0;
 }
 .obmin-title {
   font-size: 1.8em;
