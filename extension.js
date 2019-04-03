@@ -201,7 +201,7 @@ const ObminIndicator = new Lang.Class({
         //Preferences
         this.menu.addMenuItem (new SeparatorItem ().content);
         let sm = new PrefsMenuItem ();
-        this.menu.addMenuItem (sm);
+        this.menu.addMenuItem (sm.content);
 
         this.connections.content.connect ('activate', ()=>{GLib.spawn_command_line_async (EXTENSIONDIR + '/obmin-center');});
         this.requests.content.connect ('activate', ()=>{GLib.spawn_command_line_async (EXTENSIONDIR + '/obmin-center');});
@@ -247,26 +247,25 @@ const ObminIndicator = new Lang.Class({
 
 const PrefsMenuItem = new Lang.Class({
     Name: 'PrefsMenuItem',
-    Extends: PopupMenu.PopupBaseMenuItem,
 
     _init: function () {
-        this.parent ({ reactive: false, can_focus: false});
-        this.actor.add (new St.Label ({text: ' '}), { expand: true });
+        this.content = new PopupMenu.PopupBaseMenuItem ({ reactive: false, can_focus: false});
+        this.content.actor.add (new St.Label ({text: ' '}), { expand: true });
         this.preferences = new St.Button ({ child: new St.Icon ({ icon_name: 'preferences-system-symbolic' }), style_class: 'system-menu-action'});
-        this.actor.add (this.preferences, { expand: true, x_fill: false });
+        this.content.actor.add (this.preferences, { expand: true, x_fill: false });
         this.preferences.connect ('clicked', Lang.bind (this, function () {
             GLib.spawn_command_line_async (EXTENSIONDIR + '/obmin-center');
-            this.emit ('activate');
+            this.content.emit ('activate');
         }));
-        this.actor.add (new St.Label ({text: ' '}), { expand: true });
+        this.content.actor.add (new St.Label ({text: ' '}), { expand: true });
         //this.about = new St.Button ({ label: '?', style_class: 'prefs-button'});
         this.about = new St.Button ({ child: new St.Icon ({ icon_name: 'dialog-question-symbolic' }), style_class: 'system-menu-action'});
-        this.actor.add (this.about, { expand: false });
+        this.content.actor.add (this.about, { expand: false });
         this.about.connect ('clicked', Lang.bind (this, function () {
             GLib.spawn_command_line_async ("gedit --new-window " + EXTENSIONDIR + "/README.md");
-            this.emit ('activate');
+            this.content.emit ('activate');
         }));
-        this.actor.add (new St.Label ({text: ' '}), { expand: true });
+        this.content.actor.add (new St.Label ({text: ' '}), { expand: true });
     }
 });
 
