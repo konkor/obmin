@@ -188,24 +188,24 @@ const ObminIndicator = new Lang.Class({
         this.info_local = new LocalItem ();
         this.menu.addMenuItem (this.info_local);
         this.info_public = new PublicItem ();
-        this.menu.addMenuItem (this.info_public);
+        this.menu.addMenuItem (this.info_public.content);
         this.separator = new InfoMenuItem (_("Usage Statistics"), " ", false, 'obmin-ip-item', 'obmin-ip-label');
-        this.menu.addMenuItem (this.separator);
-        this.separator.actor.visible = false;
+        this.menu.addMenuItem (this.separator.content);
+        this.separator.content.actor.visible = false;
         this.connections = new InfoMenuItem (_("Active"), "", true, 'obmin-active', 'obmin-active');
-        this.menu.addMenuItem (this.connections);
+        this.menu.addMenuItem (this.connections.content);
         this.requests = new InfoMenuItem (_("Total Requests"), "", true, 'obmin-ip-item', 'obmin-ip-label');
-        this.menu.addMenuItem (this.requests);
+        this.menu.addMenuItem (this.requests.content);
         this.uploads = new InfoMenuItem (_("Transferred"), "", true, 'obmin-ip-item', 'obmin-ip-label');
-        this.menu.addMenuItem (this.uploads);
+        this.menu.addMenuItem (this.uploads.content);
         //Preferences
         this.menu.addMenuItem (new SeparatorItem ().content);
         let sm = new PrefsMenuItem ();
         this.menu.addMenuItem (sm);
 
-        this.connections.connect ('activate', ()=>{GLib.spawn_command_line_async (EXTENSIONDIR + '/obmin-center');});
-        this.requests.connect ('activate', ()=>{GLib.spawn_command_line_async (EXTENSIONDIR + '/obmin-center');});
-        this.uploads.connect ('activate', ()=>{GLib.spawn_command_line_async (EXTENSIONDIR + '/obmin-center');});
+        this.connections.content.connect ('activate', ()=>{GLib.spawn_command_line_async (EXTENSIONDIR + '/obmin-center');});
+        this.requests.content.connect ('activate', ()=>{GLib.spawn_command_line_async (EXTENSIONDIR + '/obmin-center');});
+        this.uploads.content.connect ('activate', ()=>{GLib.spawn_command_line_async (EXTENSIONDIR + '/obmin-center');});
     },
 
     _enable: function (state) {
@@ -272,16 +272,15 @@ const PrefsMenuItem = new Lang.Class({
 
 const InfoMenuItem = new Lang.Class ({
     Name: 'InfoMenuItem',
-    Extends: PopupMenu.PopupMenuItem,
 
     _init: function (label, info, reactive, style, style_info) {
-        this.parent (label, {reactive: reactive, style_class: style?style:'obmin-info-item'});
-        this.label.x_expand = true;
+        this.content = new PopupMenu.PopupMenuItem (label, {reactive: reactive, style_class: style?style:'obmin-info-item'});
+        this.content.label.x_expand = true;
         this.info = new St.Label ({text: ' ', style_class: style_info?style_info:"", reactive:true, can_focus: true, track_hover: true });
         this.info.align = St.Align.END;
-        this.actor.add_child (this.info);
+        this.content.actor.add_child (this.info);
         this.info.connect ('notify::text', Lang.bind (this, function () {
-            this.actor.visible = this.info.text.length > 0;
+            this.content.actor.visible = this.info.text.length > 0;
         }));
         this.set_text (info);
     },
@@ -331,12 +330,13 @@ const PublicItem = new Lang.Class ({
     _init: function () {
         this.parent (_("Public IP Address"), "", true, 'obmin-ip-item', 'obmin-ip-label');
         this._ip = "";
+        this.content.activate = this.activate.bind (this);
     },
 
     activate: function (event) {
         Clipboard.set_text (CLIPBOARD_TYPE, "http" + https?"s":"" + "://" + this.info.text);
         show_notify (_("Public IP address copied to clipboard."));
-        this.emit ('activate', event);
+        this.content.emit ('activate', event);
     },
 
     update: function () {
