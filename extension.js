@@ -186,7 +186,7 @@ const ObminIndicator = new Lang.Class({
         }));
         this.menu.addMenuItem (this.server_switch);
         this.info_local = new LocalItem ();
-        this.menu.addMenuItem (this.info_local);
+        this.menu.addMenuItem (this.info_local.content);
         this.info_public = new PublicItem ();
         this.menu.addMenuItem (this.info_public.content);
         this.separator = new InfoMenuItem (_("Usage Statistics"), " ", false, 'obmin-ip-item', 'obmin-ip-label');
@@ -292,22 +292,21 @@ const InfoMenuItem = new Lang.Class ({
 
 const LocalItem = new Lang.Class ({
     Name: 'LocalItem',
-    Extends: PopupMenu.PopupSubMenuMenuItem,
 
     _init: function () {
-        this.parent (_("Local IP Address"), false);
+        this.content = new PopupMenu.PopupSubMenuMenuItem (_("Local IP Address"), false);
         this.info = new St.Label ({text: ' ', reactive:true, can_focus: true, track_hover: true });
         this.info.align = St.Align.END;
-        this.actor.add_child (this.info);
+        this.content.actor.add_child (this.info);
         this.update_ips ();
     },
 
     update_ips: function () {
         let l = Convenience.get_ip_addresses ();
-        this.menu.removeAll ();
+        this.content.menu.removeAll ();
         l.forEach ((s)=>{
             let item = new PopupMenu.PopupMenuItem (s + ":" + port);
-            this.menu.addMenuItem (item);
+            this.content.menu.addMenuItem (item);
             item.connect ('activate', Lang.bind (this, function (o) {
                 var scheme = "http://";
                 if (https) scheme = "https://";
