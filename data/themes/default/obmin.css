@@ -45,7 +45,7 @@
   font-size: 1.8em;
 }
 .hb {
-  /*color: @obmin_base_color;*/
+  color: @obmin_base_color;
   background-color: @obmin_bg_color;
   background-image: none;
   font-weight: bold;
@@ -57,15 +57,19 @@
   border:0;
   text-shadow:none;
   padding:0 8px 0 0;
-  margin: 8px;
 }
 .hb GtkButton, .hb button {
-  /*color: @obmin_base_color;*/
+  color: @obmin_base_color;
   background-color: @obmin_bg_color;
+  border-color: transparent;
 }
 .hb GtkButton:hover, .hb button:hover {
+  background-color: shade (@obmin_bg_color, 0.8);
+}
+.hb GtkButton:checked, .hb button:checked {
   background-image: none;
-  background-color: shade(@obmin_bg_color, 0.93);
+  color: @obmin_bg_color;
+  background-color: @obmin_base_color;
 }
 .titlebar {
   padding:8px;
