@@ -37,6 +37,7 @@ schemas/Makefile
 po/Makefile.in
 metadata.json
 ])
+chmod 600 metadata.json
 
 echo "
 
