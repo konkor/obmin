@@ -179,10 +179,6 @@ const ObminIndicator = new Lang.Class({
     icon_run: function () { this.statusIcon.gicon = this._icon_run.gicon; },
 
     _build_ui: function () {
-        this._build_popup ();
-    },
-
-    _build_popup: function () {
         this.menu.removeAll ();
         this.server_switch = new PopupMenu.PopupSwitchMenuItem (_("Obmin Server "), server);
         this.server_switch.connect ('toggled', Lang.bind (this, function (item) {
@@ -203,7 +199,7 @@ const ObminIndicator = new Lang.Class({
         this.uploads = new InfoMenuItem (_("Transferred"), "", true, 'obmin-ip-item', 'obmin-ip-label');
         this.menu.addMenuItem (this.uploads);
         //Preferences
-        this.menu.addMenuItem (new SeparatorItem ());
+        this.menu.addMenuItem (new SeparatorItem ().content);
         let sm = new PrefsMenuItem ();
         this.menu.addMenuItem (sm);
 
@@ -357,14 +353,16 @@ const PublicItem = new Lang.Class ({
 
 const SeparatorItem = new Lang.Class({
     Name: 'SeparatorItem',
-    Extends: PopupMenu.PopupBaseMenuItem,
 
     _init: function () {
-        this.parent({reactive: false, can_focus: false, style_class: 'obmin-separator-item'});
-        this._separator = new St.Widget({ style_class: 'obmin-separator-menu-item',
-                                          y_expand: true,
-                                          y_align: Clutter.ActorAlign.CENTER });
-        this.actor.add(this._separator, {expand: true});
+        this.content = new PopupMenu.PopupBaseMenuItem ({
+          reactive: false, can_focus: false, style_class: 'obmin-separator-item'
+        });
+        this._separator = new St.Widget ({
+          style_class: 'obmin-separator-menu-item', y_expand: true,
+          y_align: Clutter.ActorAlign.CENTER
+        });
+        this.content.actor.add (this._separator, {expand: true});
     }
 });
 
