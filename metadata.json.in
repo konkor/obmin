@@ -16,6 +16,6 @@
     "3.32"
   ],
   "url": "https://obmin.github.io",
-  "uuid": "obmin@konkor",
+  "uuid": "obmin@konkor", 
   "version": @VERSION@
 }

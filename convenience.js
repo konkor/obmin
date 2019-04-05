@@ -196,7 +196,7 @@ function fetch_sync (url, agent, headers) {
     agent = agent || "Obmin ver." + API_VERSION;
 
     let responce = [];
-    let cancalable = new Gio.Cancellable();
+    let cancellable = new Gio.Cancellable();
     let session = new Soup.SessionSync({ user_agent: agent });
     let request = Soup.Message.new ("GET", url);
     if (headers) headers.forEach (h=>{
@@ -206,7 +206,7 @@ function fetch_sync (url, agent, headers) {
         if (cancelable) cancelable.cancel();
         return false;
     }));
-    let stream = session.send (request, cancalable);
+    let stream = session.send (request, cancellable);
     GLib.Source.remove (timeout_id);
     if (stream) {
         let dis = new Gio.DataInputStream ({base_stream: stream});
