@@ -147,7 +147,7 @@ const ObminIndicator = new Lang.Class({
             else this.requests.set_text ('');
             if (stats.upload > 0) this.uploads.set_text (GLib.format_size (stats.upload));
             else this.uploads.set_text ('');
-            this.separator.actor.visible =
+            this.separator.content.actor.visible =
                 (stats.access - stats.ready) > 0 || stats.access > 0 || stats.upload > 0;
         }
         if (server) this.update_icon ();
