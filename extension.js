@@ -332,7 +332,9 @@ const PublicItem = new Lang.Class ({
     },
 
     activate: function (event) {
-        Clipboard.set_text (CLIPBOARD_TYPE, "http" + https?"s":"" + "://" + this.info.text);
+        var scheme = "http://";
+        if (https) scheme = "https://";
+        Clipboard.set_text (CLIPBOARD_TYPE, scheme + this.info.text);
         show_notify (_("Public IP address copied to clipboard."));
         this.content.emit ('activate', event);
     },
