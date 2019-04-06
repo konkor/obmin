@@ -34,7 +34,8 @@ var METADATA = {
 };
 
 var web_mime = "video/mp4;video/webm";
-var mime = "video/mp4;video/3gpp;video/3gpp2;video/dv;video/mp2t;video/mpeg;video/ogg;video/quicktime;video/vivo;video/webm;video/x-avi;video/x-flv;video/x-matroska;video/x-matroska-3d;video/x-mng;video/x-msvideo;video/x-nsv;video/x-ogm+ogg;video/x-theora+ogg;video/x-vnd.rn-realvideo";
+var mime = "video/mp4;video/3gpp;video/3gpp2;video/dv;video/mp2t;video/mpeg;video/ogg;video/quicktime;video/vivo;video/webm;video/x-avi;video/x-flv;" +
+  "video/x-matroska;video/x-matroska-3d;video/x-mng;video/x-msvideo;video/x-nsv;video/x-ogm+ogg;video/x-theora+ogg;video/x-vnd.rn-realvideo";
 var mime_audio = ";application/ogg;audio/x-vorbis+ogg;audio/ac3;audio/basic;audio/x-flac;audio/mp4;audio/mpeg;audio/x-mpeg;audio/x-ms-asx;audio/x-pn-realaudio;audio/flac";
 var threads = Math.round (GLib.get_num_processors()/2) - 1;
 if (threads < 1) threads = 1;

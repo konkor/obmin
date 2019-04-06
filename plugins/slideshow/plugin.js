@@ -38,7 +38,8 @@ var SHOWS = [
 ];
 
 var mime = "image/png;image/jpeg;image/gif;image/x-icon;image/x-ico;image/x-win-bitmap;image/svg+xml;image/svg;image/svg-xml;image/vnd.adobe.svg+xml;text/xml-svg;image/svg+xml-compressed";
-var mime_raw = ";image/x-adobe-dng;image/x-canon-cr2;image/x-canon-crw;image/x-dcraw;image/x-fuji-raf;image/x-hdr;image/x-kde-raw;image/x-kodak-dcr;image/x-kodak-k25;image/x-kodak-kdc;image/x-minolta-mrw;image/x-nikon-nef;image/x-olympus-orf;image/x-panasonic-raw;image/x-panasonic-raw2;image/x-pentax-pef;image/x-sigma-x3f;image/x-sony-arw;image/x-sony-sr2;image/x-sony-srf";
+var mime_raw = ";image/x-adobe-dng;image/x-canon-cr2;image/x-canon-crw;image/x-dcraw;image/x-fuji-raf;image/x-hdr;image/x-kde-raw;image/x-kodak-dcr;image/x-kodak-k25;image/x-kodak-kdc;" +
+  "image/x-minolta-mrw;image/x-nikon-nef;image/x-olympus-orf;image/x-panasonic-raw;image/x-panasonic-raw2;image/x-pentax-pef;image/x-sigma-x3f;image/x-sony-arw;image/x-sony-sr2;image/x-sony-srf";
 
 var Plugin = new Lang.Class ({
     Name: 'SlideshowPlugin',

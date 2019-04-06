@@ -67,7 +67,8 @@ const html_head = "<head><meta charset=\"utf-8\"><title>Obmin - Simple File Shar
 const h_menu_btn = "<a class=\"nmenu-button\" href=\"javascript:void(0);\" onclick=\"toggle()\" title=\"Toggle Menu\">&#x2630;</a>";
 var html_menu = "<div id=\"navmenu\" class=\"nmenu hide\">";
 const h_menu = "<a href=\"https://github.com/konkor/obmin/wiki\" class=\"nmenu-item right\" onclick=\"toggle()\" title=\"About Obmin\">About ...</a>";
-const h_js = "<script>function toggle(id){id = (typeof id !== \'undefined\')?id:\'navmenu\'; var x=document.getElementById(id);if(x.className.indexOf(\"show\")==-1){x.className += \" show\";}else{x.className=x.className.replace(\" show\",\"\");}}function hide(id){if (!id) return; var x=document.getElementById(id);if(x.className.indexOf(\"hide\")==-1){x.className += \" hide\";}}</script>";
+const h_js = "<script>function toggle(id){id = (typeof id !== \'undefined\')?id:\'navmenu\'; var x=document.getElementById(id);if(x.className.indexOf(\"show\")==-1){x.className += \" show\";}else{x.className=x.className.replace(\" show\",\"\");}}" +
+  "function hide(id){if (!id) return; var x=document.getElementById(id);if(x.className.indexOf(\"hide\")==-1){x.className += \" hide\";}}</script>";
 
 let https = false;
 let mounts = true;
