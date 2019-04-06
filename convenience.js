@@ -1,23 +1,12 @@
 /* -*- mode: js; js-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
- * Obmin - Simple File Sharing Server For GNOME Desktop
+ * This is a part of OBMIN Server
+ * Copyright (C) 2017-2019 konkor <konkor.github.io>
  *
- * Copyright (C) 2017 Kostiantyn Korienkov <kapa76@gmail.com>
- *
- * This file is part of Obmin File Server.
- *
- * Obmin is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
- * Obmin is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
  * You should have received a copy of the GNU General Public License along
- * with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 const API_VERSION = 1;
@@ -273,4 +262,3 @@ function get_ip_addresses () {
     if (addresses.length == 0) addresses.push ('127.0.0.1');
     return addresses;
 }
-
