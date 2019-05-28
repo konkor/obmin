@@ -12,7 +12,7 @@ description: Here could be your name, brand, reference and logo.
 
 
 * **[Joël Dinel](https://obmin.github.io/donations/)**
-* **[Michel Bonifert]https://obmin.github.io/donations/)**
+* **[Michel Bonifert](https://obmin.github.io/donations/)**
 * **[Patrick Strobel](https://obmin.github.io/donations/)**
 <br><br>
 
