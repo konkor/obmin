@@ -6,6 +6,7 @@ description: Here could be your name, brand, reference and logo.
 
 # People donated their **real money**
 
+<<<<<<< HEAD
 * #### [Jonathan Alden](https://obmin.github.io/donations/)
 * #### [Manuel Transfeld](https://obmin.github.io/donations/)
 <br>
@@ -32,6 +33,13 @@ description: Here could be your name, brand, reference and logo.
 * [Steffen W.](https://www.patreon.com/user/creators?u=7405409)
 * [Yoann Deferi](https://obmin.github.io/donations/)
 
+=======
+* Steffen W. (Germany)
+* Yoann Deferi (France)
+* [Térence Clastres (France)](https://github.com/terencode)
+
+
+>>>>>>> b7fed274dad8957e9203b7606b2dc52a887bc3f0
 # People donated their **own time**
 
 ## Coding and testing
@@ -46,8 +54,14 @@ description: Here could be your name, brand, reference and logo.
 ## Documentation
 
 * [Térence Clastres](https://github.com/terencode)
+<<<<<<< HEAD
 
 ## Others
+=======
+* [David](https://github.com/BurningSmile)
+
+## Other
+>>>>>>> b7fed274dad8957e9203b7606b2dc52a887bc3f0
 
 * Thanks to all testers and bug reporters.
 * Thanks to your feedbacks on network resources.
@@ -56,5 +70,11 @@ description: Here could be your name, brand, reference and logo.
 # YOUR NAME COULD BE HERE.
 ## LET'S SUPPORT IT NOW!
 
+<<<<<<< HEAD
 * https://obmin.github.io/donations/
 * https://obmin.github.io/supporters/
+=======
+* http://obmin.github.io/donations/
+* http://obmin.github.io/supporters/
+* http://obmin.github.io/contributors/
+>>>>>>> b7fed274dad8957e9203b7606b2dc52a887bc3f0

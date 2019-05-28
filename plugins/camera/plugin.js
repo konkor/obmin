@@ -1,11 +1,13 @@
 /*
- * Obmin - Simple File Sharing Server
+ * This is a part of OBMIN Server
+ * Copyright (C) 2017-2019 konkor <konkor.github.io>
  *
- * Copyright (C) 2017 Kostiantyn Korienkov <kapa76@gmail.com>
- *
+ * Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  * You should have received a copy of the GNU General Public License along
- * with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+
 
 const Lang = imports.lang;
 const GLib = imports.gi.GLib;

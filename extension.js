@@ -1,22 +1,11 @@
 /*
- * Obmin - Simple File Sharing Server For GNOME Desktop
+ * This is a part of OBMIN Server
+ * Copyright (C) 2017-2019 konkor <konkor.github.io>
  *
- * Copyright (C) 2017 Kostiantyn Korienkov <kapa76@gmail.com>
- *
- * This file is part of Obmin File Server.
- *
- * Obmin is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
- * Filefinder is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
  * You should have received a copy of the GNU General Public License along
- * with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 const St = imports.gi.St;
@@ -147,7 +136,7 @@ const ObminIndicator = new Lang.Class({
             else this.requests.set_text ('');
             if (stats.upload > 0) this.uploads.set_text (GLib.format_size (stats.upload));
             else this.uploads.set_text ('');
-            this.separator.actor.visible =
+            this.separator.content.actor.visible =
                 (stats.access - stats.ready) > 0 || stats.access > 0 || stats.upload > 0;
         }
         if (server) this.update_icon ();
@@ -332,7 +321,9 @@ const PublicItem = new Lang.Class ({
     },
 
     activate: function (event) {
-        Clipboard.set_text (CLIPBOARD_TYPE, "http" + https?"s":"" + "://" + this.info.text);
+        var scheme = "http://";
+        if (https) scheme = "https://";
+        Clipboard.set_text (CLIPBOARD_TYPE, scheme + this.info.text);
         show_notify (_("Public IP address copied to clipboard."));
         this.content.emit ('activate', event);
     },

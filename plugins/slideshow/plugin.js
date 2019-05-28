@@ -1,22 +1,11 @@
 /*
- * Obmin - Simple File Sharing Server For GNU/Linux Desktop
+ * This is a part of OBMIN Server
+ * Copyright (C) 2017-2019 konkor <konkor.github.io>
  *
- * Copyright (C) 2017 Kostiantyn Korienkov <kapa76@gmail.com>
- *
- * This file is part of Obmin File Server.
- *
- * Obmin is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
- * Obmin is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
  * You should have received a copy of the GNU General Public License along
- * with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 const Lang = imports.lang;
@@ -49,7 +38,8 @@ var SHOWS = [
 ];
 
 var mime = "image/png;image/jpeg;image/gif;image/x-icon;image/x-ico;image/x-win-bitmap;image/svg+xml;image/svg;image/svg-xml;image/vnd.adobe.svg+xml;text/xml-svg;image/svg+xml-compressed";
-var mime_raw = ";image/x-adobe-dng;image/x-canon-cr2;image/x-canon-crw;image/x-dcraw;image/x-fuji-raf;image/x-hdr;image/x-kde-raw;image/x-kodak-dcr;image/x-kodak-k25;image/x-kodak-kdc;image/x-minolta-mrw;image/x-nikon-nef;image/x-olympus-orf;image/x-panasonic-raw;image/x-panasonic-raw2;image/x-pentax-pef;image/x-sigma-x3f;image/x-sony-arw;image/x-sony-sr2;image/x-sony-srf";
+var mime_raw = ";image/x-adobe-dng;image/x-canon-cr2;image/x-canon-crw;image/x-dcraw;image/x-fuji-raf;image/x-hdr;image/x-kde-raw;image/x-kodak-dcr;image/x-kodak-k25;image/x-kodak-kdc;" +
+  "image/x-minolta-mrw;image/x-nikon-nef;image/x-olympus-orf;image/x-panasonic-raw;image/x-panasonic-raw2;image/x-pentax-pef;image/x-sigma-x3f;image/x-sony-arw;image/x-sony-sr2;image/x-sony-srf";
 
 var Plugin = new Lang.Class ({
     Name: 'SlideshowPlugin',

@@ -1,22 +1,11 @@
 /*
- * Obmin - Simple File Sharing Server For GNU/Linux Desktop
+ * This is a part of OBMIN Server
+ * Copyright (C) 2017-2019 konkor <konkor.github.io>
  *
- * Copyright (C) 2017 Kostiantyn Korienkov <kapa76@gmail.com>
- *
- * This file is part of Obmin File Server.
- *
- * Obmin is free software: you can redistribute it and/or modify it
- * under the terms of the GNU General Public License as published by the
  * Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
- * Obmin is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
- * See the GNU General Public License for more details.
- *
  * You should have received a copy of the GNU General Public License along
- * with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 const Lang = imports.lang;
@@ -45,7 +34,8 @@ var METADATA = {
 };
 
 var web_mime = "video/mp4;video/webm";
-var mime = "video/mp4;video/3gpp;video/3gpp2;video/dv;video/mp2t;video/mpeg;video/ogg;video/quicktime;video/vivo;video/webm;video/x-avi;video/x-flv;video/x-matroska;video/x-matroska-3d;video/x-mng;video/x-msvideo;video/x-nsv;video/x-ogm+ogg;video/x-theora+ogg;video/x-vnd.rn-realvideo";
+var mime = "video/mp4;video/3gpp;video/3gpp2;video/dv;video/mp2t;video/mpeg;video/ogg;video/quicktime;video/vivo;video/webm;video/x-avi;video/x-flv;" +
+  "video/x-matroska;video/x-matroska-3d;video/x-mng;video/x-msvideo;video/x-nsv;video/x-ogm+ogg;video/x-theora+ogg;video/x-vnd.rn-realvideo";
 var mime_audio = ";application/ogg;audio/x-vorbis+ogg;audio/ac3;audio/basic;audio/x-flac;audio/mp4;audio/mpeg;audio/x-mpeg;audio/x-ms-asx;audio/x-pn-realaudio;audio/flac";
 var threads = Math.round (GLib.get_num_processors()/2) - 1;
 if (threads < 1) threads = 1;
