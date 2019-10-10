@@ -216,6 +216,7 @@ var ObminServer = new Lang.Class({
                 error (e);
             }
         }
+        e.close (null);
         for (let p of plugins.values()) debug ("plugin: " + p.name);
         this.init_html_menu ();
     },
@@ -266,7 +267,7 @@ var ObminServer = new Lang.Class({
         }
         if (msg.request_body.length > 0) debug (msg.request_body);
         debug ("Default handler start (" + counter.access + ")");
-        Mainloop.timeout_add (S_TIMEOUT, Lang.bind (this, function () {
+        /*Mainloop.timeout_add (S_TIMEOUT, Lang.bind (this, function () {
             if (path == '/') {
                 msg.response_headers.append ("Server", "Obmin");
                 msg.set_response ("text/html", Soup.MemoryUse.COPY, this._root_handler (msg));
@@ -277,8 +278,15 @@ var ObminServer = new Lang.Class({
             } else this._send_content (request);
 
             return false;
-        }));
+        }));*/
         this.pause_message (msg);
+        if (path == '/') {
+            msg.response_headers.append ("Server", "Obmin");
+            msg.set_response ("text/html", Soup.MemoryUse.COPY, this._root_handler (msg));
+            msg.set_status (200);
+            this.unpause_message (msg);
+            counter.ready++;
+        } else this._send_content (request);
         this.update_stats ();
     },
 
@@ -584,6 +592,7 @@ var ObminServer = new Lang.Class({
                         break;
                 }
             }
+            e.close (null);
         } catch (err) {
             error (err);
         }
