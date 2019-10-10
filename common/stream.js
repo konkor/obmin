@@ -20,8 +20,8 @@ var FileStream = new Lang.Class({
         this.server = server;
         this.msg = request.msg;
         this.version = this.msg.get_http_version ();
-        this.msg.connect ("wrote-chunk", Lang.bind (this, this.wrote_chunk));
-        this.msg.connect ("finished", ()=>{
+        this.msg.connect ("wrote-chunk", this.wrote_chunk.bind (this));
+        this.msg.connect ("finished", () => {
             //debug ("ContentStream " + this.num + " finished");
             this.done = true;
             if (this.read_event != 0) {
@@ -73,7 +73,7 @@ var FileStream = new Lang.Class({
             this.server.unpause_message (this.msg);
         }
         //debug ("Start steamimg");
-        this.file.read_async (GLib.PRIORITY_DEFAULT, null, Lang.bind (this, this.opened));
+        this.file.read_async (GLib.PRIORITY_DEFAULT, null, this.opened.bind (this));
     },
 
     wrote_chunk: function (sender, msg) {
@@ -110,11 +110,11 @@ var FileStream = new Lang.Class({
         if (this.done) return;
         if (seek) this.stream.seek (this.offset, GLib.SeekType.SET, null);
         if ((this.reads - this.wrotes) > 32) {
-            this.read_event = GLib.timeout_add (0, 250, Lang.bind (this, this.read_more));
+            this.read_event = GLib.timeout_add (0, 250, this.read_more.bind (this));
             return;
         }
         if ((this.range - this.offset + 1) < this.BUFFER) this.BUFFER = this.range - this.offset + 1;
-        this.stream.read_bytes_async (this.BUFFER, GLib.PRIORITY_DEFAULT, null, Lang.bind (this, this.read_done));
+        this.stream.read_bytes_async (this.BUFFER, GLib.PRIORITY_DEFAULT, null, this.read_done.bind (this));
         this.reads++;
     },
 
@@ -141,7 +141,7 @@ var FileStream = new Lang.Class({
                 this.server.unpause_message (this.msg);
                 this.uploaded += this.b.get_size ();
                 if (this.offset < this.range)
-                    this.read_event = GLib.timeout_add (0, 10, Lang.bind (this, this.read_more));
+                    this.read_event = GLib.timeout_add (0, 10, this.read_more.bind (this));
             }
         } catch (err) {
             error ("read_done" + err);
@@ -165,8 +165,8 @@ var PipeStream = new Lang.Class({
         this.server = server;
         this.msg = request.msg;
         this.version = this.msg.get_http_version ();
-        this.msg.connect ("wrote-chunk", Lang.bind (this, this.wrote_chunk));
-        this.msg.connect ("finished", ()=>{
+        this.msg.connect ("wrote-chunk", this.wrote_chunk.bind (this));
+        this.msg.connect ("finished", () => {
             //debug ("PipeStream " + this.num + " finished");
             this.done = true;
             if (this.read_event != 0) {
@@ -229,11 +229,11 @@ var PipeStream = new Lang.Class({
                 }
                 return true;
             });
-            let watch = GLib.child_watch_add (GLib.PRIORITY_DEFAULT, pid, Lang.bind (this, (pid, status, o) => {
+            let watch = GLib.child_watch_add (GLib.PRIORITY_DEFAULT, pid, (pid, status, o) => {
                 //debug ("watch handler " + pid + ":" + status + ":" + o);
                 GLib.source_remove (watch);
                 //GLib.spawn_close_pid (pid);
-            }));
+            });
             this.read_more ();
         } catch (e) {
             error (e);
@@ -269,10 +269,10 @@ var PipeStream = new Lang.Class({
         }
         if (this.done) return;
         if ((this.reads - this.wrotes) > 32) {
-            this.read_event = GLib.timeout_add (0, 250, Lang.bind (this, this.read_more));
+            this.read_event = GLib.timeout_add (0, 250, this.read_more.bind (this));
             return;
         }
-        this.stream.read_bytes_async (this.BUFFER, GLib.PRIORITY_DEFAULT, null, Lang.bind (this, this.read_done));
+        this.stream.read_bytes_async (this.BUFFER, GLib.PRIORITY_DEFAULT, null, this.read_done.bind (this));
         this.reads++;
     },
 
@@ -296,7 +296,7 @@ var PipeStream = new Lang.Class({
                 //this.test_stream.write (this.b.get_data(),null);
                 this.msg.response_body.append_buffer (new Soup.Buffer (this.b.get_data()));
                 this.server.unpause_message (this.msg);
-                this.read_event = GLib.timeout_add (0, 10, Lang.bind (this, this.read_more));
+                this.read_event = GLib.timeout_add (0, 10, this.read_more.bind (this));
             }
         } catch (err) {
             error ("read_done " + err);
