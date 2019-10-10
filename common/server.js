@@ -115,7 +115,7 @@ var ObminServer = new Lang.Class({
         GLib.set_prgname ("obmin-server");
         this.parent ({tls_certificate:tls_cert});
         this.plugs_init ();
-        this.add_handler (null, Lang.bind (this, this._default_handler));
+        this.add_handler (null, this._default_handler.bind (this));
         try {
             this.listen_all (port, https?Soup.ServerListenOptions.HTTPS:0);
             info ("Server started at ::1:" + port + (https?" HTTPS":" HTTP"));
@@ -245,7 +245,7 @@ var ObminServer = new Lang.Class({
                 //Mainloop.source_remove (plug_events.get (query.plug));
                 plug_events.set (query.plug, 0);
             }
-            plug_events.set (query.plug, Mainloop.timeout_add (P_TIMEOUT, Lang.bind (this, function () {
+            plug_events.set (query.plug, Mainloop.timeout_add (P_TIMEOUT, () => {
                 plug_events.set (query.plug, 0);
                 if (!plugins.get (query.plug).response (request)) {
                     debug ("plugin not responding: " + query.plug);
@@ -255,7 +255,7 @@ var ObminServer = new Lang.Class({
                 counter.upload += msg.response_body.length;
                 this.update_stats ();
                 return false;
-            })));
+            }));
             this.pause_message (msg);
             this.update_stats ();
             return;
@@ -267,7 +267,7 @@ var ObminServer = new Lang.Class({
         }
         if (msg.request_body.length > 0) debug (msg.request_body);
         debug ("Default handler start (" + counter.access + ")");
-        /*Mainloop.timeout_add (S_TIMEOUT, Lang.bind (this, function () {
+        /*Mainloop.timeout_add (S_TIMEOUT, () => {
             if (path == '/') {
                 msg.response_headers.append ("Server", "Obmin");
                 msg.set_response ("text/html", Soup.MemoryUse.COPY, this._root_handler (msg));
@@ -278,7 +278,7 @@ var ObminServer = new Lang.Class({
             } else this._send_content (request);
 
             return false;
-        }));*/
+        });*/
         this.pause_message (msg);
         if (path == '/') {
             msg.response_headers.append ("Server", "Obmin");
@@ -408,12 +408,12 @@ var ObminServer = new Lang.Class({
     send_pipe_async: function (request, args, name, mime, dir) {
         let st = new Stream.PipeStream (this, request, args, name, mime, dir);
         counter.ready--;
-        request.msg.connect ("finished", Lang.bind (this, (o)=> {
-            debug ("pipe finished %s:%d".format(st.num,st.offset));
+        request.msg.connect ("finished", (o) => {
+            debug ("pipe finished %s:%d".format (st.num,st.offset));
             counter.ready++;
             this.upload (st.offset);
             st = null;
-        }));
+        });
         return true;
     },
 
@@ -805,9 +805,9 @@ function load_settings () {
     if (config.theme) theme = APPDIR + "/data/www/themes/" + config.theme + "/";
     else {
         theme = APPDIR + "/data/www/themes/" + settings.get_string (THEME_KEY) + "/";
-        settings.connect ("changed::" + THEME_KEY, Lang.bind (this, function() {
+        settings.connect ("changed::" + THEME_KEY, () => {
             theme = APPDIR + "/data/www/themes/" + settings.get_string (THEME_KEY) + "/";
-        }));
+        });
     }
     if (config.sources)
         check_sources (config.sources);
@@ -825,9 +825,9 @@ function load_settings () {
     if (config.stats_monitor) stats_monitor = config.stats_monitor;
     else {
         stats_monitor = settings.get_boolean (STATS_MONITOR_KEY);
-        settings.connect ("changed::" + STATS_MONITOR_KEY, Lang.bind (this, function() {
+        settings.connect ("changed::" + STATS_MONITOR_KEY, () => {
             stats_monitor = settings.get_boolean (STATS_MONITOR_KEY);
-        }));
+        });
     }
     return true;
 }
