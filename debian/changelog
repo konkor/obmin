@@ -1,3 +1,10 @@
+obmin (19-1) UNRELEASED; urgency=low
+
+  * Fix for the offending callbacks into JSAPI during the sweeping phase of GC
+  * Update minor fixes and improvements
+
+ -- konkor <kapa76@gmail.com>  Fri, 11 Oct 2019 11:57:00 +0100
+
 obmin (18-1) UNRELEASED; urgency=low
 
   * Next version
