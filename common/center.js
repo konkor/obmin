@@ -23,6 +23,7 @@ const _ = Gettext.gettext;
 const APPDIR = get_appdir ();
 imports.searchPath.unshift(APPDIR);
 const Convenience = imports.convenience;
+const b2s = Convenience.byteArrayToString;
 const Prefs = imports.prefs;
 
 const DEBUG_KEY = 'debug';
@@ -129,7 +130,7 @@ var ObminCenter = new Lang.Class ({
         let run = false;
         let res = GLib.spawn_command_line_sync ("ps -A");
         let o, n;
-        if (res[0]) o = res[1].toString().split("\n");
+        if (res[0]) o = b2s (res[1]).toString().split("\n");
         res = null;
         for (let i = 0; i < o.length; i++) {
             if (o[i].indexOf ("obmin-server") > -1) {
@@ -198,6 +199,10 @@ var ObminCenter = new Lang.Class ({
 
         this.sidebar.connect ('stack_update', Lang.bind (this, this.on_stack));
         this.run_button.connect ('toggled', Lang.bind (this, this.on_run));
+        window.connect ('destroy', () => {
+            if (update_event) GLib.Source.remove (update_event);
+            update_event = 0;
+        });
         /*this.sidebar.exit_button.button.connect ('clicked', Lang.bind (this, ()=>{
             this.application.quit ();
         }));*/
