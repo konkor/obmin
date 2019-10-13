@@ -76,9 +76,9 @@ var ObminCenter = new Lang.Class ({
 
         server = this.server_enabled;
 
-        this.application.connect ('activate', Lang.bind (this, this._onActivate));
-        this.application.connect ('startup', Lang.bind (this, this._onStartup));
-        settings.connect ("changed::" + THEME_GUI_KEY, Lang.bind (this, function() {
+        this.application.connect ('activate', this._onActivate.bind (this));
+        this.application.connect ('startup', this._onStartup.bind (this));
+        settings.connect ("changed::" + THEME_GUI_KEY, () => {
             theme_gui = APPDIR + "/data/themes/" + settings.get_string (THEME_GUI_KEY) + "/obmin.css";
             if (cssp) {
                 Gtk.StyleContext.remove_provider_for_screen (window.get_screen(), cssp);
@@ -87,28 +87,28 @@ var ObminCenter = new Lang.Class ({
             if (cssp) { Gtk.StyleContext.add_provider_for_screen (
                 window.get_screen(), cssp, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION);
             }
-        }));
-        settings.connect ("changed::" + JOURNAL_KEY, Lang.bind (this, function() {
+        });
+        settings.connect ("changed::" + JOURNAL_KEY, () => {
             journal = settings.get_boolean (JOURNAL_KEY);
-        }));
+        });
     },
 
     _onActivate: function () {
         window.show_all ();
         this.dbus = Gio.bus_get_sync (Gio.BusType.SESSION, null);
         if (this.dbus)
-            this.dbus.call('org.freedesktop.DBus', '/', "org.freedesktop.DBus", "AddMatch",
-                GLib.Variant.new('(s)', ["type=\'signal\'"]), null, Gio.DBusCallFlags.NONE, -1, null, Lang.bind (this, function() {
-                    this._signalCC = this.dbus.signal_subscribe(null, "org.konkor.obmin.server", "CounterChanged",
-                    '/org/konkor/obmin/server', null, Gio.DBusSignalFlags.NO_MATCH_RULE, Lang.bind (this, this.on_counter_changed));
-            }));
+            this.dbus.call ('org.freedesktop.DBus', '/', "org.freedesktop.DBus", "AddMatch",
+                GLib.Variant.new ('(s)', ["type=\'signal\'"]), null, Gio.DBusCallFlags.NONE, -1, null, () => {
+                    this._signalCC = this.dbus.signal_subscribe (null, "org.konkor.obmin.server", "CounterChanged",
+                    '/org/konkor/obmin/server', null, Gio.DBusSignalFlags.NO_MATCH_RULE, this.on_counter_changed.bind (this));
+            });
         window.present ();
     },
 
     on_counter_changed: function (conn, sender, object, iface, signal, param, user_data) {
         stats = JSON.parse (param.get_child_value(0).get_string()[0]);
         if (update_event) GLib.Source.remove (update_event);
-        update_event = GLib.timeout_add (0, 50, Lang.bind (this, this.update_stats ));
+        update_event = GLib.timeout_add (0, 50, this.update_stats.bind (this));
     },
 
     _onStartup: function () {
@@ -119,11 +119,10 @@ var ObminCenter = new Lang.Class ({
         }
         this.check_status ();
         if (status > 0)
-            status_event = GLib.timeout_add_seconds (0, status,
-            Lang.bind (this, function () {
+            status_event = GLib.timeout_add_seconds (0, status, () => {
             this.check_status ();
             return true;
-        }));
+        });
     },
 
     check_status: function () {
@@ -197,15 +196,15 @@ var ObminCenter = new Lang.Class ({
         this.stack.add_named (this.logsview, "logs");
         this.stack.add_named (this.prefs.notebook, "prefs");
 
-        this.sidebar.connect ('stack_update', Lang.bind (this, this.on_stack));
-        this.run_button.connect ('toggled', Lang.bind (this, this.on_run));
+        this.sidebar.connect ('stack_update', this.on_stack.bind (this));
+        this.run_button.connect ('toggled', this.on_run.bind (this));
         window.connect ('destroy', () => {
             if (update_event) GLib.Source.remove (update_event);
             update_event = 0;
         });
-        /*this.sidebar.exit_button.button.connect ('clicked', Lang.bind (this, ()=>{
+        /*this.sidebar.exit_button.button.connect ('clicked', () => {
             this.application.quit ();
-        }));*/
+        });*/
     },
 
     update_stats: function () {
@@ -265,16 +264,16 @@ var ObminCenter = new Lang.Class ({
 
         this.infobox.add (this.infobar);
         this.infobar.show_all ();
-        this.infobar.connect ('response', Lang.bind (this, (o,e) => {
+        this.infobar.connect ('response', (o, e) => {
             //print (e, Gtk.ResponseType.YES, Gtk.ResponseType.OK);
             this.infobar.destroy ();
             infobar_event = 0;
-        }));
-        if (timeout) infobar_event = GLib.timeout_add_seconds (0, timeout, Lang.bind (this, function () {
+        });
+        if (timeout) infobar_event = GLib.timeout_add_seconds (0, timeout, () => {
             if (this.infobar) this.infobar.destroy ();
             infobar_event = 0;
             return false;
-        }));
+        });
     },
 
     show_info: function (text) {
@@ -292,11 +291,11 @@ var ObminCenter = new Lang.Class ({
             this.infobar = this.refresh;
             this.infobox.add (this.infobar);
             this.infobar.show_all ();
-            this.refresh.connect ('response', Lang.bind (this, () => {
+            this.refresh.connect ('response', () => {
                 this.refresh.destroy ();
                 this.refresh = null;
                 this.logsview.refresh ();
-            }));
+            });
         } else {
             this.refresh.update (count);
         }
@@ -374,9 +373,9 @@ const Sidebar = new Lang.Class({
         this.prefs_button.margin_bottom = 16;
         this.pack_end (this.prefs_button, false, false, 0);
 
-        this.stats_button.button.connect ('toggled', Lang.bind (this, this.on_toggle));
-        this.log_button.button.connect ('toggled', Lang.bind (this, this.on_toggle));
-        this.prefs_button.button.connect ('toggled', Lang.bind (this, this.on_toggle));
+        this.stats_button.button.connect ('toggled', this.on_toggle.bind (this));
+        this.log_button.button.connect ('toggled', this.on_toggle.bind (this));
+        this.prefs_button.button.connect ('toggled', this.on_toggle.bind (this));
 
         this.show_all ();
     },
@@ -414,7 +413,7 @@ const RunButton = new Lang.Class({
         this.xalign = 0;
         this.get_style_context ().add_class ("suggested-action");
 
-        this.connect ('toggled', Lang.bind (this, this.on_toggle));
+        this.connect ('toggled', this.on_toggle.bind (this));
 
         this.show_all ();
     },
@@ -490,7 +489,7 @@ const PublicItem = new Lang.Class ({
     },
 
     update: function () {
-        Convenience.fetch ("http://ipecho.net/plain", null, null, Lang.bind (this, (text, s) => {
+        Convenience.fetch ("http://ipecho.net/plain", null, null, (text, s) => {
             if ((s == 200) && text) {
                 this._ip = text.split("\n")[0];
                 if (!this._ip || this._ip.length < 7) this._ip = "";
@@ -499,7 +498,7 @@ const PublicItem = new Lang.Class ({
             else this.visible = false;
             this.update_info (this._ip);
             return false;
-        }));
+        });
     }
 });
 
@@ -528,7 +527,7 @@ const Statistic = new Lang.Class({
 
         //this.t = [0,1,0,1,1,1,2,0,0,0,0,3,0,1,0,1,1,1,2,0,0,0,0,4];
         //this.i = 0;
-        GLib.timeout_add_seconds (0, 1, Lang.bind (this, function () {
+        GLib.timeout_add_seconds (0, 1, () => {
             //this.monitor.add (Math.round (Math.random (100)*100));
             //this.monitor.add (this.t[this.i++]);
             //if (this.i == this.t.length) this.i = 0;
@@ -536,7 +535,7 @@ const Statistic = new Lang.Class({
             else this.monitor.add (stats.access - this.c0);
             this.c0 = stats.access;
             return true;
-        }));
+        });
 
         this.show_all ();
     },
@@ -580,7 +579,7 @@ const RoundLabel = new Lang.Class({
         this.parent ();
         this._label = text;
         this.set_size_request (160, 160);
-        this.connect ('draw', Lang.bind(this, this.on_drawn));
+        this.connect ('draw', this.on_drawn.bind (this));
     },
 
     on_drawn: function (area, context) {
@@ -628,14 +627,14 @@ const StatMonitor = new Lang.Class({
         this.val = -1;
         this.full = false;
         this.set_size_request (240, 60);
-        this.connect ('draw', Lang.bind (this, this.on_drawn));
-        this.connect ('size_allocate', Lang.bind(this, (o)=>{
+        this.connect ('draw', this.on_drawn.bind (this));
+        this.connect ('size_allocate', (o) => {
             this.buffer = null;
             System.gc();
             this.buffer = new Cairo.ImageSurface (Cairo.Format.ARGB32, this.get_allocated_width (), this.get_allocated_height ());
             this.full = true;
-        }));
-        GLib.timeout_add (0, this.timeout, Lang.bind (this, ()=>{
+        });
+        GLib.timeout_add (0, this.timeout, () => {
             if (this.val>-1) {
                 this.v.unshift (this.val);
                 if (this.v.length > this.scale) this.v.splice (this.scale, 1);
@@ -644,7 +643,7 @@ const StatMonitor = new Lang.Class({
             }
             this.redraw ();
             return true;
-        }));
+        });
     },
 
     minmax: function () {
@@ -752,9 +751,9 @@ const Logs = new Lang.Class({
     _build: function () {
         this.range = new LogRangeSelector ();
         this.box.add (this.range);
-        this.range.level.connect ('changed', Lang.bind (this, (o)=>{
+        this.range.level.connect ('changed', (o) => {
             this.refresh (o.active);
-        }));
+        });
 
         this.view.headers_clickable = true;
         this.view.get_selection ().mode = Gtk.SelectionMode.MULTIPLE;

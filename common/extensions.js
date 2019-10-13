@@ -155,9 +155,9 @@ var ExtensionItem = new Lang.Class({
                                         sensitive: true,
                                         state: this.enabled() });
         hbox.add (this.switcher);
-        this.switcher.connect ('state_set', Lang.bind (this, function () {
+        this.switcher.connect ('state_set', () => {
             this.enabled (this.switcher.active);
-        }));
+        });
     },
 
     enabled: function (state) {

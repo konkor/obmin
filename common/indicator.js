@@ -65,8 +65,8 @@ var ObminIndicator = new Lang.Class ({
             flags: Gio.ApplicationFlags.HANDLES_OPEN});
         GLib.set_application_name ("OBMIN Indicator");
         GLib.set_prgname ("OBMIN Indicator");
-        this.application.connect ('activate', Lang.bind (this, this._onActivate));
-        this.application.connect ('startup', Lang.bind (this, this._onStartup));
+        this.application.connect ('activate', this._onActivate.bind (this));
+        this.application.connect ('startup', this._onStartup.bind (this));
         debug (desktop);
     },
 
@@ -89,23 +89,23 @@ var ObminIndicator = new Lang.Class ({
         if (server) {
             this.update_stats ();
         } else if (startup) this._enable (true);
-        if (status > 0) status_event = GLib.timeout_add_seconds (0, status, Lang.bind (this, function () {
+        if (status > 0) status_event = GLib.timeout_add_seconds (0, status, () => {
             this.check_status ();
             return true;
-        }));
+        });
         this.dbus = Gio.bus_get_sync (Gio.BusType.SESSION, null);
         if (stats_monitor && this.dbus)
-            this.dbus.call('org.freedesktop.DBus', '/', "org.freedesktop.DBus", "AddMatch",
-                GLib.Variant.new('(s)', ["type=\'signal\'"]), null, Gio.DBusCallFlags.NONE, -1, null, Lang.bind (this, function() {
-                    this._signalCC = this.dbus.signal_subscribe(null, "org.konkor.obmin.server", "CounterChanged",
-                    '/org/konkor/obmin/server', null, Gio.DBusSignalFlags.NO_MATCH_RULE, Lang.bind (this, this.on_counter_changed));
-            }));
+            this.dbus.call ('org.freedesktop.DBus', '/', "org.freedesktop.DBus", "AddMatch",
+                GLib.Variant.new ('(s)', ["type=\'signal\'"]), null, Gio.DBusCallFlags.NONE, -1, null, () => {
+                    this._signalCC = this.dbus.signal_subscribe (null, "org.konkor.obmin.server", "CounterChanged",
+                    '/org/konkor/obmin/server', null, Gio.DBusSignalFlags.NO_MATCH_RULE, this.on_counter_changed.bind (this));
+            });
     },
 
     on_counter_changed: function (conn, sender, object, iface, signal, param, user_data) {
         stats = JSON.parse (param.get_child_value(0).get_string()[0]);
         if (update_event) GLib.Source.remove (update_event);
-        update_event = GLib.timeout_add (0, 50, Lang.bind (this, this.update_stats ));
+        update_event = GLib.timeout_add (0, 50, this.update_stats.bind (this));
     },
 
     check_status: function () {
@@ -162,9 +162,9 @@ var ObminIndicator = new Lang.Class ({
         this.server_switch.get_child().set_markup ("<b> Obmin "+_("Server")+"</b>");
         this.server_switch.tooltip_text = _("Activate Obmin Server");
         this.server_switch.active = server;
-        this.server_switch.connect ('toggled', Lang.bind (this, function () {
+        this.server_switch.connect ('toggled', () => {
             if (!this.lock) this._enable (this.server_switch.active);
-        }));
+        });
         this.appmenu.append (this.server_switch);
         this.appmenu.append (new Gtk.SeparatorMenuItem ());
 
@@ -184,49 +184,49 @@ var ObminIndicator = new Lang.Class ({
         this.uploads = new InfoMenuItem (_("Transferred"), "0 bytes");
         this.uploads.tooltip_text = _("Total Amount Of The Transferred Data From Obmin Server");
         if (desktop != "PANTHEON") {
-        this.appmenu.append (new Gtk.SeparatorMenuItem ());
-        this.appmenu.append (this.stats);
-        this.appmenu.append (this.connections);
-        this.appmenu.append (this.requests);
-        this.appmenu.append (this.uploads);
-        this.connections.connect ('activate', Lang.bind (this, function () {
-            GLib.spawn_command_line_async (APPDIR + '/obmin-center');
-        }));
-        this.requests.connect ('activate', Lang.bind (this, function () {
-            GLib.spawn_command_line_async (APPDIR + '/obmin-center');
-        }));
-        this.uploads.connect ('activate', Lang.bind (this, function () {
-            GLib.spawn_command_line_async (APPDIR + '/obmin-center');
-        }));
+            this.appmenu.append (new Gtk.SeparatorMenuItem ());
+            this.appmenu.append (this.stats);
+            this.appmenu.append (this.connections);
+            this.appmenu.append (this.requests);
+            this.appmenu.append (this.uploads);
+            this.connections.connect ('activate', () => {
+                GLib.spawn_command_line_async (APPDIR + '/obmin-center');
+            });
+            this.requests.connect ('activate', () => {
+                GLib.spawn_command_line_async (APPDIR + '/obmin-center');
+            });
+            this.uploads.connect ('activate', () => {
+                GLib.spawn_command_line_async (APPDIR + '/obmin-center');
+            });
         }
 
         this.appmenu.append (new Gtk.SeparatorMenuItem ());
         item = Gtk.MenuItem.new_with_label (_("Control Center..."));
         item.tooltip_text = _("Open Obmin Control Center");
-        item.connect ('activate', Lang.bind (this, function () {
+        item.connect ('activate', () => {
             GLib.spawn_command_line_async (APPDIR + '/obmin-center');
-        }));
+        });
         this.appmenu.append (item);
 
         this.appmenu.append (new Gtk.SeparatorMenuItem ());
         item = Gtk.MenuItem.new_with_label (_("Exit"));
-        item.connect ('activate', Lang.bind (this, function () {
+        item.connect ('activate', () => {
             this.remove_events ();
             this.application.quit ();
-        }));
+        });
         this.appmenu.append (item);
 
         this.appmenu.show_all ();
         this.indicator.set_status (AI.IndicatorStatus.ACTIVE);
         this.indicator.set_icon ("obmin-off");
         this.indicator.set_menu (this.appmenu);
-        this.appmenu.connect ('show', Lang.bind (this, function () {
+        this.appmenu.connect ('show', () => {
             this.check_status ();
             port = settings.get_int (PORT_KEY);
             this.info_local.update ();
             this.info_public.update ();
             this.update_stats ();
-        }));
+        });
     },
 
     _enable: function (state) {
@@ -318,7 +318,7 @@ const PublicItem = new Lang.Class ({
     },
 
     update: function () {
-        Convenience.fetch ("http://ipecho.net/plain", null, null, Lang.bind (this, (text, s) => {
+        Convenience.fetch ("http://ipecho.net/plain", null, null, (text, s) => {
             if ((s == 200) && text) {
                 this._ip = text.split("\n")[0];
                 if (!this._ip || this._ip.length < 7) this._ip = "";
@@ -327,7 +327,7 @@ const PublicItem = new Lang.Class ({
             else this.visible = false;
             this.get_child().set_markup (this.prefix + this._ip);
             return false;
-        }));
+        });
     }
 });
 

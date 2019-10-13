@@ -24,8 +24,8 @@ var Preferences = new Lang.Class ({
         this.application = new Gtk.Application ();
         GLib.set_application_name ("OBMIN Preferences");
         GLib.set_prgname ("OBMIN Preferences");
-        this.application.connect ('activate', Lang.bind (this, this._onActivate));
-        this.application.connect ('startup', Lang.bind (this, this._onStartup));
+        this.application.connect ('activate', this._onActivate.bind (this));
+        this.application.connect ('startup', this._onStartup.bind (this));
     },
 
     _onActivate: function (){

@@ -93,15 +93,15 @@ const ObminIndicator = new Lang.Class({
             this.update_stats ();
         }
 
-        this.menu.connect ('open-state-changed', Lang.bind (this, this.on_menu_state_changed));
+        this.menu.connect ('open-state-changed', this.on_menu_state_changed.bind (this));
 
         this.dbus = Gio.bus_get_sync (Gio.BusType.SESSION, null);
         if (stats_monitor && this.dbus)
-            this.dbus.call('org.freedesktop.DBus', '/', "org.freedesktop.DBus", "AddMatch",
-                GLib.Variant.new('(s)', ["type=\'signal\'"]), null, Gio.DBusCallFlags.NONE, -1, null, Lang.bind (this, function() {
+            this.dbus.call ('org.freedesktop.DBus', '/', "org.freedesktop.DBus", "AddMatch",
+                GLib.Variant.new ('(s)', ["type=\'signal\'"]), null, Gio.DBusCallFlags.NONE, -1, null, () => {
                     this._signalCC = this.dbus.signal_subscribe(null, "org.konkor.obmin.server", "CounterChanged",
-                    '/org/konkor/obmin/server', null, Gio.DBusSignalFlags.NO_MATCH_RULE, Lang.bind (this, this.on_counter_changed));
-            }));
+                    '/org/konkor/obmin/server', null, Gio.DBusSignalFlags.NO_MATCH_RULE, this.on_counter_changed.bind (this));
+            });
     },
 
     on_counter_changed: function (conn, sender, object, iface, signal, param, user_data) {
@@ -109,7 +109,7 @@ const ObminIndicator = new Lang.Class({
         stats = JSON.parse (param.get_child_value(0).get_string()[0]);
         if (this.menu.isOpen) {
             if (update_event) GLib.Source.remove (update_event);
-            update_event = GLib.timeout_add (0, 250, Lang.bind (this, this.update_stats ));
+            update_event = GLib.timeout_add (0, 250, this.update_stats.bind (this));
         } else this.update_icon ();
     },
 
@@ -170,9 +170,9 @@ const ObminIndicator = new Lang.Class({
     _build_ui: function () {
         this.menu.removeAll ();
         this.server_switch = new PopupMenu.PopupSwitchMenuItem (_("Obmin Server "), server);
-        this.server_switch.connect ('toggled', Lang.bind (this, function (item) {
+        this.server_switch.connect ('toggled', (item) => {
             this._enable (item.state);
-        }));
+        });
         this.menu.addMenuItem (this.server_switch);
         this.info_local = new LocalItem ();
         this.menu.addMenuItem (this.info_local.content);
@@ -242,18 +242,18 @@ const PrefsMenuItem = new Lang.Class({
         this.content.actor.add (new St.Label ({text: ' '}), { expand: true });
         this.preferences = new St.Button ({ child: new St.Icon ({ icon_name: 'preferences-system-symbolic' }), style_class: 'system-menu-action'});
         this.content.actor.add (this.preferences, { expand: true, x_fill: false });
-        this.preferences.connect ('clicked', Lang.bind (this, function () {
+        this.preferences.connect ('clicked', () => {
             GLib.spawn_command_line_async (EXTENSIONDIR + '/obmin-center');
             this.content.emit ('activate');
-        }));
+        });
         this.content.actor.add (new St.Label ({text: ' '}), { expand: true });
         //this.about = new St.Button ({ label: '?', style_class: 'prefs-button'});
         this.about = new St.Button ({ child: new St.Icon ({ icon_name: 'dialog-question-symbolic' }), style_class: 'system-menu-action'});
         this.content.actor.add (this.about, { expand: false });
-        this.about.connect ('clicked', Lang.bind (this, function () {
+        this.about.connect ('clicked', () => {
             GLib.spawn_command_line_async ("gedit --new-window " + EXTENSIONDIR + "/README.md");
             this.content.emit ('activate');
-        }));
+        });
         this.content.actor.add (new St.Label ({text: ' '}), { expand: true });
     }
 });
@@ -267,9 +267,9 @@ const InfoMenuItem = new Lang.Class ({
         this.info = new St.Label ({text: ' ', style_class: style_info?style_info:"", reactive:true, can_focus: true, track_hover: true });
         this.info.align = St.Align.END;
         this.content.actor.add_child (this.info);
-        this.info.connect ('notify::text', Lang.bind (this, function () {
+        this.info.connect ('notify::text', () => {
             this.content.actor.visible = this.info.text.length > 0;
-        }));
+        });
         this.set_text (info);
     },
 
@@ -292,15 +292,15 @@ const LocalItem = new Lang.Class ({
     update_ips: function () {
         let l = Convenience.get_ip_addresses ();
         this.content.menu.removeAll ();
-        l.forEach ((s)=>{
+        l.forEach ((s) => {
             let item = new PopupMenu.PopupMenuItem (s + ":" + port);
             this.content.menu.addMenuItem (item);
-            item.connect ('activate', Lang.bind (this, function (o) {
+            item.connect ('activate', (o) => {
                 var scheme = "http://";
                 if (https) scheme = "https://";
                 Clipboard.set_text (CLIPBOARD_TYPE, scheme + o.label.text);
                 show_notify (_("Local IP address copied to clipboard."));
-            }));
+            });
         });
         this.info.set_text (l[0]);
     },
@@ -329,14 +329,14 @@ const PublicItem = new Lang.Class ({
     },
 
     update: function () {
-        Convenience.fetch ("http://ipecho.net/plain", null, null, Lang.bind (this, (text, s) => {
+        Convenience.fetch ("http://ipecho.net/plain", null, null, (text, s) => {
             if ((s == 200) && text) {
                 this._ip = text.split("\n")[0];
                 if (!this._ip || this._ip.length < 7) this._ip = "";
             } else this._ip = "";
             this.set_text (this._ip);
             return false;
-        }));
+        });
     }
 });
 
@@ -387,10 +387,10 @@ function show_notify (message, style) {
         opacity: 196,
         time: 1,
         transition: 'linear',
-        onComplete: Lang.bind(this, function () {
+        onComplete: () => {
             Main.uiGroup.remove_actor (text);
             text = null;
-        })
+        }
     });
 }
 
