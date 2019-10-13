@@ -16,6 +16,7 @@ const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
 const Soup = imports.gi.Soup;
 const Gettext = imports.gettext;
+const ByteArray = imports.byteArray;
 
 var Format = imports.format;
 String.prototype.format = Format.format;
@@ -250,7 +251,7 @@ function get_ip_addresses () {
     let addresses = [];
     var cmd_output = GLib.spawn_command_line_sync ('ip addr show');
     if (!cmd_output[0]) return ['127.0.0.1'];
-    var list = cmd_output[1].toString ().split ('\n');
+    var list = byteArrayToString (cmd_output[1]).toString ().split ('\n');
     list.forEach ((s)=>{
         let ar;
         if ((s.indexOf ('inet') > -1) && (s.indexOf ('scope global') > -1)) {
@@ -261,4 +262,8 @@ function get_ip_addresses () {
     });
     if (addresses.length == 0) addresses.push ('127.0.0.1');
     return addresses;
+}
+
+function byteArrayToString (array) {
+  return array instanceof Uint8Array ? ByteArray.toString (array):array;
 }
