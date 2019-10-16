@@ -884,7 +884,7 @@ const LogStore = new Lang.Class({
         if (logs) logs.forEach (l => {
             try {
                 file = Gio.File.new_for_path (l);
-                contents = file.load_contents (null)[1].toString().split('\n');
+                contents = b2s (file.load_contents (null)[1]).toString().split('\n');
                 list = list.concat (this.parse_local (contents));
             } catch (e) {
                 error (e.message);

@@ -6,31 +6,39 @@ description: Here could be your name, brand, reference and logo.
 
 # People donated their **real money**
 
-* #### [Jonathan Alden](https://obmin.github.io/donations/)
-* #### [Manuel Transfeld](https://obmin.github.io/donations/)
+* #### [Jonathan Alden](https://obmin.github.io/supporters/)
+* #### [Manuel Transfeld](https://obmin.github.io/supporters/)
 <br>
 
 
-* **[Joël Dinel](https://obmin.github.io/donations/)**
-* **[Michel Bonifert](https://obmin.github.io/donations/)**
-* **[Patrick Strobel](https://obmin.github.io/donations/)**
+* **[Roland Jungnickel](https://obmin.github.io/supporters/)**
+* **[Joël Dinel](https://obmin.github.io/supporters/)**
+* **[Michel Bonifert](https://obmin.github.io/supporters/)**
+* **[Patrick Strobel](https://obmin.github.io/supporters/)**
 <br><br>
 
 
+* [Felix Emmert](https://obmin.github.io/supporters/)
+* [Chun-Sheng Wu](https://obmin.github.io/supporters/)
+* [Mark Graber](https://obmin.github.io/supporters/)
+* [Samir Menon](https://obmin.github.io/supporters/)
+* [Idan Bidani](https://obmin.github.io/supporters/)
+* [Arnold Schröder](https://obmin.github.io/supporters/)
+* [Adam Jones](https://obmin.github.io/supporters/)
+* [Alibek Junisbayev](https://obmin.github.io/supporters/)
 * [Térence Clastres](https://github.com/terencode)
-* [Mark Graber](https://obmin.github.io/donations/)
-* [Samir Menon](https://obmin.github.io/donations/)
-* [Idan Bidani](https://obmin.github.io/donations/)
-* [Arnold Schröder](https://obmin.github.io/donations/)
-* [Adam Jones](https://obmin.github.io/donations/)
-* [Alibek Junisbayev](https://obmin.github.io/donations/)
 
 ## [Patreons](https://www.patreon.com/konkor)
 
 * [Nick Krzemienski](https://github.com/krzemienski)
 * [Ivan Chayka](https://vk.com/anaumynaugames)
+* [Phenix Nunlee](https://www.patreon.com/user?u=21996172)
 * [Steffen W.](https://www.patreon.com/user/creators?u=7405409)
-* [Yoann Deferi](https://obmin.github.io/donations/)
+* [Yoann Deferi](https://obmin.github.io/supporters/)
+* [Tony](https://www.patreon.com/twu026)
+* [Takao Sumitomo](https://www.patreon.com/user?u=21736175)
+* [jasonium](https://www.patreon.com/user?u=711103)
+
 
 # People donated their **own time**
 
@@ -46,6 +54,7 @@ description: Here could be your name, brand, reference and logo.
 ## Documentation
 
 * [Térence Clastres](https://github.com/terencode)
+* [David](https://github.com/BurningSmile)
 
 ## Others
 
@@ -56,5 +65,6 @@ description: Here could be your name, brand, reference and logo.
 # YOUR NAME COULD BE HERE.
 ## LET'S SUPPORT IT NOW!
 
-* https://obmin.github.io/donations/
-* https://obmin.github.io/supporters/
+https://obmin.github.io/donations/
+https://obmin.github.io/supporters/
+
