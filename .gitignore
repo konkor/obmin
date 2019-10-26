@@ -19,6 +19,7 @@ things/
 tools/*JPG
 packaging/VERSION
 zip-files/
+packaging/debs/
 .deps/
 autom4te.cache/
 compile
