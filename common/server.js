@@ -127,8 +127,12 @@ var ObminServer = new Lang.Class({
         this.update_stats ();
         if (authentication) {
             let auth = new Soup.AuthDomainDigest ({realm: Convenience.realm});
-            auth.add_path ("/");
-            auth.digest_set_auth_callback (this.digest_auth_callback);
+            auth.add_path = "/";
+            try {
+                auth.digest_set_auth_callback (this.digest_auth_callback);
+            } catch (e) {
+                auth.set_auth_callback (this.digest_auth_callback);
+            }
             auth.set_filter (this.filter_callback);
             this.add_auth_domain (auth);
         }
