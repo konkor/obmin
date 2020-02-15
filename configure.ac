@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT(obmin, 19)
+AC_INIT(obmin, 20)
 
 AC_CONFIG_HEADERS([config.h])
 
