@@ -1,3 +1,9 @@
+obmin (21-1) UNRELEASED; urgency=low
+
+  * Add Turkish translations
+
+ -- konkor <kapa76@gmail.com>  Sat, 14 Nov 2020 00:41:00 +0100
+
 obmin (20-1) UNRELEASED; urgency=low
 
   * Fix for the Digest HTTP Authentication for newer libsoup versions
@@ -143,7 +149,7 @@ obmin (3.0-1) UNRELEASED; urgency=medium
   * Add german translation
 
  -- konkor <kapa76@gmail.com>  Wed, 29 Aug 2017 22:29:00 +0300
- 
+
 obmin (2.0-1) UNRELEASED; urgency=medium
 
   * Add bins obmin-server and obmin-preferences
