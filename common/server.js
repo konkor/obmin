@@ -137,7 +137,7 @@ var ObminServer = new Lang.Class({
             this.add_auth_domain (auth);
         }
         Mainloop.timeout_add (10000, () => {
-            debug ("Garbage Collection");
+            //debug ("Garbage Collection");
             System.gc ();
             return true;
         });
@@ -270,6 +270,7 @@ var ObminServer = new Lang.Class({
             return;
         }
         if (msg.method == "POST") {
+            debug (msg.request_body.data);
             counter.ready++;
             this.update_stats ();
             return;
