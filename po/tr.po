@@ -1,0 +1,241 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Obmin\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2017-09-29 13:51-0300\n"
+"PO-Revision-Date: 2020-10-29 17:33+0300\n"
+"Language-Team: Turkish\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.4.1\n"
+"Last-Translator: Muha Aliss <muhaaliss@pm.me>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: tr\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+
+#: extension.js:185
+msgid "Obmin Server "
+msgstr "Obmin Server "
+
+#: extension.js:194
+msgid "Usage Statistics"
+msgstr "Kullanım istatistikleri"
+
+#: extension.js:197
+msgid "Active"
+msgstr "Aktif"
+
+#: extension.js:199
+msgid "Total Requests"
+msgstr "Toplam istekler"
+
+#: extension.js:201
+msgid "Transferred"
+msgstr "Transfer edildi"
+
+#: extension.js:310
+msgid "Local IP"
+msgstr "Yerel IP"
+
+#: extension.js:315
+msgid "Local IP address copied to clipboard."
+msgstr "Yerel IP adresi panoya kopyalandı."
+
+#: extension.js:335
+msgid "Public IP"
+msgstr "Genel IP"
+
+#: extension.js:340
+msgid "Public IP address copied to clipboard."
+msgstr "Genel IP adresi panoya kopyalandı."
+
+#: prefs.js:88
+msgid "Locations"
+msgstr "Konumlar"
+
+#: prefs.js:93
+msgid "General"
+msgstr "Genel"
+
+#: prefs.js:98
+msgid "Behavior"
+msgstr "Davranış"
+
+#: prefs.js:103
+msgid "Display"
+msgstr "Görüntüle"
+
+#: prefs.js:108
+msgid "Notifications"
+msgstr "Bildirimler"
+
+#: prefs.js:113
+msgid "Supporting"
+msgstr "Destekleyen"
+
+#: prefs.js:132
+msgid "Shared Locations Editor"
+msgstr "Paylaşılan konum düzenleyici"
+
+#: prefs.js:135
+msgid "Add a location to share"
+msgstr "Paylaşmak için bir konum ekleyin"
+
+#: prefs.js:233
+msgid "FOLDER"
+msgstr "KLASÖR"
+
+#: prefs.js:233
+msgid "FILE"
+msgstr "DOSYA"
+
+#: prefs.js:251
+msgid "Remove this location from the sharing"
+msgstr "Bu konumu paylaşımdan kaldır"
+
+#: prefs.js:269
+msgid "Select folder"
+msgstr "Klasör Seç"
+
+#: prefs.js:290
+msgid "Select file"
+msgstr "Dosya Seç"
+
+#: prefs.js:313
+msgid "<b>System</b>"
+msgstr "<b>Sistem</b>"
+
+#: prefs.js:314
+msgid "Start server on the loading"
+msgstr "Sunucuyu açılışta başlat"
+
+#: prefs.js:323
+msgid "<b>Network</b>"
+msgstr "<b>Ağ</b>"
+
+#: prefs.js:326
+msgid "Listening Port"
+msgstr "Dinlenen bağlantı noktası"
+
+#: prefs.js:335
+msgid "<b>Content</b>"
+msgstr "<b>İçerik</b>"
+
+#: prefs.js:338
+msgid "Theme"
+msgstr "Tema"
+
+#: prefs.js:381
+msgid "Show mount points"
+msgstr "Bağlama noktalarını göster"
+
+#: prefs.js:389
+msgid "Show symbolic links"
+msgstr "Sembolik bağları göster"
+
+#: prefs.js:397
+msgid "Show hidden content"
+msgstr "Gizli içeriği göster"
+
+#: prefs.js:405
+msgid "Show backups"
+msgstr "Yedekleri göster"
+
+#: prefs.js:433
+msgid "Debugging level"
+msgstr "Hata ayıklama seviyesi"
+
+#: prefs.js:436
+msgid "ERROR"
+msgstr "HATA"
+
+#: prefs.js:436
+msgid "INFO"
+msgstr "BİLGİ"
+
+#: prefs.js:436
+msgid "DEBUG"
+msgstr "HATA AYIKLA"
+
+#: prefs.js:446
+msgid "Activity Monitor"
+msgstr "Etkinlik monitörü"
+
+#: prefs.js:447
+msgid "Monitor usage statistic and active connections"
+msgstr "Kullanım istatistiğini ve aktif bağlantıları izle"
+
+#: prefs.js:470
+msgid "Make Donation to the project"
+msgstr "Projeye bağış yapın"
+
+#: prefs.js:472
+msgid ""
+"Behind the development for the Linux Desktop are ordinary people who spend a "
+"lot of time and their own resources to make the Linux Desktop better."
+msgstr ""
+"GNU/Linux masaüstü geliştirmenin arkasında, GNU/Linux masaüstünü daha iyi "
+"hale getirmek için çok fazla zaman ve kendi kaynaklarını harcayan sıradan "
+"insanlar vardır."
+
+#: prefs.js:479 prefs.js:487
+msgid "Make Donation"
+msgstr "Bağış yap"
+
+#: prefs.js:493
+msgid "Find more about contributions..."
+msgstr "Katkılar hakkında daha fazla bilgi edinin ..."
+
+#: prefs.js:498
+msgid "Level of the donation notifications"
+msgstr ""
+
+#: prefs.js:501
+msgid "INTERFACE"
+msgstr "ARAYÜZ"
+
+#: prefs.js:501
+msgid "SERVER"
+msgstr "SUNUCU"
+
+#: prefs.js:501
+msgid "NONE"
+msgstr "YOK"
+
+#: prefs.js:510
+msgid ""
+"Feel free to set up a disired supporting level of the notifications if some "
+"forms anoyong you or you are already a project's contributor."
+msgstr ""
+
+#: prefs.js:528
+msgid "File Server"
+msgstr "Dosya sunucusu"
+
+#: prefs.js:531
+msgid "Show the folder's list on requests."
+msgstr "Klasör listesini isteklerde göster."
+
+#: prefs.js:536
+msgid "WEB/File Server"
+msgstr "WEB/Dosya sunucusu"
+
+#: prefs.js:539
+msgid "Look for 'index.html' first if it is not exist show the folder's list."
+msgstr ""
+
+#: prefs.js:544
+msgid "WEB Server"
+msgstr "WEB sunucusu"
+
+#: prefs.js:547
+msgid ""
+"Look for 'index.html' and direct links only if it is not exist show error "
+"'404.html'."
+msgstr ""
