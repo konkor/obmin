@@ -12,7 +12,6 @@ const St = imports.gi.St;
 const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
 const Clutter = imports.gi.Clutter;
-const Tweener = imports.ui.tweener;
 const Main = imports.ui.main;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
@@ -156,9 +155,9 @@ const ObminIndicator = new Lang.Class({
             this.info_local.update ();
             this.info_public.update ();
             this.update_stats ();
-        } else {
+        } /* else {
             Clutter.ungrab_keyboard ();
-        }
+        }*/
     },
 
     icon_on: function () { this.statusIcon.gicon = this._icon_on.gicon; },
@@ -239,22 +238,28 @@ const PrefsMenuItem = new Lang.Class({
 
     _init: function () {
         this.content = new PopupMenu.PopupBaseMenuItem ({ reactive: false, can_focus: false});
-        this.content.actor.add (new St.Label ({text: ' '}), { expand: true });
+        let l = new St.Label ({text: ' '});
+        l.x_expand = true;
+        this.content.actor.add (l);
         this.preferences = new St.Button ({ child: new St.Icon ({ icon_name: 'preferences-system-symbolic' }), style_class: 'system-menu-action'});
-        this.content.actor.add (this.preferences, { expand: true, x_fill: false });
+        this.content.actor.add (this.preferences);
         this.preferences.connect ('clicked', () => {
             GLib.spawn_command_line_async (EXTENSIONDIR + '/obmin-center');
             this.content.emit ('activate');
         });
-        this.content.actor.add (new St.Label ({text: ' '}), { expand: true });
+        l = new St.Label ({text: ' '});
+        l.x_expand = true;
+        this.content.actor.add (l);
         //this.about = new St.Button ({ label: '?', style_class: 'prefs-button'});
         this.about = new St.Button ({ child: new St.Icon ({ icon_name: 'dialog-question-symbolic' }), style_class: 'system-menu-action'});
-        this.content.actor.add (this.about, { expand: false });
+        this.content.actor.add (this.about);
         this.about.connect ('clicked', () => {
             GLib.spawn_command_line_async ("gedit --new-window " + EXTENSIONDIR + "/README.md");
             this.content.emit ('activate');
         });
-        this.content.actor.add (new St.Label ({text: ' '}), { expand: true });
+        l = new St.Label ({text: ' '});
+        l.x_expand = true;
+        this.content.actor.add (l);
     }
 });
 
@@ -351,7 +356,8 @@ const SeparatorItem = new Lang.Class({
           style_class: 'obmin-separator-menu-item', y_expand: true,
           y_align: Clutter.ActorAlign.CENTER
         });
-        this.content.actor.add (this._separator, {expand: true});
+        //this.content.actor.add (this._separator, {expand: true});
+        this.content.actor.add (this._separator);
     }
 });
 
@@ -383,14 +389,8 @@ function show_notify (message, style) {
     text.set_position (Math.floor (Main.layoutManager.primaryMonitor.width / 2 - text.width / 2),
         Math.floor (Main.layoutManager.primaryMonitor.height / 2 - text.height / 2));
 
-    Tweener.addTween (text, {
-        opacity: 196,
-        time: 1,
-        transition: 'linear',
-        onComplete: () => {
-            Main.uiGroup.remove_actor (text);
-            text = null;
-        }
+    GLib.timeout_add (0, 1000, () => {
+        Main.uiGroup.remove_actor (text);
     });
 }
 
