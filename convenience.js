@@ -227,14 +227,18 @@ function gen_certificate () {
             "-out", "certificate.pem", "-subj",
             "/CN=" + Gio.dbus_generate_guid ()
         ];
-
-        let proc = GLib.spawn_sync(
+        try {
+          GLib.spawn_sync(
             CONFIG_PATH,
             cmd,
             null,
             GLib.SpawnFlags.SEARCH_PATH,
             null
-        );
+          );
+        } catch (e) {
+          print (e);
+          return;
+        }
     }
 
     GLib.spawn_command_line_async("chmod 0600 " + CONFIG_PATH + "/private.pem");
