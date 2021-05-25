@@ -1,3 +1,9 @@
+obmin (22-1) UNRELEASED; urgency=low
+
+  * Update fixes for GNOME Shell 40x series
+
+ -- konkor <kapa76@gmail.com>  Tue, 25 May 2021 18:58:00 +0100
+
 obmin (21-1) UNRELEASED; urgency=low
 
   * Add Turkish translations
