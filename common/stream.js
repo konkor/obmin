@@ -137,7 +137,7 @@ var FileStream = new Lang.Class({
                 this.stream.close_async (100, null, null);
             } else {
                 this.offset += this.b.get_size ();
-                this.msg.response_body.append_buffer (new Soup.Buffer (this.b.get_data()));
+                this.msg.response_body.append_buffer (Soup.Buffer.new (this.b.get_data()));
                 this.server.unpause_message (this.msg);
                 this.uploaded += this.b.get_size ();
                 if (this.offset < this.range)
@@ -294,7 +294,7 @@ var PipeStream = new Lang.Class({
             } else {
                 this.offset += this.b.get_size();
                 //this.test_stream.write (this.b.get_data(),null);
-                this.msg.response_body.append_buffer (new Soup.Buffer (this.b.get_data()));
+                this.msg.response_body.append_buffer (Soup.Buffer.new (this.b.get_data()));
                 this.server.unpause_message (this.msg);
                 this.read_event = GLib.timeout_add (0, 10, this.read_more.bind (this));
             }
