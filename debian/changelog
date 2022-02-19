@@ -1,3 +1,9 @@
+obmin (24-1) UNRELEASED; urgency=low
+
+  * Update fixes versioning of JS modules
+
+ -- konkor <kapa76@gmail.com>  Sat, 19 Feb 2022 16:43:00 +0100
+
 obmin (23-1) UNRELEASED; urgency=low
 
   * Update fixes for GNOME Shell 41x series
