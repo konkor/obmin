@@ -8,6 +8,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+imports.gi.versions.Soup = "2.4";
+imports.gi.versions.Gtk = '3.0';
 
 const Lang = imports.lang;
 const GLib = imports.gi.GLib;

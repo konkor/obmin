@@ -9,6 +9,8 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+imports.gi.versions.Soup = "2.4";
+
 const API_VERSION = 1;
 
 const Lang = imports.lang;
