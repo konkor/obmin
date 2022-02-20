@@ -1,3 +1,9 @@
+obmin (25-1) UNRELEASED; urgency=low
+
+  * Update fixes removing notify events on disable
+
+ -- konkor <kapa76@gmail.com>  Sun, 20 Feb 2022 12:00:00 +0100
+
 obmin (24-1) UNRELEASED; urgency=low
 
   * Update fixes versioning of JS modules

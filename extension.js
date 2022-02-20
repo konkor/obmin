@@ -381,22 +381,26 @@ function get_info_string (cmd) {
     return "";
 }
 
+let text, notify_event = 0;
 function show_notify (message, style) {
-    var text = new St.Label ({text: message, style_class: style?style:'notify-label'});
+    text = new St.Label ({text: message, style_class: style?style:'notify-label'});
     text.opacity = 255;
     Main.uiGroup.add_actor (text);
 
     text.set_position (Math.floor (Main.layoutManager.primaryMonitor.width / 2 - text.width / 2),
         Math.floor (Main.layoutManager.primaryMonitor.height / 2 - text.height / 2));
 
-    GLib.timeout_add (0, 1000, () => {
+    notify_event = GLib.timeout_add (0, 1000, () => {
         Main.uiGroup.remove_actor (text);
+        notify_event = 0;
     });
 }
 
-function show_warn (message) {
-    show_notify (message, "warn-label");
-}
+function remove_notify () {
+    if (notify_event) GLib.Source.remove (notify_event);
+    notify_event = 0;
+    Main.uiGroup.remove_actor (text);
+};
 
 let obmin_menu;
 function init () {
@@ -410,6 +414,7 @@ function enable () {
 
 function disable () {
     obmin_menu.remove_events ();
+    remove_notify ();
     obmin_menu.destroy ();
     obmin_menu = null;
 }
