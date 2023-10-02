@@ -13,7 +13,7 @@ imports.gi.versions.Soup = "2.4";
 const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
 const Soup = imports.gi.Soup;
-const Lang = imports.lang;
+const GObject = imports.gi.GObject;
 const Mainloop = imports.mainloop;
 const System = imports.system;
 
@@ -109,13 +109,11 @@ let user = "obmin";
 let pass = "123456";
 let htdigest = "";
 
-var ObminServer = new Lang.Class({
-    Name: 'ObminServer',
-    Extends: Soup.Server,
+var ObminServer = GObject.registerClass (class ObminServer extends Soup.Server {
 
-    _init: function () {
+    _init () {
         GLib.set_prgname ("obmin-server");
-        this.parent ({tls_certificate:tls_cert});
+        super._init ({tls_certificate:tls_cert});
         this.plugs_init ();
         this.add_handler (null, this._default_handler.bind (this));
         try {
@@ -143,23 +141,23 @@ var ObminServer = new Lang.Class({
             System.gc ();
             return true;
         });
-    },
+    }
 
-    digest_auth_callback: function (domain, msg, username) {
+    digest_auth_callback (domain, msg, username) {
         if (user == username) return htdigest;
         return null;
-    },
+    }
 
-    filter_callback: function (domain, msg) {
+    filter_callback (domain, msg) {
         /*print (msg.uri.to_string(true), domain.accepts(msg));
         msg.request_headers.foreach ( (n, v) => {
             print (n + ": " + v);
         });*/
         if (!domain.accepts(msg)) return obmin.check_response (msg);
         return true;
-    },
+    }
 
-    check_response: function (msg) {
+    check_response (msg) {
         let dig = {}, s = "", i = -1;
         let auth = msg.request_headers.get_one ("Authorization");
         debug ("fix digest", auth);
@@ -203,9 +201,9 @@ var ObminServer = new Lang.Class({
         if (s == dig.response) return false;
 
         return true;
-    },
+    }
 
-    plugs_init: function () {
+    plugs_init () {
         plugins = new Map ();
         plug_events = new Map ();
         let finfo;
@@ -230,16 +228,16 @@ var ObminServer = new Lang.Class({
         e.close (null);
         for (let p of plugins.values()) debug ("plugin: " + p.name);
         this.init_html_menu ();
-    },
+    }
 
-    init_html_menu: function () {
+    init_html_menu () {
         for (let p of plugins.values()) if (p.has (Plugs.PlugType.MENU_ITEM))
             html_menu += p.menu_item ("nmenu-item");
         html_menu += h_menu;
         html_menu += "</div>";
-    },
+    }
 
-    _default_handler: function (server, msg, path, query, client) {
+    _default_handler (server, msg, path, query, client) {
         counter.access++;
         let drop = false, num = counter.access;
         let request = {msg:msg, path:path, query:query, client:client, num:counter.access};
@@ -294,9 +292,9 @@ var ObminServer = new Lang.Class({
             return false;
         });
         this.update_stats ();
-    },
+    }
 
-    _send_content: function (request) {
+    _send_content (request) {
         let file, r, finfo;
         [file, r] = this.get_file (request.path);
         if (!file) [file, r] = this.get_file (GLib.uri_unescape_string (request.path, null));
@@ -343,25 +341,25 @@ var ObminServer = new Lang.Class({
         counter.upload += request.msg.response_body.length;
         this.update_stats ();
         return true;
-    },
+    }
 
-    not_found: function (msg) {
+    not_found (msg) {
         //msg.set_response ("text/html", Soup.MemoryUse.COPY, "<html><head><title>404</title></head><body><h1>404</h1></body></html>");
         //msg.response_headers.append ("Server", "Obmin");
         msg.set_status (404);
         this.unpause_message (msg);
         return true;
-    },
+    }
 
-    redirect: function (msg, path) {
+    redirect (msg, path) {
         path = path || "/";
         msg.set_status (302);
         msg.response_headers.append ("Location", path);
         this.unpause_message (msg);
         return true;
-    },
+    }
 
-    send_data: function (msg, text, mime, filename, attachment) {
+    send_data (msg, text, mime, filename, attachment) {
         mime = mime || "text/html";
         filename = filename?("filename=\"" + filename + "\";"):"";
         if (attachment) filename = "attachment;" + filename;
@@ -373,9 +371,9 @@ var ObminServer = new Lang.Class({
         msg.set_status (200);
         this.unpause_message (msg);
         return true;
-    },
+    }
 
-    send_file: function (msg, path) {
+    send_file (msg, path) {
         if (!path) return this.not_found (msg);
         var f = Gio.File.new_for_path (path);
         if (!f.query_exists (null)) this.not_found (msg);
@@ -394,9 +392,9 @@ var ObminServer = new Lang.Class({
             this.unpause_message (msg);
         } else this.send_file_async (request, f, finfo);
         return true;
-    },
+    }
 
-    send_file_async: function (request, file, finfo) {
+    send_file_async (request, file, finfo) {
         if (!file) return this.not_found (request.msg);
         finfo = finfo || file.query_info ("standard::*", 0, null);
         let st = new Stream.FileStream (this, request, file, finfo);
@@ -409,9 +407,9 @@ var ObminServer = new Lang.Class({
         });
         counter.ready--;
         return true;
-    },
+    }
 
-    send_pipe_async: function (request, args, name, mime, dir) {
+    send_pipe_async (request, args, name, mime, dir) {
         let st = new Stream.PipeStream (this, request, args, name, mime, dir);
         counter.ready--;
         request.msg.connect ("finished", (o) => {
@@ -421,15 +419,15 @@ var ObminServer = new Lang.Class({
             st = null;
         });
         return true;
-    },
+    }
 
-    update_stats: function () {
+    update_stats () {
         //if (!stats_monitor) return;
         //settings.set_string (STATS_DATA_KEY, JSON.stringify (counter));
         this.dbus.emit_signal ("CounterChanged", new GLib.Variant ("(s)", [JSON.stringify (counter)]));
-    },
+    }
 
-    get_file: function (path) {
+    get_file (path) {
         let s = path, file, id = -1, src, i, res = [null, null], index = null;
         if (s.length == 0) return res;
         if (s[0] != '/') return res;
@@ -471,16 +469,16 @@ var ObminServer = new Lang.Class({
             if (file.query_exists (null)) return [file, sources[id].recursive];
         }
         return res;
-    },
+    }
 
-    is_int: function (str) {
+    is_int (str) {
         for (let i = 0; i < str.length; i++) {
             if (str[i] < '0' || str[i] > '9') return false;
         };
         return true;
-    },
+    }
 
-    get_path: function (path) {
+    get_path (path) {
         if (!path) return "";
         let res = "", ref = "/", dirs = path.substring (1, path.length - 1).split ("/");
         debug (dirs);
@@ -494,9 +492,9 @@ var ObminServer = new Lang.Class({
             }
         };
         return res;
-    },
+    }
 
-    get_dir: function (dir, r, path) {
+    get_dir (dir, r, path) {
         let slash, size, d = new Date(0), ds, link, i = 0, item = "";
         files = [];
         if (dir) files = this.list_dir ({path: dir.get_path (), recursive: r});
@@ -533,15 +531,15 @@ var ObminServer = new Lang.Class({
         });
         html_body += "</div>" + h_js + "</body>";
         return "<html>" + html_head + html_body + "</html>";
-    },
+    }
 
-    _root_handler: function (msg) {
+    _root_handler (msg) {
         if (mode > 0)
             if (this._send_content ({msg:msg, path:'/index.html', num:this.access_counter}) || (mode == 2)) return '';
         return this.get_dir (null, false, null);
-    },
+    }
 
-    list_dir: function (loc, recursive, filter) {
+    list_dir (loc, recursive, filter) {
         var finfo;
         var dir = Gio.File.new_for_path (loc.path);
         let files = [], item;
@@ -604,9 +602,9 @@ var ObminServer = new Lang.Class({
         }
         if (!recursive) files.sort (sorting);
         return files;
-    },
+    }
 
-    add_file: function (finfo, path, filter) {
+    add_file (finfo, path, filter) {
         //debug ("add_file:" + finfo.get_name ());
         //debug ("unix_mode:"+finfo.get_attribute_uint32 (Gio.FILE_ATTRIBUTE_UNIX_MODE));
         var size_condition = 0;
@@ -643,47 +641,47 @@ var ObminServer = new Lang.Class({
             }
         }
         return item;
-    },
+    }
 
-    is_remote: function (finfo) {
+    is_remote (finfo) {
         let fs = finfo.get_attribute_string (Gio.FILE_ATTRIBUTE_ID_FILESYSTEM);
         for (let i = 0; i < vfss.length; i++) {
             if (fs.toLowerCase().indexOf (vfss[i]) > -1) return true;
         }
         return false;
-    },
+    }
 
-    remote_name: function (finfo) {
+    remote_name (finfo) {
         let fs = finfo.get_attribute_string (Gio.FILE_ATTRIBUTE_ID_FILESYSTEM);
         if (fs.indexOf("host=") > -1) return fs.substring (fs.indexOf("host=") + 5);
         return fs;
-    },
+    }
 
-    check_backup: function () {
+    check_backup () {
         return check_backup;
-    },
+    }
 
-    check_hidden: function () {
+    check_hidden () {
         return check_hidden;
-    },
+    }
 
-    ready: function (val) {
+    ready (val) {
         if (val) {
             counter.ready += val;
             if (val > 0) this.update_stats ();
         }
         System.gc();
-    },
+    }
 
-    upload: function (val) {
+    upload (val) {
         if (val) {
             counter.upload += val;
             if (val > 0) this.update_stats ();
         }
         System.gc();
-    },
+    }
 
-    debug_lvl: function () {
+    debug_lvl () {
         return DEBUG_LVL;
     }
 });

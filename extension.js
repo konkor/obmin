@@ -9,6 +9,7 @@
  */
 
 const St = imports.gi.St;
+const GObject = imports.gi.GObject;
 const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
 const Clutter = imports.gi.Clutter;
@@ -16,7 +17,6 @@ const Main = imports.ui.main;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 const Util = imports.misc.util;
-const Lang = imports.lang;
 
 const HTTPS_KEY = 'https';
 const STARTUP_KEY = 'startup-settings';
@@ -48,12 +48,10 @@ let stats = {};
 let update_event = 0;
 let server = 0;
 
-const ObminIndicator = new Lang.Class({
-    Name: 'ObminIndicator',
-    Extends: PanelMenu.Button,
+const ObminIndicator  = GObject.registerClass (class ObminIndicator extends PanelMenu.Button {
 
-    _init: function () {
-        this.parent (0.0, "Obmin Server Indicator", false);
+    _init () {
+        super._init (0.0, "Obmin Server Indicator", false);
         this.edit_item = null;
 
         this.settings = Convenience.getSettings();
@@ -74,7 +72,7 @@ const ObminIndicator = new Lang.Class({
         this.icon_off ();
         let _box = new St.BoxLayout();
         _box.add_actor(this.statusIcon);
-        this.actor.add_actor (_box);
+        this.add_actor (_box);
 
         https = this.settings.get_boolean (HTTPS_KEY);
         startup = this.settings.get_boolean (STARTUP_KEY);
@@ -101,18 +99,18 @@ const ObminIndicator = new Lang.Class({
                     this._signalCC = this.dbus.signal_subscribe(null, "org.konkor.obmin.server", "CounterChanged",
                     '/org/konkor/obmin/server', null, Gio.DBusSignalFlags.NO_MATCH_RULE, this.on_counter_changed.bind (this));
             });
-    },
+    }
 
-    on_counter_changed: function (conn, sender, object, iface, signal, param, user_data) {
+    on_counter_changed (conn, sender, object, iface, signal, param, user_data) {
         //print ('on_counter_changed', param.get_child_value(0).get_string()[0]);
         stats = JSON.parse (param.get_child_value(0).get_string()[0]);
         if (this.menu.isOpen) {
             if (update_event) GLib.Source.remove (update_event);
             update_event = GLib.timeout_add (0, 250, this.update_stats.bind (this));
         } else this.update_icon ();
-    },
+    }
 
-    check_status: function () {
+    check_status () {
         let run = this.server_enabled;
         if (run != server) {
             server = run;
@@ -120,9 +118,9 @@ const ObminIndicator = new Lang.Class({
             if (server) this.update_icon ();
             else this.icon_off ();
         }
-    },
+    }
 
-    update_stats: function () {
+    update_stats () {
         if (update_event) {
             GLib.Source.remove (update_event);
             update_event = 0;
@@ -141,14 +139,14 @@ const ObminIndicator = new Lang.Class({
         if (server) this.update_icon ();
         else this.icon_off ();
         return false;
-    },
+    }
 
-    update_icon: function () {
+    update_icon () {
         if ((stats.access - stats.ready) > 0) this.icon_run ();
         else this.icon_on ();
-    },
+    }
 
-    on_menu_state_changed: function (source, state) {
+    on_menu_state_changed (source, state) {
         if (state) {
             this.check_status ();
             port = this.settings.get_int (PORT_KEY);
@@ -158,15 +156,15 @@ const ObminIndicator = new Lang.Class({
         } /* else {
             Clutter.ungrab_keyboard ();
         }*/
-    },
+    }
 
-    icon_on: function () { this.statusIcon.gicon = this._icon_on.gicon; },
+    icon_on () { this.statusIcon.gicon = this._icon_on.gicon; }
 
-    icon_off: function () { this.statusIcon.gicon = this._icon_off.gicon; },
+    icon_off () { this.statusIcon.gicon = this._icon_off.gicon; }
 
-    icon_run: function () { this.statusIcon.gicon = this._icon_run.gicon; },
+    icon_run () { this.statusIcon.gicon = this._icon_run.gicon; }
 
-    _build_ui: function () {
+    _build_ui () {
         this.menu.removeAll ();
         this.server_switch = new PopupMenu.PopupSwitchMenuItem (_("Obmin Server "), server);
         this.server_switch.connect ('toggled', (item) => {
@@ -194,9 +192,9 @@ const ObminIndicator = new Lang.Class({
         this.connections.content.connect ('activate', ()=>{GLib.spawn_command_line_async (EXTENSIONDIR + '/obmin-center');});
         this.requests.content.connect ('activate', ()=>{GLib.spawn_command_line_async (EXTENSIONDIR + '/obmin-center');});
         this.uploads.content.connect ('activate', ()=>{GLib.spawn_command_line_async (EXTENSIONDIR + '/obmin-center');});
-    },
+    }
 
-    _enable: function (state) {
+    _enable (state) {
         server = state;
         if (state) {
             if (GLib.spawn_command_line_async (EXTENSIONDIR + "/obmin-server")) {
@@ -210,12 +208,12 @@ const ObminIndicator = new Lang.Class({
             GLib.spawn_command_line_async ("killall obmin-server");
             this.icon_off ();
         }
-    },
+    }
 
     get server_enabled () {
         let res = GLib.spawn_command_line_sync ("ps -A");
         let o, n;
-        if (res[0]) o = res[1].toString().split("\n");
+        if (res[0]) o = Convenience.byteArrayToString (res[1]).split("\n");
         for (let i = 0; i < o.length; i++) {
             if (o[i].indexOf ("obmin-server") > -1) {
                 n = parseInt (o[i].trim().split(" ")[0]);
@@ -223,9 +221,9 @@ const ObminIndicator = new Lang.Class({
             }
         }
         return 0;
-    },
+    }
 
-    remove_events: function () {
+    remove_events () {
         if (update_event) GLib.Source.remove (update_event);
         update_event = 0;
         if (this.dbus && this._signalCC) this.dbus.signal_unsubscribe (this._signalCC);
@@ -233,10 +231,10 @@ const ObminIndicator = new Lang.Class({
     }
 });
 
-const PrefsMenuItem = new Lang.Class({
-    Name: 'PrefsMenuItem',
+const PrefsMenuItem = GObject.registerClass (class PrefsMenuItem extends GObject.Object {
 
-    _init: function () {
+    _init () {
+        super._init ();
         this.content = new PopupMenu.PopupBaseMenuItem ({ reactive: false, can_focus: false});
         let l = new St.Label ({text: ' '});
         l.x_expand = true;
@@ -263,10 +261,10 @@ const PrefsMenuItem = new Lang.Class({
     }
 });
 
-const InfoMenuItem = new Lang.Class ({
-    Name: 'InfoMenuItem',
+const InfoMenuItem  = GObject.registerClass (class InfoMenuItem extends GObject.Object {
 
-    _init: function (label, info, reactive, style, style_info) {
+    _init (label, info, reactive, style, style_info) {
+        super._init ();
         this.content = new PopupMenu.PopupMenuItem (label, {reactive: reactive, style_class: style?style:'obmin-info-item'});
         this.content.label.x_expand = true;
         this.info = new St.Label ({text: ' ', style_class: style_info?style_info:"", reactive:true, can_focus: true, track_hover: true });
@@ -276,25 +274,24 @@ const InfoMenuItem = new Lang.Class ({
             this.content.actor.visible = this.info.text.length > 0;
         });
         this.set_text (info);
-    },
+    }
 
-    set_text: function (text) {
+    set_text (text) {
         this.info.set_text (text);
     }
 });
 
-const LocalItem = new Lang.Class ({
-    Name: 'LocalItem',
+const LocalItem = GObject.registerClass (class LocalItem extends GObject.Object {
 
-    _init: function () {
+    _init () {
         this.content = new PopupMenu.PopupSubMenuMenuItem (_("Local IP Address"), false);
         this.info = new St.Label ({text: ' ', reactive:true, can_focus: true, track_hover: true });
         this.info.align = St.Align.END;
         this.content.actor.add_child (this.info);
         this.update_ips ();
-    },
+    }
 
-    update_ips: function () {
+    update_ips () {
         let l = Convenience.get_ip_addresses ();
         this.content.menu.removeAll ();
         l.forEach ((s) => {
@@ -308,35 +305,33 @@ const LocalItem = new Lang.Class ({
             });
         });
         this.info.set_text (l[0]);
-    },
+    }
 
-    update: function () {
+    update () {
         this.update_ips ();
     }
 });
 
-const PublicItem = new Lang.Class ({
-    Name: 'PublicItem',
-    Extends: InfoMenuItem,
+const PublicItem = GObject.registerClass (class PublicItem extends InfoMenuItem {
 
-    _init: function () {
-        this.parent (_("Public IP Address"), "", true, 'obmin-ip-item', 'obmin-ip-label');
+    _init () {
+        super._init (_("Public IP Address"), "", true, 'obmin-ip-item', 'obmin-ip-label');
         this._ip = "";
         this.content.activate = this.activate.bind (this);
-    },
+    }
 
-    activate: function (event) {
+    activate (event) {
         var scheme = "http://";
         if (https) scheme = "https://";
         Clipboard.set_text (CLIPBOARD_TYPE, scheme + this.info.text);
         show_notify (_("Public IP address copied to clipboard."));
         this.content.emit ('activate', event);
-    },
+    }
 
-    update: function () {
+    update () {
         Convenience.fetch ("http://ipecho.net/plain", null, null, (text, s) => {
             if ((s == 200) && text) {
-                this._ip = text.split("\n")[0];
+                this._ip = Convenience.byteArrayToString(text).split("\n")[0];
                 if (!this._ip || this._ip.length < 7) this._ip = "";
             } else this._ip = "";
             this.set_text (this._ip);
@@ -345,10 +340,9 @@ const PublicItem = new Lang.Class ({
     }
 });
 
-const SeparatorItem = new Lang.Class({
-    Name: 'SeparatorItem',
+const SeparatorItem = GObject.registerClass (class SeparatorItem extends GObject.Object {
 
-    _init: function () {
+    _init () {
         this.content = new PopupMenu.PopupBaseMenuItem ({
           reactive: false, can_focus: false, style_class: 'obmin-separator-item'
         });
@@ -399,7 +393,7 @@ function show_notify (message, style) {
 function remove_notify () {
     if (notify_event) GLib.Source.remove (notify_event);
     notify_event = 0;
-    Main.uiGroup.remove_actor (text);
+    if (text) Main.uiGroup.remove_actor (text);
 };
 
 let obmin_menu;

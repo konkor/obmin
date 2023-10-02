@@ -9,11 +9,10 @@
  * with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-imports.gi.versions.Soup = "2.4";
+imports.gi.versions.Soup = "3.0";
 
 const API_VERSION = 1;
 
-const Lang = imports.lang;
 const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
 const Soup = imports.gi.Soup;
@@ -110,10 +109,9 @@ function InitLogger (source) {
 }
 
 let log_path = GLib.get_user_data_dir () + "/obmin/logs/";
-const Logger = new Lang.Class({
-    Name: 'Logger',
+const Logger = class Logger {
 
-    _init: function (source) {
+    constructor (source) {
         let filename;
         this.prefix = source?source:"";
         if (!GLib.file_test (log_path, GLib.FileTest.EXISTS))
@@ -131,13 +129,13 @@ const Logger = new Lang.Class({
         }
         if (!rotation) return;
         GLib.timeout_add_seconds (0, 2, rotation_worker);
-    },
+    }
 
-    put: function (text) {
+    put (text) {
         if (!text || !this.stream) return;
         this.stream.put_string (text + "\n", null);
         //this.stream.flush_async (0, null, null);
-    },
+    }
 
     get new_filename () {
         let d = new Date();
@@ -145,7 +143,7 @@ const Logger = new Lang.Class({
             d.getFullYear(),d.getMonth()+1,d.getDate(),
             d.getHours(),d.getMinutes(),d.getSeconds(),d.getMilliseconds());
     }
-});
+};
 
 let rotation = getSettings().get_int ('logs-rotation');
 function rotation_worker () {
@@ -172,15 +170,26 @@ function fetch (url, agent, headers, callback) {
     callback = callback || null;
     agent = agent || "Obmin ver." + API_VERSION;
 
-    let session = new Soup.SessionAsync({ user_agent: agent });
-    Soup.Session.prototype.add_feature.call (session, new Soup.ProxyResolverDefault());
+    let session = Soup.Session.new();
+    session.user_agent = agent;
+    // Soup.Session.prototype.add_feature.call (session, new Soup.ProxyResolverDefault());
     let request = Soup.Message.new ("GET", url);
-    if (headers) headers.forEach (h=>{
+    if (headers) headers.forEach (h => {
         request.request_headers.append (h[0], h[1]);
     });
-    session.queue_message (request, (source, message) => {
-        if (callback)
-            callback (message.response_body.data?message.response_body.data.toString():"", message.status_code);
+    session.send_and_read_async (request, 0, null, (session, res) => {
+      let response;
+      try {
+        response = session.send_and_read_finish (res);
+      } catch (e) {
+        error ("finish error", e);
+        if (callback) callback (e, 404);
+      }
+      if (response) {
+        let data = response.get_data ();
+        //print ("FETCH", data, session, response);
+        if (callback) callback (data, 200);
+      }
     });
 }
 
@@ -194,10 +203,10 @@ function fetch_sync (url, agent, headers) {
     if (headers) headers.forEach (h=>{
         request.request_headers.append (h[0], h[1]);
     });
-    let timeout_id = GLib.timeout_add_seconds (0, 4, Lang.bind (this, function () {
+    let timeout_id = GLib.timeout_add_seconds (0, 4, () => {
         if (cancelable) cancelable.cancel();
         return false;
-    }));
+    });
     let stream = session.send (request, cancellable);
     GLib.Source.remove (timeout_id);
     if (stream) {

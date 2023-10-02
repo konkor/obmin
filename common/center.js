@@ -493,7 +493,7 @@ const PublicItem = new Lang.Class ({
     update: function () {
         Convenience.fetch ("http://ipecho.net/plain", null, null, (text, s) => {
             if ((s == 200) && text) {
-                this._ip = text.split("\n")[0];
+                this._ip = b2s(text).split("\n")[0];
                 if (!this._ip || this._ip.length < 7) this._ip = "";
             } else this._ip = "";
             if (this._ip) this.visible = true;

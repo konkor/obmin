@@ -1,3 +1,10 @@
+obmin (26-1) UNRELEASED; urgency=low
+
+  * Update fixes for GNOME Shell 43.x series
+  * Update ES2015 for server and extension
+
+ -- konkor <kapa76@gmail.com>  Mon, 02 Oct 2023 12:00:00 +0100
+
 obmin (25-1) UNRELEASED; urgency=low
 
   * Update fixes removing notify events on disable
